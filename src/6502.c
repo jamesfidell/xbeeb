@@ -1899,11 +1899,13 @@
 					Accumulator = ret & 0xff;
 					RegisterX = ( ret >> 8 ) & 0xff;
 					RegisterY = ( ret >> 16 ) & 0xff;
-					UnstackPC();
 					if ( NewPC >= 0 )
 						SetProgramCounter ( NewPC );
 					else
+					{
+						UnstackPC();
 						EmulatorPC++;
+					}
 					break;
 				}
 #endif
