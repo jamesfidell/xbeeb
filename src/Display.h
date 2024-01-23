@@ -65,6 +65,6 @@ extern	void		DisplayRegisters( byteval, byteval, byteval, int, byteval);
  */
 
 #define		RegDisp DisplayRegisters ( Accumulator, RegisterX, RegisterY, \
-				((( int ) EmulatorPC ) - (( int ) Mem )), StackPointer )
+				((( void* ) EmulatorPC ) - (( void* ) Mem )), StackPointer )
 
 #endif	/* DISPLAY_H */
