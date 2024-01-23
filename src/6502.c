@@ -3327,9 +3327,8 @@
 				break;
 			}
 #ifdef	M6502
-			case op_HALT82 :
-				Disassemble2 ( "HALT82 #&%02x\n", *EmulatorPC );
-				EmulatorPC++;
+			case op_NOP82 :
+				Disassemble1 ( "NOP &82\n" );
 				AddClockCycles ( CLK_IMMEDIATE );
 				break;
 #endif	/* M6502 */
@@ -4489,9 +4488,8 @@
 				break;
 			}
 #ifdef	M6502
-			case op_HALTc2 :
-				Disassemble2 ( "HALTc2 #&%02x\n", *EmulatorPC );
-				EmulatorPC++;
+			case op_NOPc2 :
+				Disassemble1 ( "NOP &c2\n" );
 				AddClockCycles ( CLK_IMMEDIATE );
 				break;
 #endif	/* M6502 */
@@ -5221,9 +5219,8 @@
 				break;
 			}
 #ifdef	M6502
-			case op_HALTe2 :
-				Disassemble2 ( "HALTe2 #&%02x\n", *EmulatorPC );
-				EmulatorPC++;
+			case op_NOPe2 :
+				Disassemble1 ( "NOP &e2\n" );
 				AddClockCycles ( CLK_IMMEDIATE );
 				break;
 #endif	/* M6502 */

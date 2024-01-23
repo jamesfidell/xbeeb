@@ -212,7 +212,7 @@
 #define	op_RRA_AbX		0x7f
 #define	op_NOP80		0x80
 #define	op_STA_IndX		0x81
-#define	op_HALT82		0x82
+#define	op_NOP82		0x82
 #define	op_SAX_IndX		0x83
 #define	op_STY_ZP		0x84
 #define	op_STA_ZP		0x85
@@ -276,7 +276,7 @@
 #define	op_LAX_AbY		0xbf
 #define	op_CPY_Im		0xc0
 #define	op_CMP_IndX		0xc1
-#define	op_HALTc2		0xc2
+#define	op_NOPc2		0xc2
 #define	op_DCP_IndX		0xc3
 #define	op_CPY_ZP		0xc4
 #define	op_CMP_ZP		0xc5
@@ -308,7 +308,7 @@
 #define	op_DCP_AbX		0xdf
 #define	op_CPX_Im		0xe0
 #define	op_SBC_IndX		0xe1
-#define	op_HALTe2		0xe2
+#define	op_NOPe2		0xe2
 #define	op_ISB_IndX		0xe3
 #define	op_CPX_ZP		0xe4
 #define	op_SBC_ZP		0xe5

@@ -1,0 +1,457 @@
+Changes since Xbeeb v0.2
+========================
+
+o Mon Nov 27 23:46:54 GMT 1995
+
+  Added code for properly handling BDC ADC flags, as per Jouko Valta's
+  65xx instruction set document
+
+
+o Mon Nov 27 23:58:55 GMT 1995
+
+  Corrected handling of address wrap-around for (ind,Y) instructions.
+
+
+o Tue Nov 28 00:12:10 GMT 1995
+
+  Corrected handling of address wrap-around for all zp,X and zp,Y
+  instructions.  This removes the need for the RANGE_CHECK define.  Removed
+  that, too.
+
+
+o Thu Nov 30 22:48:08 GMT 1995
+
+  Split src/opcodes.h into src/6502ops.h for NMOS 6502 op-codes and
+  src/EFSops.h for dummy op-codes for emulated filing system.
+
+
+o Thu Nov 30 22:50:02 GMT 1995
+
+  Fixed a bug in src/6502.c in the OSFSC handling code so that when the PC
+  is set to a new value as a result of the OSFSC call, the old value of
+  the PC is not unstacked.
+
+
+o Thu Nov 30 22:52:46 GMT 1995
+
+  Added #define to src/Config.h to prevent multiple inclusion.
+
+
+o Thu Nov 30 23:05:31 GMT 1995
+
+  Added the NMOS6502 #define to src/Config.h as the default CPU type.
+
+
+o Thu Nov 30 23:06:25 GMT 1995
+
+  Added all the undocumented NMOS 6502 HALT instructions.
+
+
+o Thu Nov 30 23:45:36 GMT 1995
+
+  Added all the undocumented NMOS 6502 NOP instructions.
+
+
+o Fri Dec  1 22:05:49 GMT 1995
+
+  Changed the code for the undocumented NMOS 6520 NOP operations so that
+  they load a value from memory according to their addressing mode (but
+  neither store it anywhere nor set any SR flags).
+
+
+o Fri Dec  1 22:13:36 GMT 1995
+
+  Updated all disassembly instructions to give the full number of hex
+  digits when displaying their parameters.
+
+
+o Fri Dec  1 23:21:14 GMT 1995
+
+  Implemented the undocumented NMOS 6502 SAX instructions
+  ( Store ( A AND X )).
+
+
+o Fri Dec  1 23:32:18 GMT 1995
+
+  Implemented the undocumented NMOS 6502 ASR instruction
+  ( A = LSR ( A AND #imm )).
+
+
+o Sat Dec  2 00:33:21 GMT 1995
+
+  Implemented the undocumented NMOS 6502 SLO instruction
+  ( v = A << 1; M = M OR v ).
+  Don't know how this operation sets the SR flags, though.
+
+  Zalaga works for the first time!
+
+
+o Sat Dec  2 13:12:51 GMT 1995
+
+  Enabled toggling of PB7 in system VIA depending on ACR bit 6 and the
+  one-shot/free-run mode of T1
+
+
+o Sat Dec  2 13:44:20 GMT 1995
+
+  Implemented User VIA T1 free-running mode.  Set the initial value of
+  the User VIA ORA to 0x80.
+
+  Planetoid/Defender now works for the first time!
+
+
+o Sat Dec  2 14:24:58 GMT 1995
+
+  Corrected value returned by read from VIA T2CL and T2CH.
+
+  Frak! now works.
+
+
+o Mon Dec  4 21:17:48 GMT 1995
+
+  Fixed a bug in the bitmapped screen wrap-around that prevented proper
+  scrolling of the screen.
+
+  Rocket Raid, Defender and Planetoid now scroll sideways properly.
+
+
+o Mon Dec  4 22:06:13 GMT 1995
+
+  Corrected bugs in the code for reading from the CRTC, properly
+  implemented the address wrap-around on the register locations and
+  return values.
+
+
+o Mon Dec  4 22:13:03 GMT 1995
+
+  Corrected the address wrap-around on the ACIA register locations
+
+
+o Mon Dec  4 22:30:05 GMT 1995
+
+  Partially implemented reading the Serial ULA (with the appropriated
+  address wrap-around).
+
+
+o Mon Dec  4 22:47:32 GMT 1995
+
+  Implemented address wrap-around the Video ULA and partially handled
+  reading from the Video ULA register.
+
+
+o Mon Dec  4 23:13:12 GMT 1995
+
+  Set up dummy return for reads from the system VIA IRA and SR.  Implemented
+  address wrap-around for memory-mapped registers in the VIA.
+
+
+o Mon Dec  4 23:22:53 GMT 1995
+
+  Set up dummy return for reads from the user VIA SR.  Implemented
+  address wrap-around for memory-mapped registers in the VIA.
+
+
+o Mon Dec  4 23:40:05 GMT 1995
+
+  Set up dummy accesses to FDC and handled address wrap-around for FDC
+  addresses.
+
+
+o Mon Dec  4 23:57:46 GMT 1995
+
+  Set up dummy accesses to Econet controller and handled address
+  wrap-around for those addresses.
+
+  Repton 1 now works, but gives loads of warnings for accessing
+  unimplemented hardware...
+
+
+o Thu Dec  7 23:48:22 GMT 1995
+
+  Implemented the undocumented NMOS 6502 LAX instructions.
+
+
+o Mon Dec 11 22:48:49 GMT 1995
+
+  Implemented the undocumented NMOS 6502 ISB instructions.
+
+  Penguin now works.
+
+
+o Thu Dec 14 23:14:48 GMT 1995
+
+  Implemented the undocumented NMOS 6502 ANC instructions.
+
+  Repton 2 now runs (although the screen is corrupted).
+
+
+o Thu Dec 21 18:17:12 GMT 1995
+
+  Some tidying up of the currently implemented undocumented NMOS 6502
+  instructions.
+
+
+o Thu Dec 21 19:18:59 GMT 1995
+
+  Implemented the undocumented NMOS 6502 RLA instructions
+  ( ROL M; A = A AND M ).
+
+
+o Fri Dec 22 20:52:08 GMT 1995
+
+  Implemented the undocumented NMOS 6502 RRA instructions
+  ( ROR M; ( A + M ) => SR, no change in A ).
+
+
+o Fri Dec 22 21:26:18 GMT 1995
+
+  Implemented the undocumented NMOS 6502 DCP instructions
+  ( M--; CMP M ).
+
+  This had repercussions in that the op-codes are used for the EFS
+  code, so all that has been updated and pch/pch.c has been changed
+  to reflect this.  The new trap values for the EFS code are opcodes
+  which would normally hang the processor.
+
+
+o Fri Dec 22 22:29:33 GMT 1995
+
+  Implemented the undocumented NMOS 6502 SHA/SHX/SHY/SHS instructions.
+
+
+o Fri Dec 22 22:56:02 GMT 1995
+
+  Implemented the undocumented NMOS 6502 LAX/LAS instructions
+  ( A = X = A & M and A = X = SP = A & M).
+
+
+o Fri Dec 22 23:18:10 GMT 1995
+
+  Implemented the undocumented NMOS6502 SBX and SBC (0xeb) instructions.
+
+
+o Wed Dec 27 14:34:31 GMT 1995
+
+  Fixed FASTCLOCK defines so that the code compiles when FASTCLOCK is not
+  defined.  Also changed use of FASTCLOCK to specify how many clock ticks
+  is the minimum before updating the clocks.
+
+
+o Thu Dec 28 14:51:44 GMT 1995
+
+  Commented out XK_KP_Home and XK_KP_End in src/Screen.c for those systems
+  that don't have them.
+
+
+o Thu Dec 28 14:54:19 GMT 1995
+
+  Tidied up EMUL_FS defines for code which relies on the disk emulation.
+
+
+o Thu Dec 28 15:27:42 GMT 1995
+
+  Added VoxWare sound code from James Murray <jsm@jsm-net.demon.co.uk>
+  and documented #define to enable it.
+
+
+o Thu Dec 28 15:37:45 GMT 1995
+
+  Changed LITTLE_ENDIAN #define to ENDIAN_6502 because of clashes with
+  Linux system #defines.
+
+
+o Thu Dec 28 21:42:57 GMT 1995
+
+  Cleaned up all instruction timing code.
+
+
+o Fri Dec 29 00:51:39 GMT 1995
+
+  Added 65c12 opcodes and #define to enable emulation for that processor,
+  in the process creating 65c12ops.h and EFSops.h.
+
+
+o Wed Jan  3 19:34:27 GMT 1996
+
+  Updated 6522 VIA emulation to have correct initial values for VIA
+  registers wherever possible.
+
+
+o Wed Jan  3 23:35:06 GMT 1996
+
+  Separated out code for performing a reset on each piece of emulated
+  hardware.
+
+
+o Thu Jan  4 01:16:26 GMT 1996
+
+  Heavily modified 6522 VIA code to separate out the input/output
+  registers and what is actually on the data pins.  This has the benefits
+  of tidying up the whole VIA i/o emulation and not requiring any nasty
+  configuration hacks to get software to work (apart from those that exist
+  because of uncompleted emulation).
+
+
+o Thu Jan  4 14:27:55 GMT 1996
+
+  Correctly coded (zp,X) addressing mode where zp+X(+1) overlaps the
+  page boundary.
+
+
+o Thu Jan  4 14:51:00 GMT 1996
+
+  Added the 65c02 RMB and SMB opcodes, creating 65c02ops.h in the process.
+
+
+o Thu Jan  4 16:05:29 GMT 1996
+
+  Added support for the BBC Micro Model A using the -a command line
+  switch.  Support can be removed by #define MODEL_B_ONLY in Config.h
+  which will also make the emulator quicker.
+
+
+o Thu Jan  4 16:44:32 GMT 1996
+
+  Prevented multiple inclusion of any of the .h files.
+
+
+o Thu Jan  4 16:55:43 GMT 1996
+
+  Split the command-line options processing code into a separate
+  module (Options.c, Options.h).
+
+
+o Thu Jan  4 17:07:22 GMT 1996
+
+  Updated the help message.
+
+
+o Thu Jan  4 17:30:21 GMT 1996
+
+  Added a command line option to set the values of the keyboard DIP
+  switches.
+
+
+o Thu Jan  4 22:16:13 GMT 1996
+
+  Parenthesised all parameters of #define's in Ops.h, "just in case" :-)
+
+
+o Mon Jan 8 19:55:06 GMT 1996
+
+  Implemented bitmapped screen image as shared XImage.
+
+
+o Mon Jan 15 23:50:07 GMT 1996
+
+  Completely changed the way that the key mapping is done to make all
+  games more playable by returning keys on a "position on the keyboard"
+  basis rather than a character basis.
+
+
+o Tue Jan 16 18:47:14 GMT 1996
+
+  Tidied up 6522Via interrupt handling code.
+
+
+o Mon Jan 22 23:14:19 GMT 1996
+
+  Added a new window to the main Beeb screen to display the status LEDs
+  and any other useful stuff.  (InfoWindow.[ch]).
+
+
+o Mon Feb 12 23:34:29 GMT 1996
+
+  Fixed RomSelect.c so that paged RAM works properly.
+
+
+o Sat Feb 17 11:14:33 GMT 1996
+
+  Integrated all the XDFS v0.7 code.
+
+
+o Mon Feb 19 21:56:48 GMT 1996
+
+  Added code to Screen.c to display the program name and version on the
+  icon and title bar.
+
+
+o Mon Feb 19 22:41:21 GMT 1996
+
+  Minor corrections to allow all the source to compile without warnings
+  using gcc -Wall with GCC v2.6.3.
+
+
+o Fri Feb 23 00:26:16 GMT 1996
+
+  Changed opcode #defines to circumvent a multiple #define problem on
+  Solaris 2.5
+
+
+o Sat Feb 24 18:27:34 GMT 1996
+
+  Added the SHIFTLOCK_SOUND_HACK code to stop the Shift Lock light
+  flickering when the sound buffer is full.  That slows down the
+  emulator dramatically because of all the redrawing of the LED image.
+
+
+o Sun Feb 25 18:04:23 GMT 1996
+
+  Recoded KeymapStrict.c to use keysyms rather than keycodes so that
+  the code is portable to implementations of X11 other than those on the
+  PC.
+
+
+o Sun Feb 25 18:15:50 GMT 1996
+
+  Tidied up the Voxware.c source code.
+
+
+o Mon Feb 26 22:43:21 GMT 1996
+
+  More minor corrections to allow all the source to compile without
+  warnings under gcc -Wall with GCC 2.7.2.
+
+
+o Tue Feb 27 00:34:12 GMT 1996
+
+  Updated with the newest XDFS code.
+
+
+o Tue Feb 27 01:20:04 GMT 1996
+
+  Major changes to the colour-handling/screen-updating code which makes
+  it faster and closer to being correct.
+
+
+o Wed Feb 28 01:19:16 GMT 1996
+
+  Update the handling of BitsPerColourInfo to make it more reliable and
+  accurate.
+
+
+o Wed Feb 28 21:51:44 GMT 1996
+
+  Fixed a bug that I introduced into EFS.c whilst integrating XDFS which
+  cause saving files to fail.
+
+
+o Thu Feb 29 00:35:59 GMT 1996
+
+  Corrected multiple howler in EFS.c that allowed reading past the end of
+  the memory array.
+
+
+o Thu Feb 29 00:39:38 GMT 1996
+
+  And another howler in the same file that allowed writing past the end
+  of the target filename array in the Copy* functions.
+
+
+* Xbeeb v0.3 released.
+
+o Sat Mar  2 20:37:59 GMT 1996
+
+  Corrected the handling of 0x82, 0xc2 and 0xe2 opcodes -- these are
+  NOPs on my 6502 -- the don't cause the processor to jam like the other
+  HALT instructions.
