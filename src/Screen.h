@@ -82,6 +82,9 @@
 #ifndef	SCREEN_H
 #define	SCREEN_H
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
 extern	void			InitialiseScreen ( void );
 extern	void			ShutdownScreen ( void );
 extern	void			CheckEvents ( void );
@@ -91,8 +94,6 @@ extern	void			RecalculateScreenInfo ( void );
 
 extern	unsigned char	ScreenMemoryChanged;
 extern	unsigned char	ScreenImageChanged;
-
-#ifdef	_XLIB_H_
 
 extern	GC				TtextTextGC;
 extern	GC				TtextMosaicGC;
@@ -128,7 +129,6 @@ extern	int				BytesPerImageLine;
 extern	XImage			*BitmapImage;
 
 #endif	/* MITSHM */
-#endif	/* _XLIB_H_ */
 
 extern	unsigned long	Cells [ 16 ];
 extern	unsigned long	Masks [ 4 ];
