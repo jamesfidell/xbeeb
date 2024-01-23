@@ -252,11 +252,13 @@ ViaClockUpdate ( byteval val )
 
 		/*
 		 * In continuous mode, we also need to re-load the counter
-		 * latches.
+		 * latches, otherwise just roll the counter over
 		 */
 
 		if ( SystemViaTimer1Continuous )
 			SystemViaTimer1 += (SystemVia[T1LL] + 256 * SystemVia[T1LH]);
+		else
+			SystemViaTimer1 &= 0xffff;
 
 		/*
 		 * And generate the interrupt if we can.
@@ -278,10 +280,27 @@ ViaClockUpdate ( byteval val )
 	if ( !SystemViaTimer2PulseCount )
 	{
 		SystemViaTimer2 -= val;
-		if ( SystemViaTimer2InterruptEnable && SystemViaTimer2 <= 0 )
+		if ( SystemViaTimer2 <= 0 )
 		{
-			SystemViaSetInterrupt ( INT_T2 );
-			SystemViaTimer2InterruptEnable = 0;
+			if ( SystemViaTimer2InterruptEnable )
+			{
+				/*
+				 * FIX ME
+				 *
+				 * David Stacey commented this next line out to get
+				 * Firetrack working.  I really need to look into that
+				 * a little more.
+				 */
+
+				SystemViaSetInterrupt ( INT_T2 );
+				SystemViaTimer2InterruptEnable = 0;
+			}
+
+			/*
+			 * roll the counter over
+			 */
+
+			SystemViaTimer2 &= 0xffff;
 		}
 	}
 
@@ -317,11 +336,13 @@ ViaClockUpdate ( byteval val )
 
 		/*
 		 * In continuous mode, we also need to re-load the counter
-		 * latches.
+		 * latches, otherwise just roll the counter over.
 		 */
 
 		if ( UserViaTimer1Continuous )
 			UserViaTimer1 += (UserVia[T1LL] + 256 * UserVia[T1LH]);
+		else
+			UserViaTimer1 &= 0xffff;
 
 		/*
 		 * And generate the interrupt
@@ -343,10 +364,19 @@ ViaClockUpdate ( byteval val )
 	if ( !UserViaTimer2PulseCount )
 	{
 		UserViaTimer2 -= val;
-		if ( UserViaTimer2InterruptEnable && UserViaTimer2 <= 0 )
+		if ( UserViaTimer2 <= 0 )
 		{
-			UserViaSetInterrupt ( INT_T2 );
-			UserViaTimer2InterruptEnable = 0;
+			if ( UserViaTimer2InterruptEnable )
+			{
+				UserViaSetInterrupt ( INT_T2 );
+				UserViaTimer2InterruptEnable = 0;
+			}
+
+			/*
+			 * Now roll over the counter.
+			 */
+
+			UserViaTimer2 &= 0xffff;
 		}
 	}
 

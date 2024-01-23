@@ -448,10 +448,28 @@ o Thu Feb 29 00:39:38 GMT 1996
   of the target filename array in the Copy* functions.
 
 
-* Xbeeb v0.3 released.
+**********************************************
+*           Xbeeb v0.3 released.             *
+**********************************************
+
 
 o Sat Mar  2 20:37:59 GMT 1996
 
   Corrected the handling of 0x82, 0xc2 and 0xe2 opcodes -- these are
   NOPs on my 6502 -- the don't cause the processor to jam like the other
   HALT instructions.
+
+  Patch created for v0.3.1
+
+
+o Thu Mar 14 22:45:42 GMT 1996
+
+  Numerous corrections for timer-handling/VIA emulation problems.
+
+
+o Mon Mar 18 22:50:45 GMT 1996
+
+  Corrections for number of cycles in branch instructions when the
+  condition is true.
+
+  Patch created for v0.3.2

@@ -175,17 +175,17 @@ extern	byteval						NegativeFlag;
 #define	CLK_ZP_READ					3		/* Read from ZP */
 #define	CLK_ZP_WRITE				3		/* Write to ZP */
 #define	CLK_ABS_JMP					3		/* Read JMP from absolute addr. */
+#define	CLK_REL_OK					3		/* Branch to same page */
 
 #define	CLK_STACK_PULL				4		/* Pull off stack */
-#define	CLK_REL_OK					4		/* Branch to same page */
 #define	CLK_ZPI_READ				4		/* Read from ZP,[XY] */
 #define	CLK_ZPI_WRITE				4		/* Write to ZP,[XY] */
+#define	CLK_REL_PAGECROSS			4		/* Branch to different page */
 #define	CLK_ABS_READ				4		/* Read from Absolute address */
 #define	CLK_ABS_WRITE				4		/* Write to Absolute address */
 #define	CLK_ABI_READ				4		/* Read from Abs,[XY] */
 											/* (no cross of page boundary) */
 
-#define	CLK_REL_PAGECROSS			5		/* Branch to different page */
 #define	CLK_ZP_READ_MOD_WRITE		5		/* Read-Modify-Write ZP */
 #define	CLK_ABI_WRITE				5		/* Write to Abs,[XY] */
 #define	CLK_ABS_INDIRECT			5		/* Absolute indirect (JMP only) */

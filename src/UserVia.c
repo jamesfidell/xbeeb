@@ -464,7 +464,7 @@ WriteUserVia ( int addr, byteval val )
 			UserViaPortBPinLevel = ~val & DEF_LOGIC;
 			UserViaPortBPinLevel |= ( val & UserVia [ ORB ] );
 #ifdef  INFO
-			printf ( "System VIA DDRB = %02x\n", val );
+			printf ( "User VIA DDRB = %02x\n", val );
 #endif
 			return;
 			break;
@@ -482,7 +482,7 @@ WriteUserVia ( int addr, byteval val )
 			UserViaPortAPinLevel = ~val & DEF_LOGIC;
 			UserViaPortAPinLevel |= ( val & UserVia [ ORA ] );
 #ifdef  INFO
-			printf ( "System VIA DDRA = %02x\n", val );
+			printf ( "User VIA DDRA = %02x\n", val );
 #endif
 			return;
 			break;
