@@ -1521,7 +1521,7 @@ ChangeDiskDirectory ( char *new )
 					 * Check for errors from malloc and sscanf
 					 */
 					p = malloc ( sizeof ( FileInfoL ));
-					sscanf ( buff, "%*s %X %X %as",
+					sscanf ( buff, "%*s %X %X %c",
 						&(p->info.LoadAddress), &(p->info.ExeAddress), &lock );
 					p->info.StartSector = 0;
 					stat ( beebfile, &sb );
