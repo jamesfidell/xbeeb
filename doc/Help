@@ -1,3 +1,5 @@
+$Id: Help,v 1.2 1996/09/24 22:47:20 james Exp $
+
 Beeb-related questions I'd like answered
 ========================================
 
@@ -52,16 +54,16 @@ o What are the initial values of all the CRTC registers ?
   to see the display.
 
 
-o What's the initial power-up state of the 8271 FDC ?
+o What's the power-up state of the 8271 FDC ?
 
 
-o What's the initial power-up state of the Econet controller ?
+o What's the power-up state of the Econet controller ?
 
 
-o What's the initial power-up state of the serial ULA ?
+o What's the power-up state of the serial ULA ?
 
 
-o What's the initial power-up state of a 6522 VIA ?
+o What's the power-up state of a 6522 VIA ?
 
 
 o On the subject of the 6522 VIA, the manuals say that the T2
@@ -90,4 +92,13 @@ o What values are returned when the Video ULA registers are read ?
   The Advanced User Guide says that the registers are write-only.
 
 
+Revision History
+================
+
+$Log: Help,v $
+Revision 1.2  1996/09/24 22:47:20  james
+Some clarification of questions.
+
+Revision 1.1  1996/09/24 22:43:21  james
+Moved HELP to doc/Help.
 

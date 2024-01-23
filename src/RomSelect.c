@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: RomSelect.c,v 1.5 1996/10/10 22:00:54 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -19,6 +22,31 @@
  * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
  * CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ */
+
+/*
+ * Modification History
+ *
+ * $Log: RomSelect.c,v $
+ * Revision 1.5  1996/10/10 22:00:54  james
+ * Added missing brackets around code block for checking for paged RAM changes
+ *
+ * Revision 1.4  1996/09/30 23:51:03  james
+ * Fixed handling of paged RAM banks.
+ *
+ * Revision 1.3  1996/09/24 23:05:42  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/21 22:13:49  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:39  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
  *
  */
 
@@ -69,10 +97,13 @@ WritePagedRomSelector ( int addr, byteval val )
 	 * check if we need to modify any of the paged RAM slots
 	 */
 
-	if ( PageWrite [ val ] )
+	if ( PageWrite [ RomSelectRegister ] )
 	{
 		if ( PagedRAMChanged )
-			memcpy ( PagedMem [ val ], &Mem [ 32768 ], 16384 );
+		{
+			memcpy ( PagedMem [ RomSelectRegister ], &Mem [ 32768 ], 16384 );
+			PagedRAMChanged = 0;
+		}
 	}
 
 	RomSelectRegister = val;
@@ -92,7 +123,7 @@ WritePagedRomSelector ( int addr, byteval val )
 int
 SaveRomSelect ( int fd )
 {
-	byteval		romsel [ 8 ];
+	byteval				romsel [ 8 ];
 
 	romsel [ 0 ] = RomSelectRegister;
 
@@ -106,7 +137,7 @@ SaveRomSelect ( int fd )
 int
 RestoreRomSelect ( int fd, unsigned int ver )
 {
-	byteval		romsel [ 8 ];
+	byteval				romsel [ 8 ];
 
 	if ( ver > 1 )
 		return -1;

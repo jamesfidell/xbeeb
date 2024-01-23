@@ -1,3 +1,5 @@
+$Id: Configuration,v 1.8 1996/10/08 00:04:21 james Exp $
+
 Setting up Config.h
 ===================
 
@@ -21,16 +23,15 @@ FASTCLOCK
  the work of updating the VIA timers etc. depending on the duration of
  each instruction, after every instruction. Generally, though, that does
  slow things down somewhat. Defining FASTCLOCK means that the timers are
- only updated every 100 or so cycles, which greatly reduces the overhead
- involved in updating the timers and checking for interrupts. The code
- may not even function correctly with this undefined at the moment.
+ updated no more often than FASTCLOCK cycles, which greatly reduces the
+ overhead involved in updating the timers and checking for interrupts. The
+ code may not even function correctly with this undefined at the moment.
 
 
-LITTLE_ENDIAN
+ENDIAN_6502
 
- Pretty obvious, this one.  If you have a LITTLE_ENDIAN machine, define
- this.  It allows for certain optimisations because the 6502 is little
- endian, too.
+ If you have a "little endian" machine, define this.  It allows for certain
+ optimisations because the 6502 is little endian, too.
 
 
 NO_FRED_JIM
@@ -63,13 +64,6 @@ INFO
  to be displayed.  Not very interesting to many.
 
 
-RANGE_CHECK
-
- Defining this enables some range-checking code in the emulator.  Useful
- for debugging, not every useful at any other time, since it does slow
- things down somewhat.
-
-
 NEED_STRCASECMP
 
  Define this to use the supplied strcasecmp if your C library doesn't
@@ -80,6 +74,11 @@ EMUL_FS
 
  Defining this enables the emulated filing system.  Without it, you won't
  be able to load or save anything.
+
+
+XDFS
+
+ Defining this as well as EMUL_FS enables the XDFS support.  Recommended.
 
 
 COUNT_INSTRS
@@ -105,18 +104,47 @@ XBEEBROOT
  (if/when I write the tape system support, tape images, too).
 
 
-CAT_NAME
+SHIFTLOCK_SOUND_HACK
 
- The name of the catalog file in the emulated filing system.
+ Disable the Shift Lock key indicating that the sound buffer is full.
+ This is recommended because having the Shift Lock key flickering whilst
+ playing sound dramatically slows down the emulator.  Use this even
+ if you don't have VOXWARE_SOUND defined.
 
 
-TMP_FILE
-TMP_CAT
-BAK_FILE
-BAK_CAT
+M6502
+R65C02
+R65C12
 
- Names of temporary files and catalogs used whilst manipulating entries
- in the emulated filesystem.
+ Define M6502 for emulation of the original Motorola 6502 CPU. R65C02
+ emulates the Rockwell 65C02 and R65C12 emulates the Rockwell 65C12.
+ Only define one of these three.
+
+
+MODEL_B_ONLY
+
+ Defining this removes support for the Model A (16K) machine, which will
+ speed the emulator up a little.
+
+
+DIP_SWITCHES
+
+ Sets the default setting for the keyboard DIP switches.
+
+
+VOXWARE_SOUND
+
+ Use the VoxWare sound emulation code.
+
+
+KEYMAP_STRICT
+KEYMAP_LEGEND
+
+ To use a keymap based on the positions on keys on the keyboard, #define
+ KEYMAP_STRICT.  This is best for games.  To use a keymap based on the
+ legend on any pressed key, #define KEYMAP_LEGEND.  This is probably
+ easier if you're used to a certain keyboard layout and want to do lots
+ of typing.
 
 
 OS_ROM
@@ -138,3 +166,93 @@ DEF_SNAPSHOT
 
  The name of the default snapshot file -- if you just press return at
  the snapshot name prompt.
+
+
+CAT_NAME
+
+ The name of the catalog file in the emulated filing system.
+
+
+TMP_FILE
+TMP_CAT
+BAK_FILE
+BAK_CAT
+
+ Names of temporary files and catalogs used whilst manipulating entries
+ in the emulated filesystem.
+
+
+Revision History
+================
+
+$Log: Configuration,v $
+Revision 1.8  1996/10/08 00:04:21  james
+Added InfoWindow to show LED status.  Also required addition of the
+SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up
+whenever the sound buffer is full, which means that far too much
+time can be spent re-drawing the LED.
+
+Revision 1.7  1996/10/07 22:59:39  james
+Modified FASTCLOCK implementation to allow configuration of the number
+of instructions between interrupts.
+
+Revision 1.6  1996/10/07 22:06:24  james
+Added XDFS ROM & support code from David Ralph Stacey.
+
+Revision 1.5  1996/10/01 22:30:26  james
+Added VoxWare sound code from James Murray <jsm@jsm-net.demon.co.uk>.
+
+Revision 1.4  1996/10/01 22:09:51  james
+Split keyboard handling into kEYMAP_STRICT and KEYMAP_LEGEND models.
+
+Revision 1.3  1996/09/24 22:39:36  james
+Massive overhaul of instruction decoding code.  Includes :
+
+  Correct implementation of (indirect),Y instructions when overflow occurs,
+  allowing the removal of the RANGE_CHECK directive for those instructions.
+
+  Correct handling of address wrap-around for all zp,X and zp,Y
+  instructions.  This removes the need for the RANGE_CHECK define.  Removed
+  that, too.
+
+  Updated all disassembly instructions to give the full number of hex
+  digits when displaying their parameters.
+
+  Split opcodes.h to give NMOS 6502 opcodes in 6502ops.h and EFS opcodes
+  in EFSops.h
+
+  Add all NMOS 6502 HALT opcodes.
+
+  Add all NMOS 6502 NOP opcodes.
+
+  Coded for the undocumented NMOS 6502 NOP operations so that
+  they load a value from memory according to their addressing mode (but
+  neither store it anywhere nor set any SR flags).
+
+  Coded all other undocumented NMOS 6502 operations.
+
+  Changed the EFS dummy opcodes because of a clash with the undocumented
+  NMOS 6502 DCP instructions.  The new trap values are now codes that would
+  normally halt the CPU.
+
+  Added all the R65C02 opcodes.
+
+  Added all the R65C12 opcodes.
+
+  Correctly coded (zp,X) addressing mode where zp+X(+1) overlaps the
+  page boundary.
+
+  Added #defined values for the number of cycles taken by each instruction
+  in 6502.h
+
+  Added #defines for the original 6502 and Rockwell 65C02 and 65C12.
+
+Revision 1.2  1996/09/24 18:22:30  james
+Change LITTLE_ENDIAN #define to ENDIAN_6502 because of a clash with
+header files on some systems.
+
+Revision 1.1  1996/09/21 19:14:31  james
+Added new documenation files : doc/Configuration doc/DataXfer
+doc/DiskEmulation doc/Keyboard doc/KnownBugs doc/MailingLists doc/Options
+doc/RomPatches doc/WorkingSoftware
+

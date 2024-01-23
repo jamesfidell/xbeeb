@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Memory.h,v 1.8 1996/10/09 22:18:55 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,6 +25,48 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Memory.h,v $
+ * Revision 1.8  1996/10/09 22:18:55  james
+ * Remove ReadFastByte macro.
+ *
+ * Revision 1.7  1996/09/30 23:39:35  james
+ * Split out option processing into Options.[ch].  Updated the help message,
+ * added support for the Model A using the -a switch (and added the
+ * MODEL_B_ONLY #define in Config.h, added the -m and -s switches to set the
+ * initial screen mode and keyboard DIP switches.
+ *
+ * Revision 1.6  1996/09/24 23:05:39  james
+ * Update copyright dates.
+ *
+ * Revision 1.5  1996/09/24 18:22:34  james
+ * Change LITTLE_ENDIAN #define to ENDIAN_6502 because of a clash with
+ * header files on some systems.
+ *
+ * Revision 1.4  1996/09/23 16:09:51  james
+ * Initial implementation of bitmap MODEs -- including modification of
+ * screen handling to use different windows for teletext and bitmapped
+ * modes and corrections/improvements to colour- and cursor-handling
+ * code.
+ *
+ * Revision 1.3  1996/09/21 22:13:49  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.2  1996/09/21 18:17:25  james
+ * Correction to ReadWordAtPC, add parentheses to ReadWord and WriteWord for
+ * those systems that require them.
+ *
+ * Revision 1.1  1996/09/21 17:20:38  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	MEMORY_H
 #define	MEMORY_H
@@ -34,11 +79,22 @@ extern	void			WriteByte ( unsigned int, byteval );
 
 extern	byteval			Mem [ 65536 ];
 extern	byteval			ScreenCheck [ 32768 ];
-extern	unsigned char	PageWrite [ 16 ];
+extern	byteval			PageWrite [ 16 ];
 extern	byteval			PagedMem [ 16 ][ 16384 ];
 extern	unsigned char	PagedRAMChanged;
+extern	unsigned int	MaxRAMAddress;
 
-#ifdef	LITTLE_ENDIAN
+/*
+ * FIX ME
+ *
+ * When MODEL_B_ONLY is not defined, ReadWordAtPC, ReadWord, WriteWord and
+ * ReadByte should all take account of the missing memory.
+ *
+ * They don't at the moment because I'm assuming that everything will
+ * stay reasonably sane without doing this...
+ */
+
+#ifdef	ENDIAN_6502
 
 #define	ReadWordAtPC()	*(( unsigned short * ) ( EmulatorPC ))
 #define	ReadWord(a)		( *(( unsigned short * ) &( Mem [ a ] )))
@@ -50,7 +106,7 @@ extern	unsigned char	PagedRAMChanged;
 #define	ReadWord(a)		( Mem [ a ] + 256 * Mem [ (a) + 1 ] )
 #define	WriteWord(a,v)	Mem [ a ] = (v) & 0xff; Mem [ (a) + 1 ] = (v) >> 8
 
-#endif	/* LITTLE_ENDIAN */
+#endif	/* ENDIAN_6502 */
 
 
 #ifdef NO_FRED_JIM
@@ -68,9 +124,6 @@ extern	unsigned char	PagedRAMChanged;
 				ReadSheila ( a ))))
 
 #endif	/* NO_FRED_JIM */
-
-
-#define ReadFastByte(a)			Mem [ a ]
 
 
 /*

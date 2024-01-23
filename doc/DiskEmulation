@@ -1,3 +1,5 @@
+$Id: DiskEmulation,v 1.2 1996/10/10 22:28:58 james Exp $
+
 The Emulated Filing System
 ==========================
 
@@ -24,3 +26,32 @@ one.  The "~" character may be used to represent $HOME and "+" may be
 used to represent the compiled in value of XBEEBDISKS (in Config.h).
 
 A demo "disk" is set up in the efs-demo directory.
+
+
+XDFS Extensions
+===============
+
+Thanks to some wonderful work by David Stacey and Rick Gough, a much
+nicer disk emulation, layered on top of the EFS code and requiring an
+additional ROM (see the roms directory) which should be put in the
+same directory as the OS and BASIC language ROMs.
+
+To get XDFS support, just make sure you set the XDFS #define in
+src/Config.h.  That's all there is to it.  You may also want to read
+roms/README to get a better idea of what's supported.
+
+A demo "disk" is set up in the xdfs-demo directory.
+
+
+Revision History
+================
+
+$Log: DiskEmulation,v $
+Revision 1.2  1996/10/10 22:28:58  james
+Documented DRS's XDFS code.
+
+Revision 1.1  1996/09/21 19:14:31  james
+Added new documenation files : doc/Configuration doc/DataXfer
+doc/DiskEmulation doc/Keyboard doc/KnownBugs doc/MailingLists doc/Options
+doc/RomPatches doc/WorkingSoftware
+

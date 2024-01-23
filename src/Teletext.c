@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Teletext.c,v 1.11 1996/10/10 22:09:02 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -19,6 +22,59 @@
  * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
  * CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ */
+
+/*
+ * Modification History
+ *
+ * $Log: Teletext.c,v $
+ * Revision 1.11  1996/10/10 22:09:02  james
+ * HoldCharacter needs to change back to space for TT_DOUBLE_HEIGHT
+ *
+ * Revision 1.10  1996/10/09 22:06:57  james
+ * Overhaul of the bitmapped screen handling code with particular respect to
+ * colour maps.
+ *
+ * Revision 1.9  1996/10/08 00:04:35  james
+ * Added InfoWindow to show LED status.  Also required addition of the
+ * SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up
+ * whenever the sound buffer is full, which means that far too much
+ * time can be spent re-drawing the LED.
+ *
+ * Revision 1.8  1996/09/30 23:39:35  james
+ * Split out option processing into Options.[ch].  Updated the help message,
+ * added support for the Model A using the -a switch (and added the
+ * MODEL_B_ONLY #define in Config.h, added the -m and -s switches to set the
+ * initial screen mode and keyboard DIP switches.
+ *
+ * Revision 1.7  1996/09/24 23:05:44  james
+ * Update copyright dates.
+ *
+ * Revision 1.6  1996/09/23 16:09:52  james
+ * Initial implementation of bitmap MODEs -- including modification of
+ * screen handling to use different windows for teletext and bitmapped
+ * modes and corrections/improvements to colour- and cursor-handling
+ * code.
+ *
+ * Revision 1.5  1996/09/22 22:34:33  james
+ * Completed handling of teletext HOLD mode.
+ *
+ * Revision 1.4  1996/09/22 22:21:09  james
+ * Add handling of double-height fonts.
+ *
+ * Revision 1.3  1996/09/22 22:01:53  james
+ * Use #defined values for teletext control characters.
+ *
+ * Revision 1.2  1996/09/21 18:18:18  james
+ * Corrections to variable typing for CursorX, CursorY and line.
+ *
+ * Revision 1.1  1996/09/21 17:20:42  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
  *
  */
 
@@ -86,7 +142,6 @@
 #define	DH_UPPER		1
 #define	DH_LOWER		2
 
-
 int						TeletextWindowX = 80;
 int						TeletextWindowY = 0;
 
@@ -136,7 +191,7 @@ InitialiseTeletext()
 			colour.green = RgbValues [ i % 8 ][ 1 ];
 			colour.blue = RgbValues [ i % 8 ][ 2 ];
 			colour.flags = DoRed | DoGreen | DoBlue;
-			XStoreColor ( dpy, Cmap, &colour );
+			XStoreColor ( dpy, DefCmap, &colour );
 		}
 
 		/*
@@ -206,7 +261,7 @@ TeletextScreenUpdate()
 
 	CursorTimer = ( CursorTimer + 1 ) % CursorBlinkFrequency;
 
-	if ( ScreenChanged || DoFlash )
+	if ( ScreenMemoryChanged || ScreenImageChanged || DoFlash )
 	{
 		SeenFlash = 0;
 		CursorOnScreen = 0;
@@ -236,7 +291,7 @@ TeletextScreenUpdate()
 			/*
 			 * This is why DH_xxx must be set to specific values
 			 */
-
+ 
 			if ( DblHeight )
 				DblHeight = ( ++DblHeight ) % 3;
 
@@ -249,7 +304,12 @@ TeletextScreenUpdate()
 				 * but speed is of the essence
 				 */
 
+#ifdef	MODEL_B_ONLY
 				c = Mem [ p++ ];
+#else
+				c = Mem [ p & MaxRAMAddress ];
+				p++;
+#endif
 
 				/*
 				 * Non-displayable characters (I think!)
@@ -281,6 +341,9 @@ TeletextScreenUpdate()
 				/*
 				 * New text colour.
 				 *
+				 * FIX ME
+				 *
+				 * should this character look like the current hold character ?
 				 */
 
 				if ( c < TT_STEADY )
@@ -305,10 +368,7 @@ TeletextScreenUpdate()
 
 				if ( c == TT_STEADY )
 				{
-					if ( HoldMode )
-						line [ got++ ] = HoldCharacter;
-					else
-						line [ got++ ] = ' ';
+					line [ got++ ] = HoldMode ? HoldCharacter : ' ';
 					XDrawImageString ( dpy, TeletextScreen, CurrGC, hpos * 12,
 											lines * 19, (char *)line, got );
 					hpos += got;
@@ -324,10 +384,7 @@ TeletextScreenUpdate()
 
 				if ( c == TT_FLASH )
 				{
-					if ( HoldMode )
-						line [ got++ ] = HoldCharacter;
-					else
-						line [ got++ ] = ' ';
+					line [ got++ ] = HoldMode ? HoldCharacter : ' ';
 					XDrawImageString ( dpy, TeletextScreen, CurrGC, hpos * 12,
 											lines * 19, (char *)line, got );
 					hpos += got;
@@ -345,18 +402,16 @@ TeletextScreenUpdate()
 				 *
 				 * I'm sure the handling of this isn't quite right, but it's
 				 * reasonably close for the moment.
-				 *
+				 * 
 				 * Problems will, I believe, occur if the teletext DH/SH
 				 * control codes do not appear in the same position on
 				 * the second line.
+				 *
 				 */
 
 				if ( c == TT_NORMAL_HEIGHT )
 				{
-					if ( HoldMode )
-						line [ got++ ] = HoldCharacter;
-					else
-						line [ got++ ] = ' ';
+					line [ got++ ] = HoldMode ? HoldCharacter : ' ';
 					XDrawImageString ( dpy, TeletextScreen, CurrGC, hpos * 12,
 											lines * 19, (char *)line, got );
 					hpos += got;
@@ -411,11 +466,16 @@ TeletextScreenUpdate()
 							XSetFont ( dpy, TtextMosaicGC,
 											TtextSeparateMosaicDblU );
 					}
+
 					goto next_char;
 				}
 
 				/*
 				 * change graphics colour
+				 *
+				 * FIX ME
+				 *
+				 * Does the colour change before or after the hold character ?
 				 */
 
 				if ( c < TT_CONCEAL )
@@ -446,7 +506,6 @@ TeletextScreenUpdate()
 
 				/*
 				 * conceal display.
-				 *
 				 */
 
 				if ( c == TT_CONCEAL )
@@ -467,10 +526,7 @@ TeletextScreenUpdate()
 
 				if ( c == TT_CONTIGUOUS )
 				{
-					if ( HoldMode )
-						line [ got++ ] = HoldCharacter;
-					else
-						line [ got++ ] = ' ';
+					line [ got++ ] = HoldMode ? HoldCharacter : ' ';
 					XDrawImageString ( dpy, TeletextScreen, CurrGC, hpos * 12,
 											lines * 19, (char *)line, got );
 					XSetFont ( dpy, TtextMosaicGC, TtextContiguousMosaic );
@@ -485,10 +541,7 @@ TeletextScreenUpdate()
 
 				if ( c == TT_SEPARATED )
 				{
-					if ( HoldMode )
-						line [ got++ ] = HoldCharacter;
-					else
-						line [ got++ ] = ' ';
+					line [ got++ ] = HoldMode ? HoldCharacter : ' ';
 					XDrawImageString ( dpy, TeletextScreen, CurrGC, hpos * 12,
 											lines * 19, (char *)line, got );
 					XSetFont ( dpy, TtextMosaicGC, TtextSeparateMosaic );
@@ -553,10 +606,12 @@ TeletextScreenUpdate()
 					 * we're currently in graphics mode
 					 */
 
-					if ( CurrGC != TtextTextGC )
-						HoldCharacter = Mem [ p - 2 ];
-					else
-						HoldCharacter = ' ';
+					HoldCharacter = ( CurrGC == TtextTextGC ) ? ' ' :
+#ifdef	MODEL_B_ONLY
+											Mem [ p - 2 ];
+#else
+											Mem [ ( p  & MaxRAMAddress ) - 2 ];
+#endif
 
 					line [ got++ ] = HoldCharacter;
 					goto next_char;
@@ -600,7 +655,7 @@ next_char:
 
 	DrawCursor();
 
-	ScreenChanged = 0;
+	ScreenImageChanged = ScreenMemoryChanged = 0;
 	XFlush ( dpy );
 	return;
 }
@@ -640,8 +695,8 @@ DrawCursor()
 				if ( CursorResized )
 				{
 					if ( CursorStartLine > 19 || ( CursorByteWidth == 0 &&
-						 MasterCursorWidth == 0 ) || CursorEndLine <
-														CursorStartLine )
+							MasterCursorWidth == 0 ) || CursorEndLine <
+															CursorStartLine )
 						CursorViewable = 0;
 					else
 						CursorViewable = 1;
@@ -670,8 +725,8 @@ DrawCursor()
 				if ( CursorResized )
 				{
 					if ( CursorStartLine > 19 || ( CursorByteWidth == 0 &&
-						 MasterCursorWidth == 0 ) || CursorEndLine <
-														CursorStartLine )
+							MasterCursorWidth == 0 ) || CursorEndLine <
+															CursorStartLine )
 						CursorViewable = 0;
 					else
 						CursorViewable = 1;
@@ -700,7 +755,7 @@ DrawCursor()
 				{
 					if ( CursorViewable )
 						XFillRectangle ( dpy, TeletextScreen, CursorGC,
-							CursorX, CursorY, CursorWidth, CursorDepth );
+								CursorX, CursorY, CursorWidth, CursorDepth );
 
 					if ( CursorMoved )
 					{
@@ -712,8 +767,8 @@ DrawCursor()
 					if ( CursorResized )
 					{
 						if ( CursorStartLine > 19 || ( CursorByteWidth == 0 &&
-						 MasterCursorWidth == 0 ) || CursorEndLine <
-														CursorStartLine )
+							MasterCursorWidth == 0 ) || CursorEndLine <
+															CursorStartLine )
 							CursorViewable = 0;
 						else
 							CursorViewable = 1;
@@ -727,7 +782,7 @@ DrawCursor()
 
 					if ( CursorViewable )
 						XFillRectangle ( dpy, TeletextScreen, CursorGC,
-							CursorX, CursorY, CursorWidth, CursorDepth );
+								CursorX, CursorY, CursorWidth, CursorDepth );
 				}
 			}
 			else
@@ -742,8 +797,8 @@ DrawCursor()
 				if ( CursorResized )
 				{
 					if ( CursorStartLine > 19 || ( CursorByteWidth == 0 &&
-						 MasterCursorWidth == 0 ) || CursorEndLine <
-														CursorStartLine )
+							MasterCursorWidth == 0 ) || CursorEndLine <
+															CursorStartLine )
 						CursorViewable = 0;
 					else
 						CursorViewable = 1;

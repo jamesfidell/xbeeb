@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Screen.c,v 1.12 1996/10/09 23:19:10 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,8 +25,62 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Screen.c,v $
+ * Revision 1.12  1996/10/09 23:19:10  james
+ * Added support for using the MIT X11 Shared Memory Extensions.
+ *
+ * Revision 1.11  1996/10/09 22:06:55  james
+ * Overhaul of the bitmapped screen handling code with particular respect to
+ * colour maps.
+ *
+ * Revision 1.10  1996/10/08 00:12:02  james
+ * Display the program name and version on the icon and title bar.
+ *
+ * Revision 1.9  1996/10/08 00:04:33  james
+ * Added InfoWindow to show LED status.  Also required addition of the
+ * SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up
+ * whenever the sound buffer is full, which means that far too much
+ * time can be spent re-drawing the LED.
+ *
+ * Revision 1.8  1996/10/01 22:10:02  james
+ * Split keyboard handling into kEYMAP_STRICT and KEYMAP_LEGEND models.
+ *
+ * Revision 1.7  1996/09/24 23:05:42  james
+ * Update copyright dates.
+ *
+ * Revision 1.6  1996/09/23 16:09:52  james
+ * Initial implementation of bitmap MODEs -- including modification of
+ * screen handling to use different windows for teletext and bitmapped
+ * modes and corrections/improvements to colour- and cursor-handling
+ * code.
+ *
+ * Revision 1.5  1996/09/22 19:23:21  james
+ * Add the emulated filing system code.
+ *
+ * Revision 1.4  1996/09/21 23:16:13  james
+ * Loading of new X fonts for double height.  Unloading of all fonts.
+ *
+ * Revision 1.3  1996/09/21 22:39:53  james
+ * Improved handling of instruction disassembly.
+ *
+ * Revision 1.2  1996/09/21 22:13:49  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:40  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #include <stdio.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
@@ -34,18 +91,30 @@
 #include "Modes.h"
 #include "Teletext.h"
 #include "Bitmap.h"
+#include "InfoWindow.h"
 #include "Keyboard.h"
+#include "Keymap.h"
 #include "Memory.h"
-#include "EFS.h"
+#include "Patchlevel.h"
 
-static void			HandleKey ( XKeyEvent*, signed char );
+#ifdef	EMUL_FS
+#include "EFS.h"
+#endif
+
+#ifdef	MITSHM
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <X11/extensions/XShm.h>
+#endif	/* MITSHM */
 
 
 Display				*dpy;
 Window				BeebScreen;
-GC					DefaultGraphicsContext;
-GC					CursorGC;
-Colormap			Cmap;
+Window				InfoWindow;
+GC					CursorGC, InfoWindowGC;
+Colormap			DefCmap;
+Font				InfoWindowFont;
+unsigned long		InfoWindowRed, InfoWindowWhite, InfoWindowBlack;
 
 /*
  * Stuff for the teletext MODE
@@ -74,6 +143,8 @@ GC					BitmapGC [ 16 ];
 GC					CopyAreaGC;
 Window				BitmapScreen;
 Pixmap				BitmapPixmap;
+int					BytesPerImageLine;
+char				*ImageData;
 
 /*
  * General colour-handling stuff
@@ -83,7 +154,8 @@ unsigned long		Cells [ 16 ];
 unsigned long		Masks [ 4 ];
 unsigned long		ColourBits;
 
-unsigned char		ScreenChanged = 0;
+unsigned char		ScreenMemoryChanged = 0;
+unsigned char		ScreenImageChanged = 0;
 
 int					RgbValues [ 8 ][ 3 ] =
 {
@@ -108,15 +180,40 @@ static unsigned int	ScreenLengths [ 4 ] =
 
 byteval					ScreenLengthIndex = 0;
 
+/*
+ * Just for the window title...
+ */
+
+#define	TITLE_STRING	"Xbeeb v%d.%d.%d"
+
+
+#ifdef	MITSHM
+unsigned char			UseSharedXImage = 0;
+unsigned char			UneSharedPixmap = 0;
+XImage					*BitmapImage;
+static XShmSegmentInfo	SharedSegInfo;
+#endif /* MITSHM */
+
 
 void
 InitialiseScreen()
 {
-	int					i;
-	XColor				colour;
+	int					i, dummy;
+	XColor				colour, scol, xcol;
 	Window				Root;
 	XGCValues			CursorGCValues;
 	unsigned long		PlaneMask;
+	int					DefScreen, DefDepth;
+	Visual				*DefVisual;
+	GC					DefGC;
+	XWindowChanges		Raise;
+	char				TitleString [ 80 ];
+	XSizeHints			SizeHints;
+#ifdef	MITSHM
+	int					PixmapFormat;
+	Bool				SharedPixmapSupport;
+#endif
+
 
 	if (( dpy = XOpenDisplay ( 0 )) == 0 )
 	{
@@ -125,14 +222,29 @@ InitialiseScreen()
 	}
 
 	Root = DefaultRootWindow ( dpy );
-	DefaultGraphicsContext = DefaultGC ( dpy, DefaultScreen ( dpy ));
+	DefScreen = DefaultScreen ( dpy );
+	DefVisual = DefaultVisual ( dpy, DefScreen );
+	DefDepth = DefaultDepth ( dpy, DefScreen );
+	DefGC = DefaultGC ( dpy, DefScreen );
+
+	/*
+	 * FIX ME
+	 *
+	 * Check for errors here...
+	 */
+
+	DefCmap = DefaultColormap ( dpy, DefScreen );
+
+	XAllocNamedColor ( dpy, DefCmap, "red", &scol, &xcol );
+	InfoWindowRed = scol.pixel;
+	InfoWindowBlack = BlackPixel ( dpy, DefScreen );
+	InfoWindowWhite = WhitePixel ( dpy, DefScreen );
 
 	/*
 	 * Get four planes in the colourmap
 	 */
 
-	Cmap = DefaultColormap ( dpy, DefaultScreen ( dpy ));
-	if ( XAllocColorCells ( dpy, Cmap, False, Masks, 4, &ColourBits, 1 ) == 0 )
+	if ( XAllocColorCells( dpy, DefCmap, False, Masks, 4, &ColourBits, 1 ) == 0)
 	{
 		fprintf ( stderr, "Failed to allocate colour planes\n" );
 		exit ( 1 );
@@ -148,7 +260,7 @@ InitialiseScreen()
 		colour.green = RgbValues [ i % 8 ][ 1 ];
 		colour.blue = RgbValues [ i % 8 ][ 2 ];
 		colour.flags = DoRed | DoGreen | DoBlue;
-		XStoreColor ( dpy, Cmap, &colour );
+		XStoreColor ( dpy, DefCmap, &colour );
 	}
 
 	PlaneMask = ( Masks [ 0 ] | Masks [ 1 ] | Masks [ 2 ] | Masks [ 3 ] ) &
@@ -158,18 +270,87 @@ InitialiseScreen()
 	 * FIX ME
 	 *
 	 * Should check for errors...
-	 * Should allocate and set sizing hints here...
 	 * How about window attributes, too ?
 	 * Possibly don't need all these windows, either -- using Pixmaps
 	 * directly.
 	 */
 
-	BeebScreen = XCreateSimpleWindow ( dpy, Root, 0, 0, 640, 526, 0,
+	BeebScreen = XCreateSimpleWindow ( dpy, Root, 0, 0, 640, 566, 0,
+															White, Black );
+	InfoWindow = XCreateSimpleWindow ( dpy, BeebScreen, 0, 512, 640, 40, 0,
 															White, Black );
 	TeletextScreen = XCreateSimpleWindow ( dpy, BeebScreen, TeletextWindowX,
 								TeletextWindowY, 480, 475, 0, White, Black );
 	BitmapScreen = XCreateSimpleWindow ( dpy, BeebScreen, BitmapWindowX,
 								BitmapWindowY, 640, 512, 0, White, Black );
+
+	(void) sprintf ( TitleString, TITLE_STRING, VERSION, RELEASE, PATCHLEVEL );
+
+	SizeHints.flags = PSize;
+	SizeHints.width = 640;
+	SizeHints.height = 566;
+
+	XSetStandardProperties ( dpy, BeebScreen, TitleString, TitleString, None,
+														0, 0, &SizeHints );
+
+#ifdef	MITSHM
+
+	/*
+	 * See if we can use shared memory
+	 */
+
+    if ( XShmQueryVersion ( dpy, &dummy, &dummy, &SharedPixmapSupport ))
+	{
+		if ( SharedPixmapSupport )
+		{
+			PixmapFormat = XShmPixmapFormat ( dpy );
+
+			/*
+			 * FIX ME
+			 *
+			 * Should check return codes here.
+			 */
+
+			BitmapImage = XShmCreateImage ( dpy, DefVisual, DefDepth, ZPixmap,
+				0, &SharedSegInfo, 640, 624 );
+
+			SharedSegInfo.shmid = shmget ( IPC_PRIVATE,
+				BitmapImage -> bytes_per_line * BitmapImage -> height,
+				IPC_CREAT | 0777 );
+
+			SharedSegInfo.shmaddr = BitmapImage -> data =
+				shmat ( SharedSegInfo.shmid, 0, 0 );
+
+			memset ( SharedSegInfo.shmaddr, 0, BitmapImage -> bytes_per_line *
+												BitmapImage -> height );
+
+			SharedSegInfo.readOnly = False;
+
+			XShmAttach ( dpy, &SharedSegInfo );
+
+			/*
+			 * FIX ME
+			 *
+			 * This should be removed.
+			 */
+
+			BitmapPixmap = XShmCreatePixmap ( dpy, BitmapScreen,
+				SharedSegInfo.shmaddr, &SharedSegInfo, 640, 624, DefDepth );
+
+			ImageData = BitmapImage -> data;
+			BytesPerImageLine = BitmapImage -> bytes_per_line;
+		}
+		else
+		{
+			fprintf ( stderr, "but no shared Pixmaps :-(\n" );
+		}
+	}
+	else
+	{
+		fprintf ( stderr, "Your server doesn't support shared memory\n" );
+		fprintf ( stderr, "Expect Xbeeb to run a little slowly\n" );
+
+#endif	/* MITSHM */
 
 	/*
 	 * The Pixmap for the bitmapped screen is actually bigger than the
@@ -178,18 +359,28 @@ InitialiseScreen()
 	 * is just the bit that can be seen on the display.
 	 */
 
-	BitmapPixmap = XCreatePixmap ( dpy, BitmapScreen, 640, 624,
-								DefaultDepth ( dpy, DefaultScreen ( dpy )));
+	BitmapPixmap = XCreatePixmap ( dpy, BitmapScreen, 640, 624, DefDepth );
 	
+
+#ifdef	MITSHM
+	}
+#endif
+
 	/*
-	 * FIX ME
-	 *
-	 * Do I need to do this ?
-	 *
-	XSetWindowColormap ( dpy, BeebScreen, Cmap );
+	 * Set up the InfoWindow so that it is always at the top of the
+	 * window stack.
 	 */
-	XSetWindowColormap ( dpy, TeletextScreen, Cmap );
-	XSetWindowColormap ( dpy, BitmapScreen, Cmap );
+
+	Raise.stack_mode = TopIf;
+	XConfigureWindow ( dpy, InfoWindow, CWStackMode, &Raise );
+
+	/*
+	 * Set up the colourmaps for the display windows.  BeebScreen and
+	 * InfoWindow use the default map.
+	 */
+
+	XSetWindowColormap ( dpy, TeletextScreen, DefCmap );
+	XSetWindowColormap ( dpy, BitmapScreen, DefCmap );
 
 	/*
 	 * FIX ME
@@ -201,6 +392,7 @@ InitialiseScreen()
 						ExposureMask | EnterWindowMask | LeaveWindowMask );
 	XSelectInput ( dpy, TeletextScreen, ExposureMask );
 	XSelectInput ( dpy, BitmapScreen, ExposureMask );
+	XSelectInput ( dpy, InfoWindow, ExposureMask );
 
 	/*
 	 * FIX ME
@@ -209,7 +401,7 @@ InitialiseScreen()
 	 */
 
 	CursorGC = XCreateGC ( dpy, BeebScreen, None, 0 );
-	XCopyGC ( dpy, DefaultGraphicsContext, ~(( unsigned long ) 0), CursorGC );
+	XCopyGC ( dpy, DefGC, ~(( unsigned long ) 0), CursorGC );
 
 	CursorGCValues.function = GXxor;
 	CursorGCValues.foreground = White;
@@ -235,9 +427,11 @@ InitialiseScreen()
 	TtextSeparateMosaic = XLoadFont ( dpy, "ttext-grs" );
 	TtextSeparateMosaicDblU = XLoadFont ( dpy, "ttext-grs-udh" );
 	TtextSeparateMosaicDblL = XLoadFont ( dpy, "ttext-grs-ldh" );
+	InfoWindowFont = XLoadFont ( dpy, "7x13bold" );
 
 	TtextTextGC = XCreateGC ( dpy, TeletextScreen, None, 0 );
 	TtextMosaicGC = XCreateGC ( dpy, TeletextScreen, None, 0 );
+	InfoWindowGC = XCreateGC ( dpy, InfoWindow, None, 0 );
 
 	/*
 	 * Set up the 17 bitmap GCs -- for each of the 16 different
@@ -248,18 +442,25 @@ InitialiseScreen()
 	for ( i = 0; i < 16; i++ )
 	{
 		BitmapGC [ i ]  = XCreateGC ( dpy, BitmapPixmap, None, 0 );
-		XCopyGC ( dpy, DefaultGraphicsContext, 0xffff, BitmapGC [ i ] );
+		XCopyGC ( dpy, DefGC, 0xffff, BitmapGC [ i ] );
 		XSetForeground ( dpy, BitmapGC [ i ], Cells [ i ] );
 	}
 	CopyAreaGC =  XCreateGC ( dpy, BitmapPixmap, None, 0 );
-	XCopyGC ( dpy, DefaultGraphicsContext, 0xffff, CopyAreaGC );
+	XCopyGC ( dpy, DefGC, 0xffff, CopyAreaGC );
 	XSetGraphicsExposures ( dpy, CopyAreaGC, False );
 
-	XCopyGC ( dpy, DefaultGraphicsContext, 0xffff, TtextTextGC );
-	XCopyGC ( dpy, DefaultGraphicsContext, 0xffff, TtextMosaicGC );
+	XCopyGC ( dpy, DefGC, 0xffff, TtextTextGC );
+	XCopyGC ( dpy, DefGC, 0xffff, TtextMosaicGC );
 
 	XSetFont ( dpy, TtextTextGC, TtextText );
 	XSetFont ( dpy, TtextMosaicGC, TtextContiguousMosaic );
+
+	/*
+	 * Set up the InfoWindow GC
+	 */
+
+	XCopyGC ( dpy, DefGC, 0xffff, InfoWindowGC );
+	XSetFont ( dpy, InfoWindowGC, InfoWindowFont );
 
 	/*
 	 * Now clear the main Beeb window and the bitmapped screen to black.
@@ -267,7 +468,10 @@ InitialiseScreen()
 
 	XFillRectangle ( dpy, BitmapPixmap, BitmapGC [ 0 ], 0, 0, 639, 623 );
 	XClearWindow ( dpy, BeebScreen );
+	XClearWindow ( dpy, InfoWindow );
+
 	XMapRaised ( dpy, BeebScreen );
+	XMapRaised ( dpy, InfoWindow );
 	XFlush ( dpy );
 	return;
 }
@@ -286,6 +490,21 @@ ShutdownScreen()
 	XUnloadFont ( dpy, TtextSeparateMosaicDblU );
 	XUnloadFont ( dpy, TtextSeparateMosaicDblL );
 
+#ifdef	MITSHM
+	XShmDetach ( dpy, &SharedSegInfo );
+	XFreePixmap ( dpy, BitmapPixmap );
+	shmdt ( SharedSegInfo.shmaddr );
+	shmctl ( SharedSegInfo.shmid, IPC_RMID, 0 );
+
+	XDestroyImage ( BitmapImage );
+#endif	/* MITSHM */
+
+	/*
+	 * FIX ME
+	 *
+	 * Should destroy all the SimpleWindows here ?
+	 */
+
 	XAutoRepeatOn ( dpy );
 	XCloseDisplay ( dpy );
 	return;
@@ -303,23 +522,15 @@ CheckEvents()
 		switch ( xevent.type )
 		{
 			case Expose :
-				if ( xevent.xexpose.window == BeebScreen )
-				{
-					/*
-					 * FIX ME
-					 *
-					 * Update the LED display etc.
-					 *
-					 */
-					XFlush ( dpy );
-				}
+				if ( xevent.xexpose.window == InfoWindow )
+					InfoWindowRedraw();
 				else
 				{
 					/*
 					 * Need to re-display the screen.
 					 */
 
-					ScreenChanged++;
+					ScreenImageChanged = 1;
 					( void ) memset (( void* ) ScreenCheck, 1, 32768 );
 				}
 				break;
@@ -354,352 +565,6 @@ CheckEvents()
 		}
 	}
 	return;
-}
-
-
-static void
-HandleKey ( XKeyEvent *key_event, signed char action )
-{
-	KeySym				sym;
-	char				buf[3];
-
-	XLookupString ( key_event, buf, 2, &sym, 0 );
-
-	switch ( sym )
-	{
-		case 'A' : case 'a' :
-			KeyboardMatrixUpdate ( KEY_A, action );
-			break;
-
-		case 'B' : case 'b' :
-			KeyboardMatrixUpdate ( KEY_B, action );
-			break;
-
-		case 'C' : case 'c' :
-			KeyboardMatrixUpdate ( KEY_C, action );
-			break;
-
-		case 'D' : case 'd' :
-			KeyboardMatrixUpdate ( KEY_D, action );
-			break;
-
-		case 'E' : case 'e' :
-			KeyboardMatrixUpdate ( KEY_E, action );
-			break;
-
-		case 'F' : case 'f' :
-			KeyboardMatrixUpdate ( KEY_F, action );
-			break;
-
-		case 'G' : case 'g' :
-			KeyboardMatrixUpdate ( KEY_G, action );
-			break;
-
-		case 'H' : case 'h' :
-			KeyboardMatrixUpdate ( KEY_H, action );
-			break;
-
-		case 'I' : case 'i' :
-			KeyboardMatrixUpdate ( KEY_I, action );
-			break;
-
-		case 'J' : case 'j' :
-			KeyboardMatrixUpdate ( KEY_J, action );
-			break;
-
-		case 'K' : case 'k' :
-			KeyboardMatrixUpdate ( KEY_K, action );
-			break;
-
-		case 'L' : case 'l' :
-			KeyboardMatrixUpdate ( KEY_L, action );
-			break;
-
-		case 'M' : case 'm' :
-			KeyboardMatrixUpdate ( KEY_M, action );
-			break;
-
-		case 'N' : case 'n' :
-			KeyboardMatrixUpdate ( KEY_N, action );
-			break;
-
-		case 'O' : case 'o' :
-			KeyboardMatrixUpdate ( KEY_O, action );
-			break;
-
-		case 'P' : case 'p' :
-			KeyboardMatrixUpdate ( KEY_P, action );
-			break;
-
-		case 'Q' : case 'q' :
-			KeyboardMatrixUpdate ( KEY_Q, action );
-			break;
-
-		case 'R' : case 'r' :
-			KeyboardMatrixUpdate ( KEY_R, action );
-			break;
-
-		case 'S' : case 's' :
-			KeyboardMatrixUpdate ( KEY_S, action );
-			break;
-
-		case 'T' : case 't' :
-			KeyboardMatrixUpdate ( KEY_T, action );
-			break;
-
-		case 'U' : case 'u' :
-			KeyboardMatrixUpdate ( KEY_U, action );
-			break;
-
-		case 'V' : case 'v' :
-			KeyboardMatrixUpdate ( KEY_V, action );
-			break;
-
-		case 'W' : case 'w' :
-			KeyboardMatrixUpdate ( KEY_W, action );
-			break;
-
-		case 'X' : case 'x' :
-			KeyboardMatrixUpdate ( KEY_X, action );
-			break;
-
-		case 'Y' : case 'y' :
-			KeyboardMatrixUpdate ( KEY_Y, action );
-			break;
-
-		case 'Z' : case 'z' :
-			KeyboardMatrixUpdate ( KEY_Z, action );
-			break;
-
-		case '1' : case '!' :
-			KeyboardMatrixUpdate ( KEY_1, action );
-			break;
-
-		case '2' : case '"' :
-			KeyboardMatrixUpdate ( KEY_2, action );
-			break;
-
-		case '3' : case '#' :
-			KeyboardMatrixUpdate ( KEY_3, action );
-			if ( sym == '#' )
-				KeyboardMatrixUpdate ( KEY_SHIFT, action );
-			break;
-
-		case '4' : case '$' :
-			KeyboardMatrixUpdate ( KEY_4, action );
-			break;
-
-		case '5' : case '%' :
-			KeyboardMatrixUpdate ( KEY_5, action );
-			break;
-
-		case '6' : case '&' :
-			KeyboardMatrixUpdate ( KEY_6, action );
-			break;
-
-		case '7' : case XK_quoteright :
-			KeyboardMatrixUpdate ( KEY_7, action );
-			if ( sym == XK_quoteright )
-				KeyboardMatrixUpdate ( KEY_SHIFT, action );
-			break;
-
-		case '8' : case '(' :
-			KeyboardMatrixUpdate ( KEY_8, action );
-			break;
-
-		case '9' : case ')' :
-			KeyboardMatrixUpdate ( KEY_9, action );
-			break;
-
-		case '0' :
-			KeyboardMatrixUpdate ( KEY_0, action );
-			break;
-
-		case ' ' :
-			KeyboardMatrixUpdate ( KEY_SPACE, action );
-			break;
-
-		case '.' : case '>' :
-			KeyboardMatrixUpdate ( KEY_PERIOD, action );
-			break;
-
-		case ',' : case '<' :
-			KeyboardMatrixUpdate ( KEY_COMMA, action );
-			break;
-
-		case '/' : case '?' :
-			KeyboardMatrixUpdate ( KEY_SLASH, action );
-			break;
-
-		case ';' : case '+' :
-			KeyboardMatrixUpdate ( KEY_SEMICOLON, action );
-			break;
-
-		case ':' : case '*' :
-			KeyboardMatrixUpdate ( KEY_COLON, action );
-			if ( sym == ':' )
-				KeyboardMatrixUpdate ( KEY_SHIFT, -action );
-			break;
-
-		case '[' : case '{' :
-			KeyboardMatrixUpdate ( KEY_LBRACKET, action );
-			break;
-
-		case ']' : case '}' :
-			KeyboardMatrixUpdate ( KEY_RBRACKET, action );
-			break;
-
-		case '@' :
-			KeyboardMatrixUpdate ( KEY_AT, action );
-			break;
-
-		case '_' : case XK_sterling :
-			KeyboardMatrixUpdate ( KEY_POUND, action );
-			break;
-
-		case '-' :
-			KeyboardMatrixUpdate ( KEY_MINUS, action );
-			break;
-
-		case '=' :
-			KeyboardMatrixUpdate ( KEY_SHIFT, action );
-			KeyboardMatrixUpdate ( KEY_MINUS, action );
-			break;
-
-		case '^' : case '~' :
-			KeyboardMatrixUpdate ( KEY_HAT, action );
-			if ( sym == '^' )
-				KeyboardMatrixUpdate ( KEY_SHIFT, -action );
-			break;
-
-		case XK_F1 :
-			KeyboardMatrixUpdate ( KEY_F0, action );
-			break;
-
-		case XK_F2 :
-			KeyboardMatrixUpdate ( KEY_F1, action );
-			break;
-
-		case XK_F3 :
-			KeyboardMatrixUpdate ( KEY_F2, action );
-			break;
-
-		case XK_F4 :
-			KeyboardMatrixUpdate ( KEY_F3, action );
-			break;
-
-		case XK_F5 :
-			KeyboardMatrixUpdate ( KEY_F4, action );
-			break;
-
-		case XK_F6 :
-			KeyboardMatrixUpdate ( KEY_F5, action );
-			break;
-
-		case XK_F7 :
-			KeyboardMatrixUpdate ( KEY_F6, action );
-			break;
-
-		case XK_F8 :
-			KeyboardMatrixUpdate ( KEY_F7, action );
-			break;
-
-		case XK_F9 :
-			KeyboardMatrixUpdate ( KEY_F8, action );
-			break;
-
-		case XK_F10 :
-			KeyboardMatrixUpdate ( KEY_F9, action );
-			break;
-
-		case XK_Shift_L : case XK_Shift_R :
-			KeyboardMatrixUpdate ( KEY_SHIFT, action );
-			break;
-
-		case XK_Control_L : case XK_Control_R :
-			KeyboardMatrixUpdate ( KEY_CTRL, action );
-			break;
-
-		case XK_Tab :
-			KeyboardMatrixUpdate ( KEY_TAB, action );
-			break;
-
-		case XK_BackSpace : case XK_Delete :
-			KeyboardMatrixUpdate ( KEY_DELETE, action );
-			break;
-
-		case XK_Caps_Lock :
-			KeyboardMatrixUpdate ( KEY_CAPSLOCK, action );
-			break;
-
-		case XK_Return :
-			KeyboardMatrixUpdate ( KEY_RETURN, action );
-			break;
-
-		case XK_Up :
-			KeyboardMatrixUpdate ( KEY_UP, action );
-			break;
-
-		case XK_Down :
-			KeyboardMatrixUpdate ( KEY_DOWN, action );
-			break;
-
-		case XK_Left :
-			KeyboardMatrixUpdate ( KEY_LEFT, action );
-			break;
-
-		case XK_Right :
-			KeyboardMatrixUpdate ( KEY_RIGHT, action );
-			break;
-
-		case XK_Insert :
-			KeyboardMatrixUpdate ( KEY_COPY, action );
-			break;
-
-		case XK_backslash : case '|' :
-			KeyboardMatrixUpdate ( KEY_BACKSLASH, action );
-			break;
-
-		case XK_Escape :
-			KeyboardMatrixUpdate ( KEY_ESCAPE, action );
-			break;
-
-		case XK_Home :
-		case XK_KP_Home :
-			if ( action == KEY_PRESSED )
-				SnapshotRequested = 1;
-			break;
-
-		case XK_End :
-		case XK_KP_End :
-			if ( action == KEY_PRESSED )
-				QuitEmulator = 1;
-			break;
-
-		case XK_KP_Enter :
-			if ( action == KEY_PRESSED )
-				ChangeDisk();
-			break;
-
-#ifdef	DISASS
-		case XK_KP_Add :
-			if ( action == KEY_PRESSED )
-				DebugLevel |= DISASSEMBLE;
-			break;
-
-		case XK_KP_Subtract :
-			if ( action == KEY_PRESSED )
-				DebugLevel &= ~DISASSEMBLE;
-			break;
-#endif
-
-		default :
-			/*
-			 * if it's not a key we recognise, just forget it...
-			 */
-
-			break;
-	}
 }
 
 

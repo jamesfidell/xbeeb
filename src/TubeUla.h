@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: TubeUla.h,v 1.4 1996/10/01 00:33:05 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,14 +25,39 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: TubeUla.h,v $
+ * Revision 1.4  1996/10/01 00:33:05  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.3  1996/09/24 23:05:45  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/21 22:13:52  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:42  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	TUBEULA_H
 #define	TUBEULA_H
 
-extern  byteval		ReadTubeUla ( int );
-extern  void		WriteTubeUla ( int, byteval );
+extern  void				ResetTubeUla();
+extern  byteval				ReadTubeUla ( int );
+extern  void				WriteTubeUla ( int, byteval );
 
-extern	int			SaveTubeUla ( int );
-extern	int			RestoreTubeUla ( int, unsigned int );
+extern	int					SaveTubeUla ( int );
+extern	int					RestoreTubeUla ( int, unsigned int );
 
 #endif	/* TUBEULA_H */

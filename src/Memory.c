@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Memory.c,v 1.7 1996/10/10 21:58:37 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,11 +25,49 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Memory.c,v $
+ * Revision 1.7  1996/10/10 21:58:37  james
+ * Cosmetic changes.
+ *
+ * Revision 1.6  1996/10/09 22:06:54  james
+ * Overhaul of the bitmapped screen handling code with particular respect to
+ * colour maps.
+ *
+ * Revision 1.5  1996/09/30 23:39:34  james
+ * Split out option processing into Options.[ch].  Updated the help message,
+ * added support for the Model A using the -a switch (and added the
+ * MODEL_B_ONLY #define in Config.h, added the -m and -s switches to set the
+ * initial screen mode and keyboard DIP switches.
+ *
+ * Revision 1.4  1996/09/24 23:05:39  james
+ * Update copyright dates.
+ *
+ * Revision 1.3  1996/09/23 16:09:51  james
+ * Initial implementation of bitmap MODEs -- including modification of
+ * screen handling to use different windows for teletext and bitmapped
+ * modes and corrections/improvements to colour- and cursor-handling
+ * code.
+ *
+ * Revision 1.2  1996/09/21 22:13:49  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:38  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #include <stdio.h>
-#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 #include <limits.h>
 #include <memory.h>
 #include <sys/stat.h>
@@ -40,6 +81,7 @@
 #include "Screen.h"
 #include "Modes.h"
 
+
 /*
  * Memory for direct access and for the screen change mirror
  *
@@ -47,6 +89,17 @@
 
 byteval 			ScreenCheck [ 32768 ];
 byteval 			Mem [ 65536 ];
+
+#ifndef   MODEL_B_ONLY
+
+/*
+ * The highest RAM address -- only when Model A emulation is enabled
+ */
+
+unsigned int		MaxRAMAddress = 0x7fff;
+
+#endif	/* MODEL_B_ONLY */
+
 
 /*
  * Memory from 0x8000 to 0xbfff -- language and utility ROMS and possibly
@@ -58,7 +111,7 @@ byteval 			Mem [ 65536 ];
  */
 
 byteval				PagedMem [ 16 ][ 16384 ];
-unsigned char		PageWrite [ 16 ] =
+byteval				PageWrite [ 16 ] =
 {
 	0, 0, 0, 0,
 	0, 0, 0, 0,
@@ -83,11 +136,15 @@ WriteByte ( unsigned int addr, byteval val )
 
 	if ( addr < 0x8000 )
 	{
+#ifdef	MODEL_B_ONLY
 		Mem [ addr ] = val;
+#else
+		Mem [ addr & MaxRAMAddress  ] = val;
+#endif
 		if ( addr >= StartOfScreenMemory )
 		{
 			ScreenCheck [ addr ] = 1;
-			ScreenChanged++;
+			ScreenImageChanged = 1;
 		}
 		return;
 	}

@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: ADC.c,v 1.8 1996/10/01 00:32:56 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,16 +25,68 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: ADC.c,v $
+ * Revision 1.8  1996/10/01 00:32:56  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.7  1996/10/01 00:10:29  james
+ * Added address wrap-around for control registers.
+ *
+ * Revision 1.6  1996/09/24 23:05:33  james
+ * Update copyright dates.
+ *
+ * Revision 1.5  1996/09/22 21:03:18  james
+ * Updates to comments on dummy ADC functions.
+ *
+ * Revision 1.4  1996/09/22 20:36:12  james
+ * More conversions of exit(x) to FatalError()
+ *
+ * Revision 1.3  1996/09/21 23:07:34  james
+ * Call FatalError() rather than exit() so that screen stuff etc. can
+ * be cleaned up.
+ *
+ * Revision 1.2  1996/09/21 22:13:46  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:35  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #include	<stdio.h>
 #include	<unistd.h>
 
 #include "Config.h"
 #include "ADC.h"
+#include "Beeb.h"
 
-static unsigned char		Channel;
-static unsigned char		FlagInput;
-static unsigned char		TenBitConversion;
+static unsigned char	Channel;
+static unsigned char	FlagInput;
+static unsigned char	TenBitConversion;
+
+
+void
+ResetADConverter ( void )
+{
+    /*
+	 * FIX ME
+	 *
+	 * I have no idea what happens when the ADC is powered up/reset
+	 */
+
+	return;
+}
+
 
 byteval
 ReadADConverter ( int addr )
@@ -53,9 +108,13 @@ ReadADConverter ( int addr )
 	 * conversion is complete
 	 */
 
-	byteval			ret;
+	byteval			ret = 0;
 
-	switch ( addr )
+	/*
+	 * Handle address wrap-around
+	 */
+
+	switch ( addr & 0x3 )
 	{
 		case 0x0 :
 			ret = Channel | TenBitConversion | 0x40;
@@ -69,9 +128,15 @@ ReadADConverter ( int addr )
 			ret = 0;
 			break;
 
-		default :
-			fprintf ( stderr, "Illegal read on ADC (addr = %x)\n", addr );
-			FatalError();
+		case 0x3 :
+			/*
+			 * FIX ME
+			 *
+			 * This location isn't used in the ADC chip.  The value
+			 * returned is what my Beeb gives on reading the location.
+			 */
+
+			ret = 0x40;
 			break;
 	}
 
@@ -82,7 +147,14 @@ ReadADConverter ( int addr )
 void
 WriteADConverter ( int addr, byteval val )
 {
-	if ( addr == 0 )
+	/*
+	 * Handle address wraparound...
+	 *
+	 * Only register 0 at address &FEC0 is writeable, so we can ignore
+	 * the rest.  Can't we ?
+	 */
+
+	if (( addr & 0x3 ) == 0 )
 	{
 		/*
 		 * FIX ME
@@ -105,12 +177,6 @@ WriteADConverter ( int addr, byteval val )
 		 * The rest of the bits are unused
 		 */
 	}
-	else
-	{
-		fprintf ( stderr, "write to A/D converter (addr = %x)", addr );
-		fprintf ( stderr, " address is illegal\n" );
-		FatalError();
-	}
 	return;
 }
 
@@ -118,7 +184,7 @@ WriteADConverter ( int addr, byteval val )
 int
 SaveADC ( int fd )
 {
-	byteval		adc [ 8 ];
+	byteval				adc [ 8 ];
 
 	adc [ 0 ] = Channel | FlagInput | TenBitConversion;
 
@@ -138,7 +204,7 @@ SaveADC ( int fd )
 int
 RestoreADC ( int fd, unsigned int ver )
 {
-	byteval		adc [ 8 ];
+	byteval				adc [ 8 ];
 
 	if ( ver > 1 )
 		return -1;

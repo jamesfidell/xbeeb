@@ -1,3 +1,5 @@
+$Id: DataXfer,v 1.1 1996/09/21 19:14:31 james Exp $
+
 Transferring data between the Beeb and Linux
 ============================================
 
@@ -30,3 +32,14 @@ to convert this output back to binary on the PC.
 
 As I said -- it's a little brutal, but it did allow me to transfer something
 like 6Mb of programs and data to my PC without any real problem.
+
+
+Revision History
+================
+
+$Log: DataXfer,v $
+Revision 1.1  1996/09/21 19:14:31  james
+Added new documenation files : doc/Configuration doc/DataXfer
+doc/DiskEmulation doc/Keyboard doc/KnownBugs doc/MailingLists doc/Options
+doc/RomPatches doc/WorkingSoftware
+

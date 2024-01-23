@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Sheila.c,v 1.5 1996/09/24 23:05:43 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -19,6 +22,31 @@
  * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
  * CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ */
+
+/*
+ * Modification History
+ *
+ * $Log: Sheila.c,v $
+ * Revision 1.5  1996/09/24 23:05:43  james
+ * Update copyright dates.
+ *
+ * Revision 1.4  1996/09/21 22:13:50  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.3  1996/09/21 18:33:00  james
+ * Renamed Floppy.[ch] to Disk.[ch]
+ *
+ * Revision 1.2  1996/09/21 18:17:52  james
+ * Removed two unexecuted lines of code.
+ *
+ * Revision 1.1  1996/09/21 17:20:40  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
  *
  */
 
@@ -93,7 +121,7 @@ ReadSheila ( int addr )
 		return ReadUserVia ( addr - 0xfe60 );
 
 	/*
-	 * 0xfe80 - 0xfe9f : Disk Controller
+	 * 0xfe80 - 0xfe9f : Floppy Disk Controller
 	 */
 
 	if ( addr < 0xfea0 )
@@ -195,7 +223,7 @@ WriteSheila ( int addr, byteval val )
 	}
 
 	/*
-	 * 0xfe80 - 0xfe9f : Disk Controller
+	 * 0xfe80 - 0xfe9f : Floppy Disk Controller
 	 */
 
 	if ( addr < 0xfea0 )

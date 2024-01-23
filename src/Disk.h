@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Disk.h,v 1.4 1996/10/01 00:33:01 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,14 +25,42 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Disk.h,v $
+ * Revision 1.4  1996/10/01 00:33:01  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.3  1996/09/24 23:05:36  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/21 22:13:47  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 18:32:59  james
+ * Renamed Floppy.[ch] to Disk.[ch]
+ *
+ * Revision 1.1  1996/09/21 18:28:49  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	DISK_H
 #define	DISK_H
 
-extern  byteval		ReadDiskController ( int );
-extern  void		WriteDiskController ( int, byteval );
+extern  void				ResetDiskController();
+extern  byteval				ReadDiskController ( int );
+extern  void				WriteDiskController ( int, byteval );
 
-extern	int			SaveDisk ( int );
-extern	int			RestoreDisk ( int, unsigned int );
+extern	int					SaveDisk ( int );
+extern	int					RestoreDisk ( int, unsigned int );
 
 #endif	/* DISK_H */

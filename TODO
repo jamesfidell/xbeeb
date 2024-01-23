@@ -1,29 +1,31 @@
-There's still a lot left to be done.  However, here's what's next on my
-list :
+$Id: TODO,v 1.2 1996/10/10 22:39:53 james Exp $
 
-o Use shared memory for the X11 windows.
+Here's what's next on my list :
 
-o Add some representation of the keyboard LEDs to the window.
+o	Emulation of joysticks on the PC games port.
 
-o Add buttons/windows for EFS disk changes.
+o	Read serial data from PC serial port in RS423 mode.
 
-o Allow the specification of the keyboard DIP switch settings on the
-  command line.
+o	Complete the VIA emulation.
 
-o Some sort of sound emulation.
+o	Set up a pound-sign key in the KeymapLegend mode.
 
-o Add a way of handling the "pound" key.
+o	Clock-stretched CPU for IO page access.
 
-o Add a "BREAK" key.
+o	Implement a "virtual disk" system using a single file to represent
+	a disk.
 
-o Add a "SHIFT LOCK" key.
+o	Write Imakefile for fonts.
 
-o Allow configuration of a 16K Model A or 32K Model B.
+o	Add the more esoteric oddities of the 6502 instruction fetch and
+	flag setting.
 
-o Set up a keymap to map Beeb keys to their positions on a PC keyboard.
+o	Completely rewrite the snapshot specification.
 
-o Add 65c02 support
+o	Make keymaps selectable on the command line.
 
-o Add 65c12 support
+o	Split up Screen.c into more manageable chunks.
 
-o Fixed as many known bugs as possible.
+o	Improve the speed of the hardware scroll.
+
+o	Fix as many outstanding bugs as possible.

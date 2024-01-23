@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Crtc.h,v 1.6 1996/10/10 21:44:03 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,6 +25,39 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Crtc.h,v $
+ * Revision 1.6  1996/10/10 21:44:03  james
+ * Fixes from David Ralph Stacey for scan-line updates.
+ *
+ * Revision 1.5  1996/10/01 00:33:00  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.4  1996/09/24 23:05:35  james
+ * Update copyright dates.
+ *
+ * Revision 1.3  1996/09/23 16:09:51  james
+ * Initial implementation of bitmap MODEs -- including modification of
+ * screen handling to use different windows for teletext and bitmapped
+ * modes and corrections/improvements to colour- and cursor-handling
+ * code.
+ *
+ * Revision 1.2  1996/09/21 22:13:47  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:36  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	CRTC_H
 #define	CRTC_H
@@ -34,7 +70,9 @@ extern	unsigned char		CursorEnabled;
 extern	unsigned char		CursorResized;
 extern	unsigned char		CursorMoved;
 extern	unsigned char		NewCursorX, NewCursorY;
+extern	unsigned int		CrtcMagicNumber;
 
+extern  void				ResetCrtc();
 extern  byteval				ReadCrtc ( int );
 extern  void				WriteCrtc ( int, byteval );
 
@@ -67,5 +105,12 @@ extern	int					RestoreCRTC ( int, unsigned int );
 
 extern	byteval				ScanLinesPlus1;
 extern	unsigned short		HorizDisplayed8;
+
+/*
+ * Something of a "bodge-up" constant that I don't really understand
+ * right now, but it does appear to make things work.
+ */
+
+#define	VSYNC_TIME			1900
 
 #endif	/* CRTC_H */

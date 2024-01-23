@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Teletext.h,v 1.4 1996/10/08 23:05:32 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,6 +25,34 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Teletext.h,v $
+ * Revision 1.4  1996/10/08 23:05:32  james
+ * Corrections to allow clean compilation under GCC 2.7.2 with -Wall -pedantic
+ *
+ * Revision 1.3  1996/09/24 23:05:45  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/23 16:09:53  james
+ * Initial implementation of bitmap MODEs -- including modification of
+ * screen handling to use different windows for teletext and bitmapped
+ * modes and corrections/improvements to colour- and cursor-handling
+ * code.
+ *
+ * Revision 1.1  1996/09/21 17:20:42  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
+
+#ifndef	TELETEXT_H
+#define	TELETEXT_H
 
 extern	void			TeletextScreenUpdate();
 extern	void			ChangeTeletextWindowX ( int );
@@ -30,4 +61,13 @@ extern	void			ChangeTeletextWindowY ( int );
 extern	int				TeletextWindowX;
 extern	int				TeletextWindowY;
 
+/*
+ * _XLIB_H defines are to avoid having to include X11 headers in files
+ * which don't need them.
+ */
+
+#ifdef	_XLIB_H
 extern  GC              TtextGC;
+#endif
+
+#endif	/* TELETEXT_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) James Fidell 1994.
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -23,6 +23,10 @@
  */
 
 
+#ifndef	BITMAP_H
+#define	BITMAP_H
+
+extern	void			InitialiseBitmap();
 extern	void			BitmapScanlineUpdate ( unsigned int );
 extern	void			BitmapScreenUpdate ( void );
 extern	void			ChangeBitmapWindowX ( int );
@@ -31,3 +35,5 @@ extern	void			ChangeBitmapWindowY ( int );
 extern	byteval			BitsForColourInfo;
 extern	int				BitmapWindowX;
 extern	int				BitmapWindowY;
+
+#endif	/* BITMAP_H */

@@ -1,0 +1,218 @@
+$Id: README,v 1.1 1996/10/07 22:06:28 james Exp $
+
+1. *CAT (<drive>)
+-----------------
+
+XDFS now supports the number of times written to the disc BCD cycle count and
+the boot up options (although I haven't put SHIFT - BREAK boot up in yet).
+You will need to add 1 line to the top of all your catalogs giving the
+number of times the disc has been written to (BCD, 2 characters) and the
+disc boot up option (1 character between 0 and 3 inclusive). Eg.:
+
+	44 0
+	$.Hopper      FF2000 FF4800 002A00 FFF
+	$.HopLScr     FF5800 FF5800 002800 FFF
+	$.HopLdr      FF0E00 FF802B 000191 FFF
+
+XDFS uses part of the start sector as a locked flag indicator. If you want
+files unlocked, set the start sector to 0x3ff or lower. Note that *ACCESS has
+not been implemented yet (even though it appears on *HELP DFS). If you want
+to lock or unlock a file in xbeeb then use the relevant OSFILE call.
+
+*CAT outputs the disc catalog on the xbeeb screen as in the Acorn DFS roms.
+The current working directory (set with *DIR) is displayed first, followed by
+the remaining directories. You cannot have more than 31 files in a directory.
+Be careful not to put any redundant newlines at the end of the __CATALOG__
+file otherwise you will get some strange output.
+
+The single parameter supplied is the drive number (0-3 inclusive) that you
+wish to catalog. This number is meaningless and is only implemented for the
+sake of compatability. A Bad Drive error is generated if the drive is not in
+the range 0-3 inclusive. There is a bug in the *CAT in all Acorn DFS roms that
+allows you to enter:
+
+	*.0 Blobby Blobby Blobby
+
+ie.: only the first character is being checked. This feature is also
+implemented in XDFS.
+
+If no parameter is supplied, then the currently selected drive (selected with
+*DRIVE or *DIR) is used.
+
+
+
+2. *HELP
+--------
+
+XDFS responds to *H.., *HELP DFS and *HELP UTILS. In each case a list of star
+commands the rom responds to is printed in the xbeeb screen. Along with most
+functions in XDFS no case checking is done, so things like *HElp utILs will
+work.
+
+
+
+3. *DRIVE <drive> (40/80)
+-------------------------
+
+This command is provided to provide compatibility with those programs written
+for Acorn DFS v 2.00 and above. The drive is a single digit in the range 0-3
+inclusive. The second parameter is optional but is parsed if supplied, so 
+*DR. 0 52 is not allowed. Wherever possible the errors generated are the same
+as the Acorn ones with the same error numbers, but I have invented some of my
+own.
+
+
+
+4. *DIR <dir>
+-------------
+
+This command is identical to the Acorn DFS version. All further occurances of
+*LOAD, *RUN, *EX, *DELETE, etc will occur on the directory specified.
+
+	*DIR :1   - Sets drive to 1, directory unchanged.
+	*DIR P	  - Sets directory to P, drive unchanged.
+	*Dir :2.O - Sets the drive to 2 and the directory to O.
+
+
+5. *LIB (<dir>)
+---------------
+
+This command is identical to the Acorn DFS version. Any *commands unrecognised
+by the system will be checked against the currently selected directory and then
+the library directory. Any parameters not supplied are set to those as given
+by the last *DIR command (as DFS v 2.45).
+
+	*DIR :1.Q - Sets the drive to 1 and the directory to Q
+	*LIB :0.W - Sets the library drive to 0 and directory to W
+	*LIB P    - Sets the library drive to 1 (currently selected drive)
+	            and the library directory to P.
+
+Note that the internal flags and pointers used by XDFS are identical to Acorn
+DFS v 0.90. So, if anyone's illegally changing directory by ?&10CA=ASC"$" this
+will work. The tube not present flag is also set but not used. A list of flags
+and pointers used by Acorn DFS v 0.90 is given in the Advanced Disc Users Guide.
+
+
+
+6. *DISC, *DISK
+---------------
+
+This command selects the XDFS. The library and currently selected directories
+are set to :0.$ and the tube not present flag is set. This command jumps into
+the OS ROM quite a bit and won't work on any OS before OS 1.00 (but then and
+again, if you're trying to run xbeeb with OS 0.1 then you really are sad).
+This command is also issued when the XDFS ROM initialises, either if XDFS is
+the highest priority filing system or the 'D' key is held down on a BREAK.
+
+Note that *D. is equivalent to *DISC (as Acorn DFS up to 2.10) and not *DUMP
+(as on the Master DFS v 2.24 and 2.45).
+
+
+
+7. *ROMS (<rom id>)
+-------------------
+
+This command is quite different to the Acorn DFS version, although the output
+is similar to that is DFS releases 1 and 2. The parameter supplied is a rom
+id in the form of a string or a number 0-15 inclusive.
+
+If no parameters are given then all ROMS are cataloged. If the ROM is a bank
+of sideways RAM then this will be identified as Ram. Note the new RomSelect.c
+required to make this feature work. The ROMs name and version number are also
+printed.
+
+If the parameter supplied is a number in the range 0-15 inclusive then that
+ROM bank is cataloged. If the socket does not contain a valid ROM then no
+output will be given.
+
+Otherwise the parameter is taken to be a ROM title string, eg.: DFS. All ROMs
+titled DFS will be cataloged. It is only necessary to enter the first word, so
+*ROMS Acorn will catalog Acorn ADFS and Acorn ANFS. Again, no case checking
+is made (unlike Acorn's version) so *ROMS BASIC and *ROMs baSIc will give the
+same result.
+
+In either case, if the ROM cannot be identified then the error Bad ROM id will
+be generated. This may give some compatibility problems at this point as
+Acorn's version gave no error.
+
+	>*ROMS
+	Rom 15 : ( L) BASIC
+	Rom 10 : (S ) DFS 0.70
+	Rom 09 : (S ) SLAVE  1.34
+	Ram 04 : (S ) DISC DOCTOR  1.0B
+	Rom 02 : (SL) ViewSheet B1.0
+	Rom 01 : (SL) VIEW
+
+Notice that bank 4 in the example above is declared as Ram.
+
+	>*roms 9
+	Rom 09 : (S ) SLAVE  1.34
+
+	>*ROMS VIEWSHEET
+	Rom 02 : (SL) ViewSheet B1.0
+
+
+8. *EX (<dir>)
+--------------
+
+This command is identical to the command provided in Acorn's DFS v 2.00 and
+above. The contents of the specified directory are given with their load,
+execution, length and start sector. If no parameter is given then the
+currently selected directory is used.
+
+
+
+9. *NEWDISC, *NEWDISK <Unix dir>
+--------------------------------
+
+This command changes the current disc used by xbeeb. Its single parameter is
+a Unix directory relative to the XBEEBROMS define in Config.h. This is the
+only command in the ROM that is case sensitive, since Unix is case sensitive,
+and Acornsoft and acornsoft could be two different directories.
+
+If the directory does not exist or it does not contain a readable __CATALOG__
+file then the error Bad Unix disc is generated. The old disc is no longer
+selected. The title of the disc is taken to be the directory given to the
+*NEWDISC command.
+
+	*NEWDISC Acornsoft
+	*NEW. Superior
+	*NEW. ../efs-demo
+
+
+10. *DELETE <fsp>
+-----------------
+
+For some reason, there are a shortage of people willing to test this function.
+I have tested it and am happy that it works, but I'd be grateful if you'd do
+the same. Please make a backup of your hard disc before attempting to use this
+function. Although I am confident that the code is bug free, I cannot take
+responsibility for any data lost by whatever means through direct or indirect
+use of the XDFS ROM. In using the DFS ROM it is taken that you agree and
+understand this disclaimer.
+
+
+
+11. *RENAME <old fsp> <new fsp>
+-------------------------------
+
+This works but is not yet bug free. The function will not let you rename a
+file to its original name, and nothing is printed if *OPT 1,2 has been set.
+I have included it as it is a good indication of how errors that occur in the
+Unix end of the filing system will be handled.
+
+
+
+12. *OPT x,y
+------------
+
+Identical to Acorn's version.
+
+
+Revision History
+================
+
+$Log: README,v $
+Revision 1.1  1996/10/07 22:06:28  james
+Added XDFS ROM & support code from David Ralph Stacey.
+

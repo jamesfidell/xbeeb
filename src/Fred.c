@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Fred.c,v 1.5 1996/09/24 23:05:38 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,12 +25,38 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Fred.c,v $
+ * Revision 1.5  1996/09/24 23:05:38  james
+ * Update copyright dates.
+ *
+ * Revision 1.4  1996/09/22 21:10:28  james
+ * Include Beeb.h to get prototype for FatalError()
+ *
+ * Revision 1.3  1996/09/22 20:36:13  james
+ * More conversions of exit(x) to FatalError()
+ *
+ * Revision 1.2  1996/09/21 22:13:48  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:37  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #include <stdio.h>
 #include <unistd.h>
 
 #include "Config.h"
 #include "Fred.h"
+#include "Beeb.h"
 
 byteval
 ReadFred ( int addr )

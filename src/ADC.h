@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: ADC.h,v 1.4 1996/10/01 00:32:57 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,14 +25,39 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: ADC.h,v $
+ * Revision 1.4  1996/10/01 00:32:57  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.3  1996/09/24 23:05:33  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/21 22:13:46  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:35  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	ADC_H
 #define	ADC_H
 
-extern	byteval			ReadADConverter ( int );
-extern	void			WriteADConverter ( int, unsigned char );
+extern	void				ResetADConverter();
+extern	byteval				ReadADConverter ( int );
+extern	void				WriteADConverter ( int, byteval );
 
-extern	int				SaveADC ( int );
-extern	int				RestoreADC ( int, unsigned int );
+extern	int					SaveADC ( int );
+extern	int					RestoreADC ( int, unsigned int );
 
 #endif	/* ADC_H */

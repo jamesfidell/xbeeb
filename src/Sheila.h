@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Sheila.h,v 1.3 1996/09/24 23:05:43 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,12 +25,31 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Sheila.h,v $
+ * Revision 1.3  1996/09/24 23:05:43  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/21 22:13:50  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:41  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	SHEILA_H
 #define	SHEILA_H
 
-extern	byteval		ReadSheila ( int );
-extern	void		WriteSheila ( int, byteval );
+extern	byteval				ReadSheila ( int );
+extern	void				WriteSheila ( int, byteval );
 
 #define	PagedRomSelector	0xfe30
 

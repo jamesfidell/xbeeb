@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Fred.h,v 1.3 1996/09/24 23:05:38 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,14 +25,33 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Fred.h,v $
+ * Revision 1.3  1996/09/24 23:05:38  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/21 22:13:48  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:37  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	FRED_H
 #define	FRED_H
 
-extern	byteval		ReadFred ( int );
-extern	void		WriteFred ( int, byteval );
+extern	byteval				ReadFred ( int );
+extern	void				WriteFred ( int, byteval );
 
-extern	int			SaveFred ( int );
-extern	int			RestoreFred ( int, unsigned int );
+extern	int					SaveFred ( int );
+extern	int					RestoreFred ( int, unsigned int );
 
 #endif	/* FRED_H */

@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: TubeUla.c,v 1.4 1996/10/01 00:33:05 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,6 +25,30 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: TubeUla.c,v $
+ * Revision 1.4  1996/10/01 00:33:05  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.3  1996/09/24 23:05:45  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/21 22:13:52  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:42  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #include <stdio.h>
 
@@ -36,13 +63,28 @@
  * returned what I read the registers.
  */
 
-static byteval	ReadRegs [ 32 ] =
+static byteval			ReadRegs [ 32 ] =
 {
 	0xae, 0xde, 0xae, 0xee, 0xae, 0xee, 0xae, 0xee,
 	0xae, 0xae, 0xae, 0xfe, 0xae, 0xee, 0xae, 0xae,
 	0xae, 0xbe, 0xae, 0xfe, 0xae, 0xbe, 0xae, 0xfe,
 	0xae, 0xfe, 0xbe, 0xfe, 0xbe, 0xfe, 0xae, 0xae
 };
+
+
+void
+ResetTubeUla ( void )
+{
+	/*
+	 * FIX ME
+	 *
+	 * I don't have any idea what the power-up/reset state of the Tube
+	 * ULA should be, so for the moment it's left as set in ReadRegs,
+	 * above.
+	 */
+
+	return;
+}
 
 
 byteval

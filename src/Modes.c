@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Modes.c,v 1.3 1996/09/24 23:05:40 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,9 +25,32 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Modes.c,v $
+ * Revision 1.3  1996/09/24 23:05:40  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/23 16:09:52  james
+ * Initial implementation of bitmap MODEs -- including modification of
+ * screen handling to use different windows for teletext and bitmapped
+ * modes and corrections/improvements to colour- and cursor-handling
+ * code.
+ *
+ * Revision 1.1  1996/09/21 17:20:38  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #include "Config.h"
 #include "Modes.h"
+
 
 unsigned char		CurrentScreenMode = MODE_UNKNOWN;
 unsigned short		ScreenLength = 0xffff;

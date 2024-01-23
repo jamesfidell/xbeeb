@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Acia.c,v 1.7 1996/10/01 00:32:57 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,6 +25,40 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Acia.c,v $
+ * Revision 1.7  1996/10/01 00:32:57  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.6  1996/09/30 23:54:37  james
+ * Added correct address wrap-around on control registers.
+ *
+ * Revision 1.5  1996/09/24 23:05:34  james
+ * Update copyright dates.
+ *
+ * Revision 1.4  1996/09/22 21:35:05  james
+ * New implementation of the (partial) ACIA emulation.
+ *
+ * Revision 1.3  1996/09/21 23:07:34  james
+ * Call FatalError() rather than exit() so that screen stuff etc. can
+ * be cleaned up.
+ *
+ * Revision 1.2  1996/09/21 22:13:46  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:35  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #include	<stdio.h>
 #include	<unistd.h>
@@ -30,8 +67,6 @@
 #include "Acia.h"
 #include "Beeb.h"
 
-void				AciaSRClear ( byteval );
-void				AciaSRSet ( byteval );
 
 /*
  * The transmit control register bit values...
@@ -48,7 +83,7 @@ static byteval		RcvIRQEnable = 0;
  *
  * FIX ME
  *
- * I don't know that the initialised values of the SR is
+ * I don't know that the initialised values of the SR are
  * necessarily correct.
  *
  * I'm working on the assumption that :
@@ -69,9 +104,16 @@ static byteval		TDR;
 static byteval		RDR;
 
 /*
- * Generating interrupts from the ACIA is problematic to code because
+ * Generation of interrupts from the ACIA is problematic to code because
  * it will probably be possible to cause an interrupt straight
  * away (because the data will be available or processed immediately).
+ *
+ * Hmmm.  That's not too clear, is it ?  What I mean is (I think :-)
+ * that whereas the real ACIA would spend some time processing data
+ * and then generate an interrupt to inform the OS that it had been done,
+ * it's quite probable that in an emulated situation, the data might be
+ * available immediately.  Generating an interrupt immediately to deal
+ * with this might screw up the OS's idea of timing.
  *
  * Unfortunately, I don't really see any way around this.
  *
@@ -86,10 +128,29 @@ static byteval		XmitIRQ = 0;
 static byteval		RcvIRQ = 0;
 
 
+void
+ResetAcia ( void )
+{
+	/*
+	 * FIX ME
+	 *
+	 * I have no idea what happens when the ACIA is powered up/reset.
+	 */
+
+	return;
+}
+
+
 byteval
 ReadAcia ( int addr )
 {
-	switch ( addr )
+	/*
+	 * Because the ACIA only takes up two of the eight addresses assigned
+	 * to it in the memory map, the others all wrap around onto those
+	 * first two.
+	 */
+
+	switch ( addr & 0x1 )
 	{
 		case 0x0 :
 			/*
@@ -117,19 +178,29 @@ ReadAcia ( int addr )
 			RcvIRQ = 0;
 			AciaSRClear ( SR_RDRF | SR_OVRN | SR_PE );
 			return RDR;
-
-		default :
-			fprintf ( stderr, "Illegal read from ACIA (addr = %x)\n", addr );
-			FatalError();
-			break;
 	}
+
+	/* NOTREACHED */
+
+	/*
+	 * FIX ME
+	 *
+	 * Should return a fatal error here ?
+	 */
+
+	return 0xff;
 }
 
 
 void
 WriteAcia ( int addr, byteval val )
 {
-	switch ( addr )
+	/*
+	 * Again we have to account for the wrap-around of memory addresses
+	 * here...
+	 */
+
+	switch ( addr & 0x1 )
 	{
 		case 0x0 :		/* Write control register */
 		{
@@ -193,12 +264,10 @@ WriteAcia ( int addr, byteval val )
 			TDR = val;
 			XmitIRQ = 0;
 			AciaSRClear ( SR_TDRE );
-printf ( "value %02x stored in TDR\n", TDR );
+#ifdef	INFO
+			printf ( "value %02x stored in TDR\n", TDR );
+#endif
 			break;
-
-		default :
-			fprintf ( stderr, "Illegal write ACIA (addr = %x)\n", addr );
-			FatalError();
 	}
 
 	return;

@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Keyboard.c,v 1.7 1996/10/09 22:09:42 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,6 +25,72 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Keyboard.c,v $
+ * Revision 1.7  1996/10/09 22:09:42  james
+ * Corrected setting of CA2 when a key is pressed.
+ *
+ * Revision 1.6  1996/10/08 00:04:31  james
+ * Added InfoWindow to show LED status.  Also required addition of the
+ * SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up
+ * whenever the sound buffer is full, which means that far too much
+ * time can be spent re-drawing the LED.
+ *
+ * Revision 1.5  1996/09/30 23:39:33  james
+ * Split out option processing into Options.[ch].  Updated the help message,
+ * added support for the Model A using the -a switch (and added the
+ * MODEL_B_ONLY #define in Config.h, added the -m and -s switches to set the
+ * initial screen mode and keyboard DIP switches.
+ *
+ * Revision 1.4  1996/09/25 19:19:57  james
+ * Major overhaul of VIA emulation code :
+ *
+ *   Enabled toggling of PB7 in system VIA depending on ACR bit 6 and the
+ *   one-shot/free-run mode of T1
+ *
+ *   Implemented User VIA T1 free-running mode.  Set the initial value of
+ *   the User VIA ORA to 0x80.  Planetoid/Defender now works for the first
+ *   time!
+ *
+ *   Corrected value returned by read from VIA T2CL and T2CH.  Frak! now
+ *   works.
+ *
+ *   Set up dummy return for reads from the system VIA IRA and SR.
+ *
+ *   Implemented address wrap-around for memory-mapped registers in the VIA.
+ *
+ *   Set up dummy return for reads from the user VIA SR.
+ *
+ *   Implemented address wrap-around for memory-mapped registers in the VIA.
+ *
+ *   Updated 6522 VIA emulation to have correct initial values for VIA
+ *   registers wherever possible.
+ *
+ *   Heavily modified 6522 VIA code to separate out the input/output
+ *   registers and what is actually on the data pins.  This has the benefits
+ *   of tidying up the whole VIA i/o emulation and not requiring any nasty
+ *   configuration hacks to get software to work (apart from those that exist
+ *   because of uncompleted emulation).
+ *
+ *   Tidied up 6522Via interrupt handling code.
+ *
+ * Revision 1.3  1996/09/24 23:05:39  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/21 22:13:48  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:38  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #include <stdio.h>
 #include <unistd.h>
@@ -30,16 +99,21 @@
 #include "Config.h"
 #include "Keyboard.h"
 #include "SystemVia.h"
+#include "InfoWindow.h"
 
-static	unsigned char		CapsLockLED;
-static	unsigned char		ShiftLockLED;
+unsigned char				CapsLockLED = 0;
+unsigned char				ShiftLockLED = 0;
+#ifdef	SHIFTLOCK_SOUND_HACK
+unsigned char				LockKeysChanged = 0;
+#endif
 
 
 unsigned char				Keys [ 80 ];
+unsigned long				DIPSwitches = DIP_SWITCHES;
 
 
-void
-KeyboardWrite ( byteval ddr, byteval *ora )
+byteval
+KeyboardWrite ( byteval data )
 {
 	/*
 	 * The keyboard is polled as an 8x10 array, using the system VIA
@@ -51,29 +125,25 @@ KeyboardWrite ( byteval ddr, byteval *ora )
 	 *
 	 */
 
-	unsigned char		vert, horiz, idx, op;
+	unsigned char		vert, horiz, idx, op, result;
 
-	vert = ddr & *ora & 0x0f;
-	horiz = ( ddr & *ora & 0x70 ) >> 4;
+	vert = data & 0x0f;
+	horiz = ( data & 0x70 ) >> 4;
 
 	idx = horiz * 10 + vert;
-	op = Keys [ idx ] ? 0x80 : 0x0;
+	result = Keys [ idx ] ? 0x80 : 0x0;
+#ifdef	SHIFTLOCK_SOUND_HACK
+	if ( result && ( idx == KEY_CAPSLOCK || idx == KEY_SHIFTLOCK ))
+		LockKeysChanged = 1;
+#endif	/* SHIFTLOCK_SOUND_HACK */
+
 #ifdef	INFO
 	printf ( "Checking key index 0x%x. val = %d\n", idx, op );
 #endif
 
 	/*
-	 * The new value of the ORA is the old outputs combined with
-	 * whatever keys were found to be pressed now and are allowed
-	 * to be inputs.
-	 */
-
-		*ora = ( *ora & ddr ) | ( op & ~ddr );
-
-	/*
-	 * In addition to changing the values in IRA, an interrupt will
-	 * also be caused if a key on this column of the keyboard scan
-	 * matrix is pressed.
+	 * An interrupt will be caused if a key on this column of the
+	 * keyboard scan matrix is pressed.
 	 */
 
 	op = 0;
@@ -81,22 +151,25 @@ KeyboardWrite ( byteval ddr, byteval *ora )
 		op += Keys [ idx ];
 
 	if ( op )
-		SystemViaSetInterrupt ( INT_CA2 );
+		SystemViaSetCA2 ( 1 );
 
-	return;
+	/*
+	 * The new value of on the input pins is the old outputs combined with
+	 * whatever keys were found to be pressed now and are allowed
+	 * to be inputs.
+	 */
+
+	return result;
 }
 
 
 void
 LedSetCapsLock ( byteval val )
 {
-	/*
-	 * FIX ME
-	 *
-	 * It would be nice to display this on the screen somewhere...
-	 */
+	byteval		oldCapsLockLED = CapsLockLED;
 
-	CapsLockLED = val ? 0 : 1;
+	if (( CapsLockLED = val ? 0 : 1 ) != oldCapsLockLED )
+		DrawCapsLockLED();
 #ifdef	INFO
 	printf ( "CAPS LOCK is %s\n", CapsLockLED ? "ON" : "OFF" );
 #endif
@@ -107,13 +180,10 @@ LedSetCapsLock ( byteval val )
 void
 LedSetShiftLock ( unsigned char val )
 {
-	/*
-	 * FIX ME
-	 *
-	 * It would be nice to display this on the screen somewhere...
-	 */
+	byteval		oldShiftLockLED = ShiftLockLED;
 
-	ShiftLockLED = val ? 0 : 1;
+	if (( ShiftLockLED = val ? 0 : 1 ) != oldShiftLockLED )
+		DrawShiftLockLED();
 #ifdef	INFO
 	printf ( "SHIFT LOCK is %s\n", ShiftLockLED ? "ON" : "OFF" );
 #endif
@@ -124,20 +194,19 @@ LedSetShiftLock ( unsigned char val )
 void
 InitialiseKeyboard()
 {
-	int			i;
+	int				i;
+	unsigned long	d = DIPSwitches;
 
 	for ( i = 0; i < 80; i++ )
 	{
 		Keys [ i ] = 0;
 	}
 
-	/*
-	 * FIX ME
-	 *
-	 * Set up the keyboard DIP switches...
-	 *
-	 */
-
+	for ( i = SW2_0; i >= SW2_7; i-- )
+	{
+		Keys [ i ] = d & 0x01;
+		d >>= 1;
+	}
 	return;
 }
 
@@ -150,13 +219,6 @@ KeyboardMatrixUpdate ( unsigned char key, signed char action )
 	 */
 
 	Keys [ key ] += action;
-
-	/*
-	 * FIX ME
-	 *
-	 * The PCR also controls how CA2 works -- this should be checked to
-	 * see that we're handling it correctly.
-	 */
 
 	/*
 	 * At this point CA2 generates an interrupt for all keys not on row
@@ -174,8 +236,8 @@ KeyboardMatrixUpdate ( unsigned char key, signed char action )
 		printf ( "Key %d %s\n", key, action == KEY_PRESSED ? "press" : "rel" );
 #endif
 
-	if ( action == KEY_PRESSED && key > 9 )
-		SystemViaSetInterrupt ( INT_CA2 );
+	if ( key > 9 )
+		SystemViaSetCA2 ( action == KEY_PRESSED ? 1 : 0 );
 
 	return;
 }

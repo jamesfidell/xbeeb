@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: EFS.h,v 1.2 1996/09/24 23:05:37 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -19,6 +22,19 @@
  * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
  * CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ */
+
+/*
+ * Modification History
+ *
+ * $Log: EFS.h,v $
+ * Revision 1.2  1996/09/24 23:05:37  james
+ * Update copyright dates.
+ *
+ * Revision 1.1  1996/09/22 19:23:21  james
+ * Add the emulated filing system code.
+ *
  *
  */
 

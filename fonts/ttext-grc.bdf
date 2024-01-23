@@ -1,6 +1,8 @@
 STARTFONT 2.1
 COMMENT  
-COMMENT   Copyright (c) James Fidell 1994.
+COMMENT   $Id: ttext-grc.bdf,v 1.2 1996/09/24 23:05:25 james Exp $
+COMMENT  
+COMMENT   Copyright (c) James Fidell 1994, 1995, 1996.
 COMMENT  
 COMMENT   Permission to use, copy, modify, distribute, and sell this
 COMMENT   software and its documentation for any purpose is hereby
@@ -22,6 +24,17 @@ COMMENT   DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
 COMMENT   DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 COMMENT   OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH
 COMMENT   THE USE OR PERFORMANCE OF THIS SOFTWARE.
+COMMENT
+COMMENT
+COMMENT   Revision History
+COMMENT
+COMMENT   $Log: ttext-grc.bdf,v $
+COMMENT   Revision 1.2  1996/09/24 23:05:25  james
+COMMENT   Update copyright dates.
+COMMENT
+COMMENT   Revision 1.1.1.1  1996/09/21 13:52:48  james
+COMMENT   Xbeeb v0.1 initial release
+COMMENT
 COMMENT
 FONT ttext-grc
 SIZE 19 100 100

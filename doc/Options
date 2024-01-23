@@ -1,3 +1,5 @@
+$Id: Options,v 1.2 1996/10/10 22:33:02 james Exp $
+
 Xbeeb Command Line Options
 ==========================
 
@@ -5,29 +7,69 @@ The following command-line options are supported :
 
 	-o <filename>
 
-	Loads the specified file as the OS.
+		Loads the specified file as the OS.
 
 	-p[slot] <filename>
 
-	Loads the specified file as a paged ROM into the given slot (between 0
-	and 15).  If no slot is given, then the default is to use slot 15.
+		Loads the specified file as a paged ROM into the given slot
+		(between 0 and 15). If no slot is given, then the default is 
+		to use slot 15.
 
 	-w[slot]
 
-	Makes the specified paged ROM slot writeable.  This effectively turns
-	it into paged RAM.
+		Makes the specified paged ROM slot writeable.  This effectively
+		turns it into paged RAM.
 
 	-d <directory>
 
-	Sets the directory for the disk emulation.
+		Sets the directory for the disk emulation.
+
+    -s <num>
+
+    	Sets the keyboard DIP switches to <num>, which may be specified
+		in octal, decimal or hex.  Only the LSB of <num> is used by the
+		emulator, and the Beeb ignores all but the five least significant
+		bits.
+
+		The start-up MODE can be selected by setting the lowest three
+		bits of this value (the bits representing the MODE number should
+		be inverted first).  So
+
+			xbeeb -s 0x5
+
+		will start the emulator in MODE 2.
+
+	-m <mode>
+
+		Sets the screen MODE on startup.  This will override any setting
+		made using the -s option.
+
+    -a
+
+    	When support is compiled in, enables the Model A machine emulation.
 
 	-V
 
-	Display version and exit.
+		Display version and exit.
 
 	-h, -?
 
-	Give help on the command line options.
+		Give help on the command line options.
+
 
 The emulator checks the specified filename and then XBEEBROOT/roms/<name>
 for the OS and paged ROMs.  XBEEBROOT is defined in Config.h.
+
+
+Revision History
+================
+
+$Log: Options,v $
+Revision 1.2  1996/10/10 22:33:02  james
+New options for v0.3
+
+Revision 1.1  1996/09/21 19:14:32  james
+Added new documenation files : doc/Configuration doc/DataXfer
+doc/DiskEmulation doc/Keyboard doc/KnownBugs doc/MailingLists doc/Options
+doc/RomPatches doc/WorkingSoftware
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) James Fidell 1994.
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -24,16 +24,24 @@
 
 
 #include <stdio.h>
+#include <memory.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
 #include "Config.h"
 #include "Bitmap.h"
+#include "Beeb.h"
 #include "Memory.h"
 #include "Screen.h"
 #include "Modes.h"
 #include "Crtc.h"
 #include "VideoUla.h"
+
+#ifdef	MITSHM
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <X11/extensions/XShm.h>
+#endif
 
 byteval					BitsForColourInfo;
 int						BitmapWindowX = 0;
@@ -42,19 +50,23 @@ int						BitmapWindowY = 0;
 static int				CursorTimer;
 static byteval			CursorOnScreen;
 
-static int				CursorX = 255;
-static int				CursorY = 255;
 static int				LastScanline = -1;
 
+#ifdef	NOT_YET_IMPLEMENTED
+static int				CursorX = 255;
+static int				CursorY = 255;
 static unsigned int		CursorDepth = 255;
 static unsigned int		CursorWidth = 255;
 static unsigned int		CursorViewable = 0;
 
 static void				DrawCursor();
+#endif
 
 #define	MIN(x,y)	(( x < y ) ? x : y )
 
-static byteval	DecodeColour ( byteval, byteval );
+#ifdef	MITSHM
+static unsigned int		Xmax = 0, Xmin = 639, Ymin = 511, Ymax = 0;
+#endif
 
 
 void
@@ -93,8 +105,14 @@ InitialiseBitmap()
 void
 BitmapScanlineUpdate ( unsigned int scanline )
 {
-	unsigned int			p, byte, hpos, h, scanline2;
+	unsigned int			p, byte, h, scanline2;
 	byteval					colour_info, pix, colour;
+	char					*ip;
+#ifdef	MITSHM
+	unsigned int			Xcurr = 0;
+#else
+	unsigned int			hpos = 0;
+#endif	/* MITSHM */
 
 	/*
 	 * FIX ME
@@ -137,6 +155,10 @@ BitmapScanlineUpdate ( unsigned int scanline )
 
 	scanline2 = scanline * 2;
 
+#ifdef	MITSHM
+	ip = ImageData + ( scanline2 * BytesPerImageLine );
+#endif
+
 	/*
 	 * The easy bit -- if the line we're tracing doesn't even cross one of
 	 * the 8 lines of a character, then we're done -- all that's required
@@ -149,21 +171,34 @@ BitmapScanlineUpdate ( unsigned int scanline )
 	if (( scanline % ScanLinesPlus1 >= 8 ) ||
 						scanline >= ( VertDisplayed * ScanLinesPlus1 ))
 	{
+#ifdef	MITSHM
+		for ( p = 0; p < 640; p++, ip++ )
+		{
+			*ip = Cells [ 0 ];
+			ip [ BytesPerImageLine ] = Cells [ 0 ];
+		}
+		Xmin = 0;
+		Xmax = 639;
+		if ( scanline2 < Ymin )
+			Ymin = scanline2;
+		if ( scanline2 > Ymax )
+			Ymax = scanline2 + 1;
+#else
 		XFillRectangle ( dpy, BitmapPixmap, BitmapGC [ 0 ], 0, scanline2,
 																	639, 2 );
+#endif	/* MITSHM */
 		return;
 	}
 
 	p = ( scanline / ScanLinesPlus1 ) * HorizDisplayed8 +
 		scanline % ScanLinesPlus1 + TopOfScreen;
 	if ( p > 0x8000 )
-		p -= StartOfScreenMemory;
+		p -= ScreenLength;
 
-	hpos = 0;
 	for ( byte = 0; byte < HorizDisplayed; byte++, p += 8 )
 	{
 		if ( p >= 0x8000 )
-			p -= StartOfScreenMemory;
+			p -= ScreenLength;
 
 		if ( ScreenCheck [ p ] )
 		{
@@ -172,10 +207,49 @@ BitmapScanlineUpdate ( unsigned int scanline )
 			 *
 	 		 * Really shouldn't address memory directly here because we
 			 * don't know what effect it might have on the system if it's
-			 * mapped to somewhere strange.
+			 * mapped to somewhere strange.  It's a damn sight faster,
+			 * though.
 			 */
 	
+#ifdef	MODEL_B_ONLY
 			colour_info = Mem [ p ];
+#else
+			colour_info = Mem [ p & MaxRAMAddress ];
+#endif
+#ifdef	MITSHM
+			for ( pix = 0; pix < PixelsPerByte; pix++ )
+			{
+				colour = DecodeColour ( colour_info, pix );
+
+				/*
+				 * FIX ME
+				 *
+				 * There's a problem here that causes a line to be left on
+				 * the far right-hand side of the screen.  Don't know
+				 * what it is yet.
+				 */
+
+				if ( *ip != Cells [ colour ] )
+				{
+					for ( h = 0; h < PixelWidth; h++, ip++ )
+					{
+						*ip = Cells [ colour ];
+						ip [ BytesPerImageLine ] = Cells [ colour ];
+					}
+					ScreenImageChanged = 1;
+					if ( Xcurr < Xmin )
+						Xmin = Xcurr;
+					Xcurr += PixelWidth;
+					if ( Xcurr > Xmax )
+						Xmax = Xcurr - 1;
+				}
+				else
+				{
+					Xcurr += PixelWidth;
+					ip += PixelWidth;
+				}
+			}
+#else	/* MITSHM */
 			for ( pix = 0, h = hpos; pix < PixelsPerByte;
 													pix++, h += PixelWidth )
 			{
@@ -183,10 +257,31 @@ BitmapScanlineUpdate ( unsigned int scanline )
 				XFillRectangle ( dpy, BitmapPixmap, BitmapGC [ colour ], h,
 												scanline2, PixelWidth, 2 );
 			}
+#endif	/* MITSHM */
 			ScreenCheck [ p ] = 0;
+#ifdef	MITSHM
+			if ( ScreenImageChanged )
+			{
+				if ( scanline2 < Ymin )
+					Ymin = scanline2;
+				if ( scanline2 > Ymax )
+					Ymax = scanline2 + 1;
+			}
+#else	/* MITSHM */
+			ScreenImageChanged = 1;
+#endif	/* MITSHM */
 		}
+#ifdef	MITSHM
+		else
+		{
+			ip += ( PixelsPerByte * PixelWidth );
+			Xcurr += PixelWidth;
+		}
+#else	/* MITSHM */
 		hpos += ByteWidth;
+#endif	/* MITSHM */
 	}
+
 	return;
 }
 
@@ -201,13 +296,44 @@ BitmapScreenUpdate()
 	 * of the CRTC registers.
 	 */
 
-	XCopyArea ( dpy, BitmapPixmap, BitmapScreen, CopyAreaGC,
+	if ( ScreenImageChanged )
+	{
+#ifdef	MITSHM
+		/*
+		 * FIX ME
+		 *
+		 * This doesn't work properly because of interactions that I don't
+		 * yet understand...  So, set the values to copy the whole screen.
+		 * 
+		 */
+	
+		Xmax = 639;
+		Ymax = 511;
+		Xmin = Ymin = 0;
+		if ( Xmin <= Xmax && Ymin <= Ymax )
+		{
+			unsigned int		Xsize = Xmax - Xmin + 1;
+			unsigned int		Ysize = Ymax - Ymin + 1;
+
+			XShmPutImage ( dpy, BitmapScreen, CopyAreaGC, BitmapImage,
+					Xmin, Ymin, Xmin, Ymin, Xsize, Ysize, False );
+			Xmax = Ymax = 0;
+			Xmin = 639;
+			Ymin = 511;
+			XFlush ( dpy );
+		}
+#else
+		XCopyArea ( dpy, BitmapPixmap, BitmapScreen, CopyAreaGC,
 													0, 0, 640, 512, 0, 0 );
-	XFlush ( dpy );
+		XFlush ( dpy );
+#endif	/* MITSHM */
+		ScreenImageChanged = 0;
+	}
 	return;
 }
 
 
+#ifdef	NOT_YET_IMPLEMENTED
 static void
 DrawCursor()
 {
@@ -371,108 +497,7 @@ DrawCursor()
 		}
 	}
 }
-
-
-static byteval
-DecodeColour ( byteval info, byteval pixel )
-{
-	byteval			bits, col;
-
-	switch ( BitsForColourInfo )
-	{
-		case 1 :
-			return (( info >> ( 7 - pixel )) & 0x1 );
-			break;
-		case 2 :
-			bits = ( info >> ( 3 - pixel )) & 0x11;
-			switch ( bits )
-			{
-				case 0x11 :
-					col = 3;
-					break;
-				case 0x10 :
-					col = 2;
-					break;
-				case 0x01 :
-					col = 1;
-					break;
-				case 0x00 :
-					col = 0;
-					break;
-			}
-			break;
-		case 4 :
-			bits = ( info >> ( 1 - pixel )) & 0x55;
-			switch ( bits )
-			{
-				case 0x55 :
-					col = 15;
-					break;
-				case 0x54 :
-					col = 14;
-					break;
-				case 0x51 :
-					col = 13;
-					break;
-				case 0x50 :
-					col = 12;
-					break;
-				case 0x45 :
-					col = 11;
-					break;
-				case 0x44 :
-					col = 10;
-					break;
-				case 0x41 :
-					col = 9;
-					break;
-				case 0x40 :
-					col = 8;
-					break;
-				case 0x15 :
-					col = 7;
-					break;
-				case 0x14 :
-					col = 6;
-					break;
-				case 0x11 :
-					col = 5;
-					break;
-				case 0x10 :
-					col = 4;
-					break;
-				case 0x05 :
-					col = 3;
-					break;
-				case 0x04 :
-					col = 2;
-					break;
-				case 0x01 :
-					col = 1;
-					break;
-				case 0x00 :
-					col = 0;
-					break;
-			}
-			break;
-		default :
-			/*
-			 * FIX ME
-			 *
-			 * Should do something very nasty here...
-			 *
-			 * Should also exit cleanly, since we've almost certainly
-			 * started up an X window and buggered about with the
-			 * server configuration by now.
-			 *
-			 */
-			fprintf ( stderr, "unrecognised number bits per colour\n" );
-			FatalError();
-			break;
-	}
-
-	return col;
-}
+#endif	/* NOT_YET_IMPLEMENTED */
 
 
 void

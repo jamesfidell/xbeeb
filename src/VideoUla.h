@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: VideoUla.h,v 1.6 1996/10/09 22:06:59 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,16 +25,51 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: VideoUla.h,v $
+ * Revision 1.6  1996/10/09 22:06:59  james
+ * Overhaul of the bitmapped screen handling code with particular respect to
+ * colour maps.
+ *
+ * Revision 1.5  1996/10/01 00:33:08  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.4  1996/09/24 23:05:46  james
+ * Update copyright dates.
+ *
+ * Revision 1.3  1996/09/23 16:09:53  james
+ * Initial implementation of bitmap MODEs -- including modification of
+ * screen handling to use different windows for teletext and bitmapped
+ * modes and corrections/improvements to colour- and cursor-handling
+ * code.
+ *
+ * Revision 1.2  1996/09/21 22:13:53  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:43  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	VIDEOULA_H
 #define	VIDEOULA_H
 
-extern  unsigned char       ReadVideoUla ( int );
-extern  void				WriteVideoUla ( int, unsigned char );
+extern  void				ResetVideoUla();
+extern  byteval				ReadVideoUla ( int );
+extern	byteval				DecodeColour ( byteval, byteval );
+extern  void				WriteVideoUla ( int, byteval );
 
 extern	int					SaveVideoUla ( int );
 extern	int					RestoreVideoUla ( int, unsigned int );
-extern	void				RestoreColourMap();
 
 extern	unsigned char		CharsPerLine;
 extern	unsigned char		PixelWidth;

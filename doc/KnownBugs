@@ -1,3 +1,5 @@
+$Id: KnownBugs,v 1.2 1996/10/10 22:31:22 james Exp $
+
 Known Bugs
 ==========
 
@@ -5,47 +7,65 @@ There are probably plenty of bugs I don't know about, though I think
 that the CPU emulation is good as long as you stick to legal, documented
 opcodes. Here's a few problems I know about...
 
-The CAPS LOCK key has to be pressed twice to ``do the right thing'' in
-the emulator.  This is because the X server's handling of the CAPS LOCK
-key is stateful.
+o The mark/space ratio for flashing teletext is a guess. I haven't a
+  clue what it really is.
 
-The keyboard emulation still has problems where key/shifted key
-character pairs on the BBC Micro keyboard are not the same as those the
-keyboard in use with the emulator.
+o The emulator possibly only works on pseudo-colour X displays. I
+  haven't tried it on any others.
 
-The mark/space ratio for flashing teletext is a guess.  I haven't a clue
-what it really is.
+o The MODE 7 screen emulation flickers because it updates the whole
+  screen when it changes, rather than just the changed bits, but I
+  haven't worked out a suitable way to optimise that yet. The reason it
+  works this way is because of the handling of double height characters
+  -- the context of each line may change because of a change in the line
+  above it.
 
-The emulator possibly only works on pseudo-colour X displays.  I haven't
-tried it on any others.
+o The code for re-initialising the screen when a snapshot has been
+  loaded is quite horrid and is probably the source of a number of bugs.
+  It needs more thought and work.
 
-The MODE 7 screen emulation flickers because it updates the whole screen
-when it changes, rather than just the changed bits, but I haven't worked
-out a suitable way to optimise that yet.  The reason it works this way
-is because of the handling of double height characters -- the context
-of each line may change because of a change in the line above it.
+o There are numerous places where I don't know how the emulator should
+  handle a given situation. These are usually documented in the code,
+  but will cause a fatal error if encountered.
 
-The code for re-initialising the screen when a snapshot has been loaded
-is quite horrid and is probably the source of a number of bugs.  It needs
-more thought and work.
+o The cursor isn't implemented for bitmapped modes.
 
-There are numerous places where I don't know how the emulator should
-handle a given situation.  These are usually documented in the code,
-but will cause a fatal error if encountered.
+o Handling of mixed case in filenames is incomplete. If a filename is
+  mixed case on the disk, it's exact name must be used in any command
+  for loading or running it.
 
-The cursor isn't implemented for bitmapped modes.
+o Not exactly a bug -- more of a feature, really. Although you won't
+  hear anything, the emulator still does all that's necessary from the
+  programming point of view to make sounds even if you don't have sound
+  support. This means that there will be delays in programs that play
+  sounds before they continue. The emulator hasn't crashed, honest :-)
 
-Untraced scan lines don't appear black (as they should in, say, MODE 6 with
-the background set to blue).
+o Handling of hardware-scrolled screens isn't perfect.  In the efs-demo
+  and xdfs-demo directories there's a program called B.DEMO that will
+  usually demonstrate the problem.
 
-Handling of mixed case in filenames is incomplete.  If a filename is mixed
-case on the disk, it's exact name must be used in any command for loading
-or running it.
+o Changing the Horizontal Sync. register in the CRTC isn't implemented
+  but is required for some games.
 
-Colour map handling isn't perfect and can go wrong some times.
+o The counter in Hopper is screwy.  I did have this working at once
+  stage, but I've broken it again.
 
-Not exactly a bug -- more of a feature, really.  Although you don't hear
-anything, the emulator still does all that's necessary from the programming
-point of view to make sounds.  This means that there will be delays in
-programs that play sounds before they continue.  The emulator hasn't crashed,
-honest :-)
+o The screen window overlaps the window with the LED status in sometimes.
+
+
+There must be other bugs, too, because otherwise all the software I have
+would work properly, wouldn't it ?
+
+
+Revision History
+================
+
+$Log: KnownBugs,v $
+Revision 1.2  1996/10/10 22:31:22  james
+Updates for v0.3.
+
+Revision 1.1  1996/09/21 19:14:32  james
+Added new documenation files : doc/Configuration doc/DataXfer
+doc/DiskEmulation doc/Keyboard doc/KnownBugs doc/MailingLists doc/Options
+doc/RomPatches doc/WorkingSoftware
+

@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Crtc.c,v 1.12 1996/10/10 21:44:02 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,15 +25,72 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Crtc.c,v $
+ * Revision 1.12  1996/10/10 21:44:02  james
+ * Fixes from David Ralph Stacey for scan-line updates.
+ *
+ * Revision 1.11  1996/10/09 23:43:48  james
+ * Sort out Video ULA register wrap around.  Also tidy up setting of
+ * BitsForColourInfo.
+ *
+ * Revision 1.10  1996/10/09 22:55:41  james
+ * Optimise writes to R10 & R11.
+ *
+ * Revision 1.9  1996/10/09 22:40:56  james
+ * Handle register wrap-around for the CRTC.
+ *
+ * Revision 1.8  1996/10/09 22:06:54  james
+ * Overhaul of the bitmapped screen handling code with particular respect to
+ * colour maps.
+ *
+ * Revision 1.7  1996/10/08 23:05:30  james
+ * Corrections to allow clean compilation under GCC 2.7.2 with -Wall -pedantic
+ *
+ * Revision 1.6  1996/10/01 00:32:59  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.5  1996/09/24 23:05:35  james
+ * Update copyright dates.
+ *
+ * Revision 1.4  1996/09/23 16:09:50  james
+ * Initial implementation of bitmap MODEs -- including modification of
+ * screen handling to use different windows for teletext and bitmapped
+ * modes and corrections/improvements to colour- and cursor-handling
+ * code.
+ *
+ * Revision 1.3  1996/09/21 23:07:35  james
+ * Call FatalError() rather than exit() so that screen stuff etc. can
+ * be cleaned up.
+ *
+ * Revision 1.2  1996/09/21 22:13:47  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:36  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #include	<stdio.h>
 #include	<unistd.h>
+#include	<memory.h>
 
 #include	"Config.h"
 #include	"Crtc.h"
+#include	"Beeb.h"
 #include	"Screen.h"
 #include	"Modes.h"
 #include	"Bitmap.h"
+#include	"Teletext.h"
 #include	"VideoUla.h"
 #include	"Memory.h"
 
@@ -52,55 +112,97 @@ unsigned char			CursorMoved = 0;
 unsigned char			CursorResized = 0;
 unsigned char			NewCursorX = 255;
 unsigned char			NewCursorY = 255;
+unsigned int			CrtcMagicNumber;
 
 static unsigned int		CursorAddress, CursorOffset;
 
 
 #define	MIN(a,b)		a < b ? a : b;
 
+
+void
+ResetCrtc ( void )
+{
+	/*
+	 * FIX ME
+	 *
+	 * I have no idea what happens when the CRTC is powered up/reset
+	 */
+
+	return;
+}
+
+
 byteval
 ReadCrtc ( int addr )
 {
-	switch ( addr )
+	/*
+	 * Only the data register on the CRTC appears to be read/write.
+	 * The address register always returns zero when it is read (allegedly).
+	 * However, since the CRTC is only two addresses, all addresses
+	 * from &FE02 to &FE07 wrap back onto the first two.
+	 */
+
+	if ( addr & 0x1 )
 	{
-		case 0x0c :
-			return ScreenStartHi;
-			break;
+		/*
+		 * We have the data register here.  Only R12-R17 actually
+		 * read a useful value, though.
+		 */
 
-		case 0x0d :
-			return ScreenStartLo;
-			break;
+		switch ( RegisterToAccess )
+		{
+			case 0x0c :
+				return ScreenStartHi;
+				break;
+	
+			case 0x0d :
+				return ScreenStartLo;
+				break;
+	
+			case 0x0e :
+				return CursorPosHi;
+				break;
+	
+			case 0x0f :
+				return CursorPosLo;
+				break;
+	
+			case 0x10 :
+				return LightPenHi;
+				break;
+	
+			case 0x11 :
+				return LightPenLo;
+				break;
 
-		case 0x0e :
-			return CursorPosHi;
-			break;
-
-		case 0x0f :
-			return CursorPosLo;
-			break;
-
-		case 0x10 :
-			return LightPenHi;
-			break;
-
-		case 0x11 :
-			return LightPenLo;
-			break;
-
-		default :
-			fprintf ( stderr, "Attempt to read CRTC (addr = %x)\n", addr );
-			fprintf ( stderr, "Not yet implemented\n" );
-			FatalError();
-			break;
+			default :
+				/*
+				 * This will get caught outside the "if"
+				 */
+				break;
+		}
 	}
+
+	return 0;
 }
+
 
 void
 WriteCrtc ( int addr, byteval val )
 {
-	switch ( addr )
+	switch ( addr & 0x1 )
 	{
 		case 0x0 :
+			/*
+			 * FIX ME
+			 *
+			 * RegisterToAccess = val & 0x1f, because we have to allow for
+			 * registers 16 and 17.  But what happens for the values
+			 * between 18 & 31 ?  This needs checking to see what actually
+			 * gets read when there's a potential wrap-around.
+			 */
+
 			RegisterToAccess = val & 0x1f;
 #ifdef	INFO
 			printf ( "CRTC address register set to 0x%x\n", RegisterToAccess );
@@ -140,52 +242,26 @@ WriteCrtc ( int addr, byteval val )
 					 *
 					 * Perhaps that should be handled by reducing the
 					 * width of the window which represents the screen ?
-					 *
-					 * Also, this register appears to be combined with
-					 * the Video ULA's idea of the number of characters
-					 * per line to decide the actual character width and
-					 * the number of bits used to store the character
-					 * colour information.
-					 *
-					 * If BitsForColourInfo turns out to be zero, then
-					 * it's set to 1.  Wizadore causes this by setting
-					 * this register to zero now and then.  Some of the
-					 * Ultimate games probably do it, too.
 					 */
 
 					HorizDisplayed = val;
 					HorizDisplayed8 = val * 8;
-					if (!(BitsForColourInfo = HorizDisplayed / CharsPerLine ))
-						BitsForColourInfo = 1;
-					PixelsPerByte = 8 / BitsForColourInfo;
-					ByteWidth = PixelWidth * PixelsPerByte;
 #ifdef	INFO
 					printf ( "CRTC Horiz. Displayed set to 0x%2x\n", val );
 #endif
 					break;
 
 				case 0x2 :
+
 					/*
 					 * FIX ME
 					 *
-					 * This sets the position of the screen relative to the
-					 * left edge of the scan line field, so it has no
-					 * direct effect on the actual display.
-					 *
-					 * I can't decide whether to ignore it, or to handle it
-					 * by changing the size/layout of the screen, somehow.
-					 *
-					 * One possibility might be to take the value of (R0-R2)
-					 * and use that as some sort of offset from the edge of
-					 * the display window, so that the display is moved
-					 * left and right as this register is changed.
-					 *
-					 * For the moment, I'll just give a warning message if
-					 * the register is set to an unexpected value.
+					 * When this register changes we need to change the
+					 * position of the start of the display across the
+					 * screen.
 					 */
 
-					if (( HorizSync = val ) != 51 && val != 49 && val != 98 )
-						fprintf ( stderr, "CRTC R2 set to odd value\n" );
+					HorizSync = val;
 #ifdef	INFO
 					printf ( "CRTC Horiz. Sync. pos. set to 0x%2x\n", val );
 #endif
@@ -259,6 +335,12 @@ WriteCrtc ( int addr, byteval val )
 				{
 					int			y;
 
+					/*
+					 * FIX ME
+					 *
+					 * Where does 560 come from here ?
+					 */
+
 					VertSync = val;
 					if ( Video )
 						y = 560 - ( ScanLinesPlus1 ) * VertSync;
@@ -273,6 +355,8 @@ WriteCrtc ( int addr, byteval val )
 
 					ChangeBitmapWindowY ( y );
 					ChangeTeletextWindowY ( y );
+
+					CrtcMagicNumber = ( 35 - VertSync ) * ScanLinesPlus1 * 64;
 #ifdef	INFO
 					printf ( "CRTC Vert. Sync. pos. set to 0x%2x\n", val );
 #endif
@@ -330,6 +414,7 @@ WriteCrtc ( int addr, byteval val )
 						FatalError();
 					}
 					ScanLinesPlus1 = ScanLines + 1;
+					CrtcMagicNumber = ( 35 - VertSync ) * ScanLinesPlus1 * 64;
 #ifdef	INFO
 					printf ( "CRTC Scan lines/char set to 0x%2x\n", val );
 #endif
@@ -337,7 +422,11 @@ WriteCrtc ( int addr, byteval val )
 
 				case 0xa :
 					CursorStart = val;
-					CursorResized = ( val & 0x1f == CursorStartLine ) ? 0 : 1;
+#ifdef	INFO
+					printf ( "CRTC Cursor start set to 0x%2x\n", val );
+#endif
+					val &= 0x1f;
+					CursorResized = ( val == CursorStartLine ) ? 0 : 1;
 					CursorBlinkEnable = CursorStart & 0x40;
 
 					/*
@@ -347,18 +436,16 @@ WriteCrtc ( int addr, byteval val )
 					 */
 
 					CursorBlinkFrequency = ( CursorStart & 0x20 ) ? 16 : 8;
-					CursorStartLine = CursorStart & 0x1f;
-#ifdef	INFO
-					printf ( "CRTC Cursor start set to 0x%2x\n", val );
-#endif
+					CursorStartLine = val;
 					break;
 
 				case 0xb :
-					CursorResized = ( val & 0x1f == CursorEndLine ) ? 0 : 1;
-					CursorEndLine = val & 0x1f;
 #ifdef	INFO
 					printf ( "CRTC Cursor end set to 0x%2x\n", val );
 #endif
+					val &= 0x1f;
+					CursorResized = ( val == CursorEndLine ) ? 0 : 1;
+					CursorEndLine = val;
 					break;
 
 				case 0xc :
@@ -390,7 +477,7 @@ WriteCrtc ( int addr, byteval val )
 							TopOfScreen *= 8;
 						}
 
-						ScreenChanged++;
+						ScreenMemoryChanged = 1;
 						( void ) memset (( void* ) ScreenCheck, 1, 32768 );
 					}
 					break;
@@ -411,7 +498,7 @@ WriteCrtc ( int addr, byteval val )
 							TopOfScreen |= ScreenStartLo;
 							TopOfScreen *= 8;
 						}
-						ScreenChanged++;
+						ScreenMemoryChanged = 1;
 						( void ) memset (( void* ) ScreenCheck, 1, 32768 );
 					}
 					break;
@@ -523,14 +610,17 @@ WriteCrtc ( int addr, byteval val )
 					break;
 
 				default :
-					fprintf(stderr, "Illegal write CRTC (addr = 0x%x)\n", addr );
-					FatalError();
+#ifdef	WARNINGS
+					fprintf ( stderr, "Bad write CRTC (R%02d = 0x%02x)\n",
+													RegisterToAccess, val );
+#endif
 					break;
 			}
 			break;
 
 		default :
-			fprintf ( stderr, "Illegal write to CRTC (addr = 0x%x)\n", addr );
+			fprintf ( stderr, "Bad write CRTC (R%02d = 0x%02x)\n",
+													RegisterToAccess, val );
 			FatalError();
 			break;
 	}
@@ -597,7 +687,7 @@ RestoreCRTC ( int fd, unsigned int ver )
 	 * However, it's still got to get restored somewhere...
 	 */
 
-	ScreenChanged++;
+	ScreenMemoryChanged = 1;
 	( void ) memset (( void* ) ScreenCheck, 1, 32768 );
 
 	CursorBlinkEnable = CursorStart & 0x40;
@@ -653,21 +743,12 @@ RestoreCRTC ( int fd, unsigned int ver )
 	 */
 
 	/*
-	 * This is calculated here rather than in RestoreVideoUla because
-	 * only now do we have all the required information (this function
-	 * being called after RestoreVideoUla).
-	 */
-
-	BitsForColourInfo = HorizDisplayed / CharsPerLine;
-	PixelsPerByte = 8 / BitsForColourInfo;
-	ByteWidth = PixelWidth * PixelsPerByte;
-
-	/*
 	 * Set up variables for optimisation of drawing bitmapped display.
 	 */
 
 	ScanLinesPlus1 = ScanLines + 1;
 	HorizDisplayed8 = HorizDisplayed * 8;
+	CrtcMagicNumber = ( 35 - VertSync ) * ScanLinesPlus1 * 64;
 
 	return 0;
 }

@@ -1,5 +1,7 @@
 ###
-### Copyright (c) James Fidell 1994.
+### $Id: Makefile.v,v 1.11 1996/10/08 00:04:32 james Exp $
+###
+### Copyright (c) James Fidell 1994, 1995, 1996.
 ###
 ### Permission to use, copy, modify, distribute, and sell this software
 ### and its documentation for any purpose is hereby granted without fee,
@@ -23,6 +25,57 @@
 ###
 
 ###
+### Modification History
+###
+### $Log: Makefile.v,v $
+### Revision 1.11  1996/10/08 00:04:32  james
+### Added InfoWindow to show LED status.  Also required addition of the
+### SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up
+### whenever the sound buffer is full, which means that far too much
+### time can be spent re-drawing the LED.
+###
+### Revision 1.10  1996/10/01 22:30:33  james
+### Added VoxWare sound code from James Murray <jsm@jsm-net.demon.co.uk>.
+###
+### Revision 1.9  1996/10/01 22:10:01  james
+### Split keyboard handling into kEYMAP_STRICT and KEYMAP_LEGEND models.
+###
+### Revision 1.8  1996/09/30 23:39:34  james
+### Split out option processing into Options.[ch].  Updated the help message,
+### added support for the Model A using the -a switch (and added the
+### MODEL_B_ONLY #define in Config.h, added the -m and -s switches to set the
+### initial screen mode and keyboard DIP switches.
+###
+### Revision 1.7  1996/09/24 23:05:39  james
+### Update copyright dates.
+###
+### Revision 1.6  1996/09/23 19:07:45  james
+### Mode7.c is now called Teletext.c
+###
+### Revision 1.5  1996/09/23 16:09:51  james
+### Initial implementation of bitmap MODEs -- including modification of
+### screen handling to use different windows for teletext and bitmapped
+### modes and corrections/improvements to colour- and cursor-handling
+### code.
+###
+### Revision 1.4  1996/09/22 19:23:21  james
+### Add the emulated filing system code.
+###
+### Revision 1.3  1996/09/21 18:32:59  james
+### Renamed Floppy.[ch] to Disk.[ch]
+###
+### Revision 1.2  1996/09/21 18:16:41  james
+### Todo.c should be Sound.c
+###
+### Revision 1.1  1996/09/21 17:20:38  james
+### Source files moved to src directory.
+###
+### Revision 1.1.1.1  1996/09/21 13:52:48  james
+### Xbeeb v0.1 initial release
+###
+###
+
+###
 ### Configuration
 ###
 
@@ -37,7 +90,7 @@ NETLIBS		=					# Linux
 # C compiler and C compiler options
 #
 CC			= gcc
-CFLAGS		= -Wall -O2
+CFLAGS		= -Wall -O
 
 #
 # makedepend
@@ -59,12 +112,13 @@ LDFLAGS		=
 SRCS		= Beeb.c Memory.c Fred.c Jim.c Sheila.c Crtc.c Acia.c \
 			  SerialUla.c VideoUla.c RomSelect.c SystemVia.c UserVia.c \
 			  Disk.c Econet.c ADC.c TubeUla.c 6522Via.c Keyboard.c \
-			  Screen.c Modes.c Teletext.c Display.c Sound.c Bitmap.c EFS.c
+			  Screen.c Modes.c Teletext.c Display.c Sound.c Bitmap.c EFS.c \
+			  VoxWare.c Options.c KeymapStrict.c KeymapLegend.c InfoWindow.c
 
 OBJS		= $(SRCS:.c=.o)
 
 PROG		= xbeeb
-LIBS		= -lX11 $(NETLIBS)
+LIBS		= -lX11 $(NETLIBS) -lm
 
 
 all			: $(PROG)
@@ -82,66 +136,9 @@ lprofile	:
 clean		:
 	$(RM) $(OBJS) $(PROG)
 
-###
-### Dependencies
-###
+depend		:
+	$(DEPEND) -s '# DO NOT DELETE' -- -- $(SRCS)
 
-Beeb.o		: Beeb.c Patchlevel.h Config.h Beeb.h 6502.h Display.h ADC.h \
-			  Acia.h Crtc.h Econet.h Disk.h RomSelect.h Fred.h Jim.h Sheila.h \
-			  Memory.h SystemVia.h 6522Via.h UserVia.h Keyboard.h Screen.h \
-			  TubeUla.h SerialUla.h VideoUla.h Ops.h opcodes.h EFS.h 6502.c
-
-Memory.o	: Memory.c Config.h 6502.h Memory.h Fred.h Jim.h Sheila.h \
-  			  Screen.h Modes.h
-
-Fred.o		: Fred.c Config.h Fred.h
-
-Jim.o		: Jim.c Config.h Jim.h
-
-Sheila.o	: Sheila.c Config.h Sheila.h Crtc.h Acia.h SerialUla.h VideoUla.h \
-			  RomSelect.h UserVia.h 6522Via.h SystemVia.h Disk.h Econet.h \
-			  ADC.h TubeUla.h
-
-Crtc.o		: Crtc.c Config.h Crtc.h Screen.h Modes.h Bitmap.h VideoUla.h \
-			  Memory.h
-
-Acia.o		: Acia.c Config.h SerialUla.h Acia.h
-
-VideoUla.o	: VideoUla.c Config.h VideoUla.h Crtc.h Modes.h Bitmap.h Screen.h
-
-RomSelect.o	: RomSelect.c Config.h RomSelect.h Memory.h
-
-SystemVia.o	: SystemVia.c Config.h 6502.h Beeb.h SystemVia.h 6522Via.h \
-			  Keyboard.h Screen.h Sound.h
-
-UserVia.o	: UserVia.c Config.h 6502.h Beeb.h UserVia.h 6522Via.h
-
-Disk.o		: Disk.c Config.h Disk.h
-
-Econet.o	: Econet.c Config.h Econet.h
-
-ADC.o		: ADC.c Config.h ADC.h
-
-TubeUla.o	: TubeUla.c Config.h TubeUla.h
-
-6522Via.o	: 6522Via.c Config.h 6522Via.h SystemVia.h UserVia.h Screen.h \
-			  Modes.h
-
-Keyboard.o	: Keyboard.c Config.h Keyboard.h SystemVia.h 6522Via.h
-
-Screen.o	: Screen.c Config.h Beeb.h Screen.h Modes.h Teletext.h Bitmap.h
-			  Keyboard.h Memory.h EFS.h
-
-Modes.o		: Modes.c Config.h Modes.h
-
-Teletext.o	: Teletext.c Config.h Teletext.h Memory.h Screen.h Modes.h Crtc.h \
-			  VideoUla.h
-
-Display.o	: Display.c Config.h 6502.h
-
-Sound.o		: Sound.c Config.h Sound.h
-
-Bitmap.o	: Bitmap.c Config.h Bitmap.h Memory.h Screen.h Modes.h Crtc.h \
-			  VideoUla.h
-
-EFS.o		: EFS.c Config.h EFS.h Memory.h
+#
+# Below are dependencies created by makedepend...
+# DO NOT DELETE

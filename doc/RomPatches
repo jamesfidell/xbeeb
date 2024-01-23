@@ -1,3 +1,5 @@
+$Id: RomPatches,v 1.2 1996/10/10 22:33:45 james Exp $
+
 Patching the OS ROM for the emulated filesystem
 ===============================================
 
@@ -11,8 +13,8 @@ that will read that in, make the patches and write it out again.  You need
 to make a copy of the ROM called "OS1.2p1.rom" before you start -- it's
 this file that gets modified.
 
-OSFILE is trapped by putting in the unused opcode 0xd4 and OSFSC is trapped
-with 0xd7.  The addresses at which these op-codes are inserted are &f27d
+OSFILE is trapped by putting in the unused opcode 0x22 and OSFSC is trapped
+with 0x02.  The addresses at which these op-codes are inserted are &f27d
 and &f1b1 respectively.
 
 If you want to run the emulator with a different ROM, you'll need to
@@ -24,3 +26,17 @@ Emulation of the filing system in this way is not too difficult, but
 causes problems where it can't be sufficiently well integrated into the
 OS.  In places the emulator will terminate because there's no way to
 handle any given error properly (ie, as it would be handled by the OS).
+
+
+Revision History
+================
+
+$Log: RomPatches,v $
+Revision 1.2  1996/10/10 22:33:45  james
+Updates for changed filing system trap values.
+
+Revision 1.1  1996/09/21 19:14:32  james
+Added new documenation files : doc/Configuration doc/DataXfer
+doc/DiskEmulation doc/Keyboard doc/KnownBugs doc/MailingLists doc/Options
+doc/RomPatches doc/WorkingSoftware
+

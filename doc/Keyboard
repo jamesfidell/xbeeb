@@ -1,3 +1,5 @@
+$Id: Keyboard,v 1.2 1996/10/10 22:30:33 james Exp $
+
 BBC Micro keyboard emulation
 ============================
 
@@ -21,18 +23,62 @@ way as a standard PC keyboard.  For instance :
 	The PC has no "COPY" key.  I have used the "Insert" key on the PC
 	keyboard for this.
 
-	Beeb function keys start at f0, PC ones start at F1.  Just use the
-	keys as if F1 on the PC is f0.
+	Beeb function keys start at f0, PC ones start at F1.
 
     The "pound" symbol (that is, GBP, not the hash symbol) doesn't appear
     on anything other than a UK PC keyboard.
 
+	The "Caps Lock" key under X acts as a toggle, not a push button.
 
-In the cases where there is a conflict between the shift key being
-up/down, the emulator tries to give the correct state of the shift key
-as it would be seen on the Beeb, but the code is not perfect.
 
-Other keys work as follows :
+Originally, I tried to get the characters entered at the keyboard to
+correspond to the characters read by the Beeb, as far as possible. This
+mean that in the cases where there is a conflict between the shift key
+being up/down, the emulator tried to give the correct state of the shift
+key as it would be seen on the Beeb, but the code could not be perfect
+and in the case of games often lead of difficulty.
+
+Other keys worked as follows :
+
+    "Pause"		is the BREAK key
+	"Left ALT"	is the SHIFT LOCK key
+	"F10"		is the F0 key
+	"End"		quits the emulator
+	"Home"		creates a snapshot
+	"Enter"		(on the keypad) allows a change of directory in the
+				emulated filing system.
+	"-"			(on the keypad) turns off instruction disassembly
+	"+"			(on the keypad) turns on instruction disassembly
+
+The code that implemented this is still available by #defining
+KEYMAP_LEGEND in src/Config.h, because it may be more useful to use
+when not playing games, or when playing games that involve lots of text
+input.
+
+To resolve some of the above problems, I finally adopted the approach of
+trying to return the keys to Xbeeb that would be in that position on it's
+keyboard.  This still isn't quite possible, but I've done the best I can.
+My keyboard now works something like :
+
+
+
+   ESC f1  f2  f3  f4  f5  f6  f7  f8  f9  f0
+
+     @  1! 2" 3# 4$ 5% 6& 7' 8( 9) 0  -= ^~
+
+     TAB Q  W  E  R  T  Y  U  I  O  P  [{ _£
+
+          A  S  D  F  G  H  J  K  L  ;+  :*  ]}
+
+         \| Z  X  C  V  B  N  M  ,< .> /?
+
+For the other keys,
+
+    "Pause"		is the BREAK key
+	"Right ALT"	is the SHIFT LOCK key
+	"F10"		is the F0 key
+	"Control"	is the CAPS LOCK key
+	"Left ALT"	is the SHIFT key
 
 	"End"		quits the emulator
 	"Home"		creates a snapshot
@@ -40,3 +86,31 @@ Other keys work as follows :
 				emulated filing system.
 	"-"			(on the keypad) turns off instruction disassembly
 	"+"			(on the keypad) turns on instruction disassembly
+
+The reason for the strange arrangement of "Control" and "Left ALT"
+for CAPS LOCK and SHIFT is that it avoids the problems of the way
+that the Caps Lock key is handled as a toggle whilst retaining the
+relative positions of these keys to make playing game such as Arcadians
+more straightforward.  To use this keymap, #define KEYMAP_STRICT in
+src/Config.h.
+
+Note that the keyboard DIP switches can be set on the command line using
+the -s option.
+
+I've noticed that there are some problems using all of these keys on
+(for example) a Sun keyboard.  If anyone has corrections or better
+suggestions, I'll be glad to incorporate them.
+
+
+Revision History
+================
+
+$Log: Keyboard,v $
+Revision 1.2  1996/10/10 22:30:33  james
+Upates for new keyboard handling.
+
+Revision 1.1  1996/09/21 19:14:32  james
+Added new documenation files : doc/Configuration doc/DataXfer
+doc/DiskEmulation doc/Keyboard doc/KnownBugs doc/MailingLists doc/Options
+doc/RomPatches doc/WorkingSoftware
+

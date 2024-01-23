@@ -1,3 +1,5 @@
+$Id: Installation,v 1.5 1996/09/24 18:22:30 james Exp $
+
 xbeeb Installation
 ==================
 
@@ -5,8 +7,12 @@ First off you'll need a copy of the OS1.2 ROM and a language ROM.  For the
 emulated filesystem, the OS ROM needs to be patched.  See doc/RomPatches
 for details on how to do that.
 
+The ROMs are still under copyright, so I can't distribute them as part of
+this package.  Careful searching for BBC Micro Emulator WWW sites will
+no doubt help you out here, I'm sure.
+
 Then edit src/Config.h for your system.  In practice, you'll probably only
-need to change the LITTLE_ENDIAN define, NEED_STRCASECMP and XBEEBROOT, which
+need to change the ENDIAN_6502 define, NEED_STRCASECMP and XBEEBROOT, which
 is the default location of the ROMs images and snapshots.
 
 There is an Imakefile for the emulator.  To use it you need to do :
@@ -51,7 +57,35 @@ can find them.  A simple way to do this is :
 	$ xset fp+ /new/font/directory/
 	$ xset fp rehash
 
+If you're running OpenWindows, then I'm not sure of the procedure, but
+try starting with :
+
+    $ for i in *.bdf
+    $ do
+    $ convertfont $i
+    $ done
+    $ bldfamily
+
 The OS and language ROMs should be placed in XBEEBROOT/roms/...  By
 default, the emulator will try to load OS1.2p1.rom (or OS1.2.rom if you
 don't have the emulated filing system enabled) and BASIC2.rom when it
 starts.
+
+
+Revision History
+================
+
+$Log: Installation,v $
+Revision 1.5  1996/09/24 18:22:30  james
+Change LITTLE_ENDIAN #define to ENDIAN_6502 because of a clash with
+header files on some systems.
+
+Revision 1.4  1996/09/24 18:15:02  james
+Font installation procedure for OpenWindows
+
+Revision 1.3  1996/09/24 18:14:09  james
+Comments on availability of Acorn ROMs.
+
+Revision 1.2  1996/09/24 18:13:13  james
+Add revision history
+

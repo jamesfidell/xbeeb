@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Sound.h,v 1.5 1996/10/01 22:30:33 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,12 +25,67 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Sound.h,v $
+ * Revision 1.5  1996/10/01 22:30:33  james
+ * Added VoxWare sound code from James Murray <jsm@jsm-net.demon.co.uk>.
+ *
+ * Revision 1.4  1996/09/25 19:19:57  james
+ * Major overhaul of VIA emulation code :
+ *
+ *   Enabled toggling of PB7 in system VIA depending on ACR bit 6 and the
+ *   one-shot/free-run mode of T1
+ *
+ *   Implemented User VIA T1 free-running mode.  Set the initial value of
+ *   the User VIA ORA to 0x80.  Planetoid/Defender now works for the first
+ *   time!
+ *
+ *   Corrected value returned by read from VIA T2CL and T2CH.  Frak! now
+ *   works.
+ *
+ *   Set up dummy return for reads from the system VIA IRA and SR.
+ *
+ *   Implemented address wrap-around for memory-mapped registers in the VIA.
+ *
+ *   Set up dummy return for reads from the user VIA SR.
+ *
+ *   Implemented address wrap-around for memory-mapped registers in the VIA.
+ *
+ *   Updated 6522 VIA emulation to have correct initial values for VIA
+ *   registers wherever possible.
+ *
+ *   Heavily modified 6522 VIA code to separate out the input/output
+ *   registers and what is actually on the data pins.  This has the benefits
+ *   of tidying up the whole VIA i/o emulation and not requiring any nasty
+ *   configuration hacks to get software to work (apart from those that exist
+ *   because of uncompleted emulation).
+ *
+ *   Tidied up 6522Via interrupt handling code.
+ *
+ * Revision 1.3  1996/09/24 23:05:44  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/21 22:13:51  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:41  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	SOUND_H
 #define	SOUND_H
 
+extern void		InitialiseSound();
 extern void		SoundWrite ( byteval );
-extern void		SpeechRead ( byteval, byteval* );
+extern byteval	SpeechRead();
 extern void		SpeechWrite ( byteval );
 
 #endif	/* SOUND_H */

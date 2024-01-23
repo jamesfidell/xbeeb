@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Beeb.c,v 1.25 1996/10/10 21:46:38 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,6 +25,140 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Beeb.c,v $
+ * Revision 1.25  1996/10/10 21:46:38  james
+ * Corrected missed conversion of 100 cycles to FASTCLOCK
+ *
+ * Revision 1.24  1996/10/10 21:45:51  james
+ * Tidy up tabbing.
+ *
+ * Revision 1.23  1996/10/09 22:06:51  james
+ * Overhaul of the bitmapped screen handling code with particular respect to
+ * colour maps.
+ *
+ * Revision 1.22  1996/10/07 22:59:45  james
+ * Modified FASTCLOCK implementation to allow configuration of the number
+ * of instructions between interrupts.
+ *
+ * Revision 1.21  1996/10/07 22:44:18  james
+ * Moved IRQ handling back into the main code rather than #defined as
+ * previously -- basically, it doesn't work that way.
+ *
+ * Revision 1.20  1996/10/07 22:06:31  james
+ * Added XDFS ROM & support code from David Ralph Stacey.
+ *
+ * Revision 1.19  1996/10/01 22:30:31  james
+ * Added VoxWare sound code from James Murray <jsm@jsm-net.demon.co.uk>.
+ *
+ * Revision 1.18  1996/10/01 22:09:57  james
+ * Split keyboard handling into kEYMAP_STRICT and KEYMAP_LEGEND models.
+ *
+ * Revision 1.17  1996/10/01 00:32:58  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.16  1996/09/30 23:46:50  james
+ * Correction to load the correct language ROM
+ *
+ * Revision 1.15  1996/09/30 23:39:29  james
+ * Split out option processing into Options.[ch].  Updated the help message,
+ * added support for the Model A using the -a switch (and added the
+ * MODEL_B_ONLY #define in Config.h, added the -m and -s switches to set the
+ * initial screen mode and keyboard DIP switches.
+ *
+ * Revision 1.14  1996/09/24 23:05:34  james
+ * Update copyright dates.
+ *
+ * Revision 1.13  1996/09/24 22:40:15  james
+ * Massive overhaul of instruction decoding code.  Includes :
+ *
+ *   Correct implementation of (indirect),Y instructions when overflow occurs,
+ *   allowing the removal of the RANGE_CHECK directive for those instructions.
+ *
+ *   Correct handling of address wrap-around for all zp,X and zp,Y
+ *   instructions.  This removes the need for the RANGE_CHECK define.  Removed
+ *   that, too.
+ *
+ *   Updated all disassembly instructions to give the full number of hex
+ *   digits when displaying their parameters.
+ *
+ *   Split opcodes.h to give NMOS 6502 opcodes in 6502ops.h and EFS opcodes
+ *   in EFSops.h
+ *
+ *   Add all NMOS 6502 HALT opcodes.
+ *
+ *   Add all NMOS 6502 NOP opcodes.
+ *
+ *   Coded for the undocumented NMOS 6502 NOP operations so that
+ *   they load a value from memory according to their addressing mode (but
+ *   neither store it anywhere nor set any SR flags).
+ *
+ *   Coded all other undocumented NMOS 6502 operations.
+ *
+ *   Changed the EFS dummy opcodes because of a clash with the undocumented
+ *   NMOS 6502 DCP instructions.  The new trap values are now codes that would
+ *   normally halt the CPU.
+ *
+ *   Added all the R65C02 opcodes.
+ *
+ *   Added all the R65C12 opcodes.
+ *
+ *   Correctly coded (zp,X) addressing mode where zp+X(+1) overlaps the
+ *   page boundary.
+ *
+ *   Added #defined values for the number of cycles taken by each instruction
+ *   in 6502.h
+ *
+ *   Added #defines for the original 6502 and Rockwell 65C02 and 65C12.
+ *
+ * Revision 1.12  1996/09/23 16:33:17  james
+ * Tidied up code for exiting the emulator
+ *
+ * Revision 1.11  1996/09/23 16:21:15  james
+ * Improvements to snapshot code.
+ *
+ * Revision 1.10  1996/09/22 21:00:54  james
+ * Changed IRQ-handling code to be called only when I think an IRQ may have
+ * happened.  Converted it all to #defines so that it can be compiled inline.
+ *
+ * Revision 1.9  1996/09/22 20:28:52  james
+ * Added Patchlevel.h and -V command line option.
+ *
+ * Revision 1.8  1996/09/22 20:20:37  james
+ * Corrections to DISASS code.
+ *
+ * Revision 1.7  1996/09/22 19:23:20  james
+ * Add the emulated filing system code.
+ *
+ * Revision 1.6  1996/09/21 23:07:35  james
+ * Call FatalError() rather than exit() so that screen stuff etc. can
+ * be cleaned up.
+ *
+ * Revision 1.5  1996/09/21 22:48:21  james
+ * Add instruction counting code.
+ *
+ * Revision 1.4  1996/09/21 22:39:52  james
+ * Improved handling of instruction disassembly.
+ *
+ * Revision 1.3  1996/09/21 22:13:46  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.2  1996/09/21 19:04:09  james
+ * Renamed Floppy.[ch] to Disk.[ch]
+ *
+ * Revision 1.1  1996/09/21 17:20:35  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,9 +170,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "Patchlevel.h"
 #include "Config.h"
 #include "Beeb.h"
+#include "Ops.h"
+#include "opcodes.h"
 #include "6502.h"
 #include "Display.h"
 #include "ADC.h"
@@ -55,8 +193,8 @@
 #include "TubeUla.h"
 #include "SerialUla.h"
 #include "VideoUla.h"
-#include "Ops.h"
-#include "opcodes.h"
+#include "Options.h"
+#include "Sound.h"
 
 #ifdef	EMUL_FS
 #include "EFS.h"
@@ -64,13 +202,40 @@
 
 
 /*
+ * Obviously this has to come first so that we know if a forward
+ * declaration of the AddClockCycles function is required.
+ */
+
+#ifdef  FASTCLOCK
+
+#define AddClockCycles(n) \
+{ \
+	ClockCyclesSoFar += n; \
+	if ( ClockCyclesSoFar > FASTCLOCK ) \
+	{ \
+		ViaClockUpdate ( ClockCyclesSoFar ); \
+		ClockCyclesSoFar = 0; \
+	} \
+}
+
+#else   /* FASTCLOCK */
+
+#define AddClockCycles(n)	ViaClockUpdate(n)
+
+#endif  /* FASTCLOCK */
+
+
+/*
  * Misc. forward declarations...
  */
 
-void				SaveSnapshot ();
-void				RestoreSnapshot ( char* );
-void				Beeb();
-void				DisplayHelp();
+void						SaveSnapshot();
+void						RestoreSnapshot ( char* );
+void						Beeb();
+static void					HardwareReset();
+#ifndef	AddClockCycles
+void						AddClockCycles ( byteval );
+#endif
 
 /*
  * This lot are just for convenience so that the real variables can
@@ -78,12 +243,12 @@ void				DisplayHelp();
  * registers.
  */
 
-byteval 			InitAccumulator;
-byteval				InitRegisterX;
-byteval				InitRegisterY;
-byteval				InitStackPointer;
-unsigned int		InitProgramCounter;
-int					NewPC;
+byteval						InitAccumulator;
+byteval						InitRegisterX;
+byteval						InitRegisterY;
+byteval						InitStackPointer;
+unsigned int				InitProgramCounter;
+int							NewPC;
 
 /*
  * The status register and the actual values of all the flags.  The
@@ -91,72 +256,41 @@ int					NewPC;
  * put in a register.
  */
 
-byteval				StatusRegister;
+byteval						StatusRegister;
 
-byteval				NegativeFlag = 0;
-byteval				OverflowFlag = 0;
-byteval				DecimalModeFlag = 0;
-byteval				IRQDisableFlag = 0;
-byteval				ZeroFlag = 0;
-byteval				CarryFlag = 0;
+byteval						NegativeFlag = 0;
+byteval						OverflowFlag = 0;
+byteval						DecimalModeFlag = 0;
+byteval						IRQDisableFlag = 0;
+byteval						ZeroFlag = 0;
+byteval						CarryFlag = 0;
 
 /*
  * The 3 jump addresses used by the 6502 -- set up at initialisation
  * once the OS ROM has been loaded.
  */
 
-unsigned int		NMIAddress;
-unsigned int		IRQAddress;
-unsigned int		ResetAddress;
+unsigned int				NMIAddress;
+unsigned int				IRQAddress;
+unsigned int				ResetAddress;
 
-byteval				SnapshotRequested = 0;
-byteval				QuitEmulator = 0;
-char				*SnapshotName;
+/*
+ * Names of files to load which are passed in as command line options.
+ */
 
-byteval 			MaskableInterruptRequest = 0;
-static byteval 		ClockCyclesSoFar = 0;
+char						*OsRomName = OS_ROM;
+char						*Rom15Name = LANG_ROM;
+#ifdef	XDFS
+char						*Rom14Name = XDFS_ROM;
+#endif
+char						*SnapshotName;
 
-#define	CheckIRQ() \
-	if ( MaskableInterruptRequest && !IRQDisableFlag ) \
-	{ \
-		/* \
-		 * We have to explicitly stack the status register here, otherwise \
-		 * it will be pushed on the stack with the BRK flag set. \
-		 */ \
- \
-		StackPC(); \
-		GenerateIRQStatusRegister; \
-		StackByte ( StatusRegister ); \
-		SetIRQDisableFlag; \
-		SetProgramCounter ( IRQAddress ); \
- \
-		/* \
-		 * Have to add clock cycles ourselves, otherwise we end up with \
-		 * mutually recursive references to AddClockCycles and CheckIRQ. \
-		 * We can't actually cause an IRQ at this stage, though, because \
-		 * interrupts have just been disabled (above). \
-		 */ \
- \
-		ClockCyclesSoFar += 7; \
-		if ( ClockCyclesSoFar > 100 ) \
-	    { \
-			ViaClockUpdate ( ClockCyclesSoFar ); \
-			ClockCyclesSoFar = 0; \
-		} \
-		MaskableInterruptRequest--; \
-	}
+unsigned char				SnapshotRequested = 0;
+unsigned char				QuitEmulator = 0;
+unsigned char				BreakKeypress = 0;
 
-
-#define	AddClockCycles(n) \
-{ \
-	ClockCyclesSoFar += n; \
-	if ( ClockCyclesSoFar > 100 ) \
-	{ \
-		ViaClockUpdate ( ClockCyclesSoFar ); \
-		ClockCyclesSoFar = 0; \
-		CheckIRQ(); \
-	} \
-}
+unsigned char				MaskableInterruptRequest = 0;
+static unsigned char		ClockCyclesSoFar = 0;
 
 
 /*
@@ -176,210 +310,11 @@ static unsigned long	InstrCount [ 256 ];
 int
 main ( int argc, char** argv )
 {
-	char		c;
-	byteval		RomNumber;
-	int			i = 1, j, next;
-	char		*OsRomName = OS_ROM;
-	char		*Rom15Name = LANG_ROM;
-	char		*RomName;
+#ifdef	COUNT_INSTRS
+	int				i;
+#endif
 
-	while ( --argc )
-	{
-		if ( *argv [ i ] == '-' )
-		{
-			next = 0;
-			j = 1;
-			while ( !next && (( c = argv [ i ][ j++ ] ) != '\0' ))
-			{
-				switch ( c )
-				{
-					case 'o' :					/* OS ROM name */
-						if ( argv [ i ][ j ] == '\0' )
-						{
-							if ( argc > 1 )
-							{
-								i++;
-								argc--;
-								OsRomName = argv [ i ];
-								next = 1;
-							}
-							else
-							{
-								fprintf ( stderr, "syntax error\nfilename " );
-								fprintf ( stderr, "should follow -o\n" );
-								exit ( 1 );
-							}
-						}
-						else
-						{
-							OsRomName = &argv[i][j];
-							next = 1;
-						}
-						break;
-
-					case 'p' :					/* Paged ROM */
-						switch ( argv[i][j] )
-						{
-							case '\0' :			/* No number, use 15 */
-								RomNumber = 15;
-								break;
-							case '0' : case '1' : case '2' :
-							case '3' : case '4' : case '5' :
-							case '6' : case '7' : case '8' :
-							case '9' :
-								RomNumber = atoi ( &argv[i][j] );
-								if ( RomNumber > 15 )
-								{
-									fprintf ( stderr, "ROM no. too big\n");
-									exit ( 1 );
-								}
-								break;
-							default :
-								fprintf ( stderr, "Bad ROM number for -p\n" );
-								fprintf ( stderr, "use -h for help\n" );
-								exit ( 1 );
-						}
-
-						if ( argc > 1 )
-						{
-							i++;
-							argc--;
-							RomName = argv [ i ];
-							next = 1;
-						}
-						else
-						{
-							fprintf ( stderr, "syntax error\nfilename " );
-							fprintf ( stderr, "should follow -p\n" );
-							exit ( 1 );
-						}
-
-						if ( RomNumber < 15 )
-							LoadPagedRom ( RomName, RomNumber );
-						else
-							Rom15Name = RomName;
-						break;
-
-					case 'w' :					/* Make a ROM slot writeable */
-						if ( argv [ i ][ j ] == '\0' )
-						{
-							if ( argc > 1 )
-							{
-								i++;
-								argc--;
-								next = 1;
-								if ( isdigit ( *argv [ i ] ))
-								{
-									RomNumber = atoi ( argv[i] );
-									if ( RomNumber < 16 )
-										PageWrite [ RomNumber ] = 1;
-									else
-									{
-										fprintf ( stderr, "ROM no. too big\n");
-										exit ( 1 );
-									}
-								}
-								break;
-							}
-
-							fprintf ( stderr, "syntax error\n rom number " );
-							fprintf ( stderr, "should follow -w\n" );
-							exit ( 1 );
-						}
-						else
-						{
-							if ( isdigit ( argv [ i ][ j ]))
-							{
-								RomNumber = atoi ( &argv[ i ][ j ]);
-								if ( RomNumber < 16 )
-									PageWrite [ RomNumber ] = 1;
-								else
-								{
-									fprintf ( stderr, "ROM no. too big\n");
-									exit ( 1 );
-								}
-							}
-							else
-							{
-								fprintf( stderr, "syntax error\n rom number ");
-								fprintf ( stderr, "should follow -w\n" );
-								exit ( 1 );
-							}
-						}
-						next = 1;
-						break;
-
-					case 'd' :					/* Disk directory/image */
-					{
-						char		*disk;
-
-						if ( argv [ i ][ j ] == '\0' )
-						{
-							if ( argc > 1 )
-							{
-								i++;
-								argc--;
-								disk = argv [ i ];
-								next = 1;
-								
-							}
-							else
-							{
-								fprintf ( stderr, "syntax error\nfilename " );
-								fprintf ( stderr, "should follow -d\n" );
-								exit ( 1 );
-							}
-						}
-						else
-						{
-							disk = &argv[i][j];
-							next = 1;
-						}
-						if ( ChangeDiskDirectory ( disk ))
-						{
-							fprintf ( stderr, "%s doesn't appear to ", disk );
-							fprintf ( stderr, "contain a valid disk image\n" );
-							exit ( 1 );
-						}
-						break;
-					}
-					case 'h' : case '?' :		/* Help message and exit */
-						DisplayHelp();
-						exit ( 1 );
-						break;
-
-					case 'V' :
-						fprintf ( stderr, "xbeeb %d.%d patchlevel %d\n",
-							VERSION, RELEASE, PATCHLEVEL );
-						exit ( 0 );
-						break;
-
-					default :					/* Unrecognised option */
-						fprintf ( stderr, "unrecognised option '%c'\n", c );
-						fprintf ( stderr, "use -h for help\n" );
-						exit ( 1 );
-						break;
-				}
-			}
-			i++;
-		}
-		else
-		{
-			/*
-			 * Assume a string on it's own is a snapshot name.
-			 * Fall over if we already have one.
-			 */
-
-			if ( SnapshotName )
-			{
-				fprintf ( stderr, "bad option '%s'\n", argv [ i ]);
-				fprintf ( stderr, "use -h for help\n" );
-				exit ( 1 );
-			}
-			else
-				SnapshotName = argv [ i ];
-		}
-	}
+	ProcessOptions ( argc, argv );
 
 	/*
 	 * Load the OS and initialise the CPU jump vectors.
@@ -395,9 +330,13 @@ main ( int argc, char** argv )
 	 */
 
 	LoadPagedRom ( Rom15Name, 15 );
+#ifdef	XDFS
+	LoadPagedRom ( Rom14Name, 14 );
+#endif
 
 	InitialiseKeyboard();
 	InitialiseScreen();
+	InitialiseSound();
 
 	Beeb();
 
@@ -411,21 +350,6 @@ main ( int argc, char** argv )
 #endif
 
 	return 0;
-}
-
-
-void
-DisplayHelp()
-{
-	printf ( "xbeeb -[Vh?] [<snapshot>] [-o <OS ROM>]" );
-	printf ( " [-p[0-15] <paged ROM>] [-w <num>]\n" );
-	printf ( "\t-[h?]\t\tdisplay this help message\n" );
-	printf ( "\t-V\t\tdisplay the version of xbeeb\n" );
-	printf ( "\t-p[<num>] <rom>\tload <rom> as ROM <num> (default 15)\n" );
-	printf ( "\t-o <rom>\tload <rom> as the OS\n" );
-	printf ( "\t-w <rom>\tmake <rom> writeable\n" );
-	printf ( "\n\n" );
-	return;
 }
 
 
@@ -444,14 +368,14 @@ Beeb()
 
 	unsigned int			OpCount = 0;
 
-	InitProgramCounter = ResetAddress;
-
 	/*
 	 * Now load a snapshot if one was specified.
 	 */
 
 	if ( SnapshotName )
 		RestoreSnapshot ( SnapshotName );
+	else
+		HardwareReset();
 
 	Accumulator = InitAccumulator;
 	RegisterX = InitRegisterX;
@@ -459,10 +383,16 @@ Beeb()
 	StackPointer = InitStackPointer;
 	SetProgramCounter ( InitProgramCounter );
 
-	while ( 1 )
+#ifdef	LIMIT
+#define	CONT_CONDITION		OpCount < LIMIT
+#else
+#define	CONT_CONDITION		1
+#endif
+
+	while ( CONT_CONDITION )
 	{
 
-		unsigned int	opcode;
+		byteval			opcode;
 
 /*
  * The 6502 execute instruction loop is in a different source file
@@ -470,6 +400,29 @@ Beeb()
  */
 
 #include "6502.c"
+
+		/*
+		 * Now check to see if we need to service an interrupt
+		 */
+
+		if ( MaskableInterruptRequest && !IRQDisableFlag )
+		{
+			/*
+			 * We have to explicitly stack the status register here, otherwise
+			 * it will be pushed on the stack with the BRK flag set.
+			 */
+
+			StackPC();
+			GenerateIRQStatusRegister;
+			StackByte ( StatusRegister );
+			SetIRQDisableFlag;
+#ifndef	M6502
+			DecimalModeFlag = 0x0;
+#endif
+			SetProgramCounter ( IRQAddress );
+			MaskableInterruptRequest--;
+			AddClockCycles ( CLK_INTERRUPT );
+		}
 
 		if (( ++OpCount & 0x7ff ) == 0 )
 		{
@@ -490,20 +443,71 @@ Beeb()
 				ViaClockUpdate ( ClockCyclesSoFar );
 
 				SaveSnapshot();
-				SnapshotRequested = 0;
+                SnapshotRequested = 0;
 			}
 			else
+			{
 				if ( QuitEmulator )
 					break;
-		}
+				else
+				{
+					if ( BreakKeypress )
+					{
+						do
+						{
+							CheckEvents();
+						} while ( BreakKeypress );
 
-#ifdef	LIMIT
-	} while ( OpCount < LIMIT );
-#else
+						HardwareReset();
+						SetProgramCounter ( InitProgramCounter );
+					}
+				}
+			}
+		}
 	}
-#endif
+
+ExitEmulator:
 
 	ShutdownScreen();
+	return;
+}
+
+
+static void
+HardwareReset()
+{
+	/*
+	 * Do a power-up reset for all the hardware...
+	 */
+
+	ResetADConverter();
+	ResetAcia();
+	ResetCrtc();
+	ResetDiskController();
+	ResetEconetController();
+	ResetSerialUla();
+	ResetSystemVia();
+	ResetTubeUla();
+	ResetUserVia();
+	ResetVideoUla();
+
+	/*
+	 * Reset for the CPU is easy -- the only thing that gets initialised
+	 * is the program counter.
+	 */
+
+	InitProgramCounter = ResetAddress;
+
+#ifndef	M6502
+
+	/*
+	 * Except for the CMOS processors, which clear the D flag as well.
+	 */
+
+	DecimalModeFlag = 0x0;
+
+#endif	/* M6502 */
+
 	return;
 }
 
@@ -515,7 +519,7 @@ void
 AddClockCycles ( byteval val )
 {
 	ClockCyclesSoFar += val;
-	if ( ClockCyclesSoFar > 100 )
+	if ( ClockCyclesSoFar > FASTCLOCK )
 	{
 		ViaClockUpdate ( ClockCyclesSoFar );
 		ClockCyclesSoFar = 0;
@@ -538,7 +542,7 @@ AddClockCycles ( byteval val )
 
 
 void
-SaveSnapshot ()
+SaveSnapshot()
 {
 	int						fd, done, ilen, xlen;
 	static unsigned char	MagicNo[4] = { 0x0b, 0xbc, 0x00, 0x01 };
@@ -913,7 +917,7 @@ RestoreSnapshot ( char* sname )
 	 * various places in the hardware...
 	 */
 
-	RestoreColourMap();
+	return;
 }
 
 
@@ -923,13 +927,13 @@ IRQ()
 {
 	MaskableInterruptRequest++;
 }
-#endif
+#endif	/* IRQ */
 
 
 int
 SaveCPU ( int fd )
 {
-	byteval		cpu [ 16 ];
+	byteval			cpu [ 16 ];
 
 	GenerateStatusRegister;
 	cpu [ 0 ] = InitAccumulator;
@@ -951,7 +955,7 @@ SaveCPU ( int fd )
 int
 RestoreCPU ( int fd, unsigned int ver )
 {
-	byteval		cpu [ 16 ];
+	byteval			cpu [ 16 ];
 
 	if ( ver > 1 )
 		return -1;

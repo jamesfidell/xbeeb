@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Keyboard.h,v 1.7 1996/10/08 00:04:31 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,18 +25,91 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Keyboard.h,v $
+ * Revision 1.7  1996/10/08 00:04:31  james
+ * Added InfoWindow to show LED status.  Also required addition of the
+ * SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up
+ * whenever the sound buffer is full, which means that far too much
+ * time can be spent re-drawing the LED.
+ *
+ * Revision 1.6  1996/10/01 22:09:59  james
+ * Split keyboard handling into kEYMAP_STRICT and KEYMAP_LEGEND models.
+ *
+ * Revision 1.5  1996/09/30 23:39:33  james
+ * Split out option processing into Options.[ch].  Updated the help message,
+ * added support for the Model A using the -a switch (and added the
+ * MODEL_B_ONLY #define in Config.h, added the -m and -s switches to set the
+ * initial screen mode and keyboard DIP switches.
+ *
+ * Revision 1.4  1996/09/25 19:19:57  james
+ * Major overhaul of VIA emulation code :
+ *
+ *   Enabled toggling of PB7 in system VIA depending on ACR bit 6 and the
+ *   one-shot/free-run mode of T1
+ *
+ *   Implemented User VIA T1 free-running mode.  Set the initial value of
+ *   the User VIA ORA to 0x80.  Planetoid/Defender now works for the first
+ *   time!
+ *
+ *   Corrected value returned by read from VIA T2CL and T2CH.  Frak! now
+ *   works.
+ *
+ *   Set up dummy return for reads from the system VIA IRA and SR.
+ *
+ *   Implemented address wrap-around for memory-mapped registers in the VIA.
+ *
+ *   Set up dummy return for reads from the user VIA SR.
+ *
+ *   Implemented address wrap-around for memory-mapped registers in the VIA.
+ *
+ *   Updated 6522 VIA emulation to have correct initial values for VIA
+ *   registers wherever possible.
+ *
+ *   Heavily modified 6522 VIA code to separate out the input/output
+ *   registers and what is actually on the data pins.  This has the benefits
+ *   of tidying up the whole VIA i/o emulation and not requiring any nasty
+ *   configuration hacks to get software to work (apart from those that exist
+ *   because of uncompleted emulation).
+ *
+ *   Tidied up 6522Via interrupt handling code.
+ *
+ * Revision 1.3  1996/09/24 23:05:39  james
+ * Update copyright dates.
+ *
+ * Revision 1.2  1996/09/21 22:13:49  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:38  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	KEYBOARD_H
 #define	KEYBOARD_H
 
-extern void		KeyboardWrite ( byteval, byteval* );
-extern void		LedSetCapsLock ( unsigned char );
-extern void		LedSetShiftLock ( unsigned char );
-extern void		InitialiseKeyboard ( void );
-extern void		KeyboardMatrixUpdate ( unsigned char, signed char );
+extern byteval			KeyboardWrite ( byteval );
+extern void				LedSetCapsLock ( byteval );
+extern void				LedSetShiftLock ( byteval );
+extern void				InitialiseKeyboard ( void );
+extern void				KeyboardMatrixUpdate ( unsigned char, signed char );
 
-extern int		SaveKeyboard ( int );
-extern int		RestoreKeyboard ( int, unsigned int );
+extern int				SaveKeyboard ( int );
+extern int				RestoreKeyboard ( int, unsigned int );
+
+extern unsigned long	DIPSwitches;
+extern unsigned char	CapsLockLED;
+extern unsigned char	ShiftLockLED;
+#ifdef	SHIFTLOCK_SOUND_HACK
+extern unsigned char	LockKeysChanged;
+#endif
 
 
 #define	KEY_SHIFT		 0
@@ -66,7 +142,7 @@ extern int		RestoreKeyboard ( int, unsigned int );
 #define	KEY_I			25
 #define	KEY_9			26
 #define	KEY_0			27
-#define	KEY_POUND		28
+#define	KEY_USCORE		28
 #define	KEY_DOWN		29
 
 #define	KEY_1			30

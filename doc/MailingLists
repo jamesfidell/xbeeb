@@ -1,3 +1,5 @@
+$Id: MailingLists,v 1.2 1996/10/10 22:32:14 james Exp $
+
 Mailing lists
 =============
 
@@ -19,3 +21,23 @@ The Xbeeb mailing list is at xbeeb@OiT.co.uk. To subscribe, send a
 message to xbeeb-request@OiT.co.uk with the word "subscribe" as the body
 of the message. Send the word "help" as the body to the same address for
 information about the mailing list.
+
+
+At some stage in the near future I hope to move these lists elsewhere,
+since I no longer work at OiT.  I'll make sure that everyone knows
+when that happens and make sure something sane happens to the OiT
+e-mail when I'm ready.
+
+
+Revision History
+================
+
+$Log: MailingLists,v $
+Revision 1.2  1996/10/10 22:32:14  james
+Update because I've moved jobs :-)
+
+Revision 1.1  1996/09/21 19:14:32  james
+Added new documenation files : doc/Configuration doc/DataXfer
+doc/DiskEmulation doc/Keyboard doc/KnownBugs doc/MailingLists doc/Options
+doc/RomPatches doc/WorkingSoftware
+

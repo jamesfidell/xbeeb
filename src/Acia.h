@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Acia.h,v 1.5 1996/10/01 00:32:58 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,6 +25,33 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Acia.h,v $
+ * Revision 1.5  1996/10/01 00:32:58  james
+ * Created separate hardware reset code for each emulated unit and called
+ * these from the main initialisation section of the code to do all of the
+ * setup necessary.
+ *
+ * Revision 1.4  1996/09/24 23:05:34  james
+ * Update copyright dates.
+ *
+ * Revision 1.3  1996/09/22 21:35:05  james
+ * New implementation of the (partial) ACIA emulation.
+ *
+ * Revision 1.2  1996/09/21 22:13:46  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:35  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	ACIA_H
 #define	ACIA_H
@@ -40,9 +70,11 @@
 #define	SR_IRQ		0x80
 
 
+extern  void		ResetAcia();
 extern  byteval		ReadAcia ( int );
 extern  void		WriteAcia ( int, byteval );
 extern	void		AciaSRClear ( byteval );
+extern	void		AciaSRSet ( byteval );
 
 extern	int			SaveACIA ( int );
 extern	int			RestoreACIA ( int, unsigned int );

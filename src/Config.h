@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Config.h,v 1.20 1996/10/09 23:19:08 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,6 +25,127 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Config.h,v $
+ * Revision 1.20  1996/10/09 23:19:08  james
+ * Added support for using the MIT X11 Shared Memory Extensions.
+ *
+ * Revision 1.19  1996/10/08 00:04:30  james
+ * Added InfoWindow to show LED status.  Also required addition of the
+ * SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up
+ * whenever the sound buffer is full, which means that far too much
+ * time can be spent re-drawing the LED.
+ *
+ * Revision 1.18  1996/10/07 22:59:46  james
+ * Modified FASTCLOCK implementation to allow configuration of the number
+ * of instructions between interrupts.
+ *
+ * Revision 1.17  1996/10/07 22:06:32  james
+ * Added XDFS ROM & support code from David Ralph Stacey.
+ *
+ * Revision 1.16  1996/10/01 22:30:32  james
+ * Added VoxWare sound code from James Murray <jsm@jsm-net.demon.co.uk>.
+ *
+ * Revision 1.15  1996/10/01 22:09:58  james
+ * Split keyboard handling into kEYMAP_STRICT and KEYMAP_LEGEND models.
+ *
+ * Revision 1.14  1996/09/30 23:39:32  james
+ * Split out option processing into Options.[ch].  Updated the help message,
+ * added support for the Model A using the -a switch (and added the
+ * MODEL_B_ONLY #define in Config.h, added the -m and -s switches to set the
+ * initial screen mode and keyboard DIP switches.
+ *
+ * Revision 1.13  1996/09/30 22:32:11  james
+ * Allowed external definition of XBEEBROOT.
+ *
+ * Revision 1.12  1996/09/24 23:05:35  james
+ * Update copyright dates.
+ *
+ * Revision 1.11  1996/09/24 22:40:16  james
+ * Massive overhaul of instruction decoding code.  Includes :
+ *
+ *   Correct implementation of (indirect),Y instructions when overflow occurs,
+ *   allowing the removal of the RANGE_CHECK directive for those instructions.
+ *
+ *   Correct handling of address wrap-around for all zp,X and zp,Y
+ *   instructions.  This removes the need for the RANGE_CHECK define.  Removed
+ *   that, too.
+ *
+ *   Updated all disassembly instructions to give the full number of hex
+ *   digits when displaying their parameters.
+ *
+ *   Split opcodes.h to give NMOS 6502 opcodes in 6502ops.h and EFS opcodes
+ *   in EFSops.h
+ *
+ *   Add all NMOS 6502 HALT opcodes.
+ *
+ *   Add all NMOS 6502 NOP opcodes.
+ *
+ *   Coded for the undocumented NMOS 6502 NOP operations so that
+ *   they load a value from memory according to their addressing mode (but
+ *   neither store it anywhere nor set any SR flags).
+ *
+ *   Coded all other undocumented NMOS 6502 operations.
+ *
+ *   Changed the EFS dummy opcodes because of a clash with the undocumented
+ *   NMOS 6502 DCP instructions.  The new trap values are now codes that would
+ *   normally halt the CPU.
+ *
+ *   Added all the R65C02 opcodes.
+ *
+ *   Added all the R65C12 opcodes.
+ *
+ *   Correctly coded (zp,X) addressing mode where zp+X(+1) overlaps the
+ *   page boundary.
+ *
+ *   Added #defined values for the number of cycles taken by each instruction
+ *   in 6502.h
+ *
+ *   Added #defines for the original 6502 and Rockwell 65C02 and 65C12.
+ *
+ * Revision 1.10  1996/09/24 22:12:09  james
+ * Prevented multiple inclusion of Config.h
+ *
+ * Revision 1.9  1996/09/24 18:22:33  james
+ * Change LITTLE_ENDIAN #define to ENDIAN_6502 because of a clash with
+ * header files on some systems.
+ *
+ * Revision 1.8  1996/09/23 16:21:16  james
+ * Improvements to snapshot code.
+ *
+ * Revision 1.7  1996/09/22 21:14:07  james
+ * Added NEED_STRCASECMP #define for EMUL_FS code.
+ *
+ * Revision 1.6  1996/09/22 19:23:20  james
+ * Add the emulated filing system code.
+ *
+ * Revision 1.5  1996/09/21 22:48:21  james
+ * Add instruction counting code.
+ *
+ * Revision 1.4  1996/09/21 22:39:52  james
+ * Improved handling of instruction disassembly.
+ *
+ * Revision 1.3  1996/09/21 22:13:47  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.2  1996/09/21 18:16:22  james
+ * Added definitions of PATH_MAX and NAME_MAX for those systems that don't have
+ * them.  This needs to be properly resolved some time.
+ *
+ * Revision 1.1  1996/09/21 17:20:36  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
+
+#ifndef	CONFIG_H
+#define	CONFIG_H
 
 /*
  * Potential performance gains
@@ -30,19 +154,23 @@
  *					without checking that any side-effects might occur (such as
  *					the screen being modified.
  *
- * FASTCLOCK		causes the VIA timers etc. to be updated every 100 cycles
- *					rather than every instruction.
+ * FASTCLOCK		causes the VIA timers etc. to be updated every FASTCLOCK
+ * 					cycles rather than every instruction.
  *
- * LITTLE_ENDIAN	Causes writing words to the memory array to be done in one
+ * ENDIAN_6502		Causes writing words to the memory array to be done in one
  *					operation as an unsigned 16-bit value rather than as two
  *					8-bit values.  Only possible because the 6502 is little-
  *					endian.
  *
+ * MITSHM			Use MIT X11 Shared Memory Extensions if they are
+ *					supported by the server.
+ *
  */
 
 #define		LO_PAGE
-#define		FASTCLOCK
-#define		LITTLE_ENDIAN
+#define		FASTCLOCK	100
+#define		ENDIAN_6502
+#define		MITSHM
 
 /*
  * Misc. config. stuff
@@ -56,21 +184,37 @@
  *					xbeeb exits.  I just use it for timing purposes.
  *
  * DISASS			Compile in code for disassembling all instructions the
- *					CPU executes.  Very useful for debugging.
+ *                  CPU executes.  Very useful for debugging.
  *
  * INFO				Gives all sorts of information about what's happening
  *					with the hardware emulation.
- *
- * RANGE_CHECK		Adds code for range-checking of operands etc.  Just
- *					slows things down, but helpful for debugging.
  *
  * NEED_STRCASECMP	If your system doesn't have the "strcasecmp" function.
  *
  * EMUL_FS			Enables the emulated file-system code
  *
+ * EFS_CATALOG_SIZE	The number of entries allowed in the EFS catalog
+ *
  * COUNT_INSTRS		Count how many times each op-code was executed
  *
- * EFS_CATALOG_SIZE	The number of entries allowed in the EFS catalog
+ * M6502			CPU is the original NMOS 6502
+ * R65C02			CPU is the Rockwell CMOS 65C02
+ * R65C12			CPU is the Rockwell CMOS 65C12
+ *
+ * MODEL_B_ONLY		Only compile in support for the model B machine.
+ *
+ * DIP_SWITCHES		The default setting for the keyboard DIP switches
+ *
+ * XBEEBROOT		The default root location of all of the disk images etc.
+ *
+ * VOXWARE_SOUND	Include Linux VoxWare sound support.
+ *
+ * SHIFTLOCK_SOUND_HACK
+ *					Disable Shift Lock indicating that the sound buffer is
+ *					full
+ *
+ * KEYMAP_STRICT	Use the keymap based on key positions on the keyboard.
+ * KEYMAP_LEGEND	Use the keymap based on key legends.
  *
  */
 
@@ -78,36 +222,66 @@
 #undef		LIMIT			/* 5000000 */
 #undef		DISASS			/* DISASSEMBLE */
 #undef		INFO
-#undef		RANGE_CHECK
 #undef		NEED_STRCASECMP
 
 #define		EMUL_FS
+#define		EFS_CATALOG_SIZE	31
+#define		XDFS
+
 #undef		COUNT_INSTRS
 
-#define		EFS_CATALOG_SIZE	31
+/*
+ * Processor type
+ */
+
+#define		M6502
+#undef		R65C02
+#undef		R65C12
+
+/*
+ * Model A/B support
+ */
+
+#define		MODEL_B_ONLY
+
+
+/*
+ * default keyboard DIP switch setting
+ */
+
+#define		DIP_SWITCHES	0x0
 
 /*
  * Default location for all of xbeeb's files
  */
 
-#define		XBEEBROOT		"/home/users/james/beeb/"
-
+#ifndef	XBEEBROOT
+#define		XBEEBROOT		"/home/james/beeb/"
+#endif
 #define		XBEEBROMS		XBEEBROOT"roms/"
 #define		XBEEBSNAPS		XBEEBROOT"snaps/"
 #define		XBEEBDISKS		XBEEBROOT"disks/"
 #define		XBEEBTAPES		XBEEBROOT"tapes/"
 
-#define		CAT_NAME		"__CATALOG__"
+/*
+ * Sound emulation #defines
+ */
 
-#define		TMP_FILE		"__TMPSAVE__"
-#define		TMP_CAT			"__TMP_CAT__"
-#define		BAK_FILE		"__BAKFILE__"
-#define		BAK_CAT			"__BAK_CAT__"
+#define		VOXWARE_SOUND
+#define		SHIFTLOCK_SOUND_HACK
+
+
+/*
+ * Keyboard tpe.  Define one of these
+ */
+
+#define		KEYMAP_STRICT
+#undef		KEYMAP_LEGEND
 
 /*
  * Names of ROMs to load by default
  */
-
+  
 #ifdef	EMUL_FS
 #define		OS_ROM			"OS1.2p1.rom"
 #else
@@ -115,6 +289,10 @@
 #endif
 #define		LANG_ROM		"BASIC2.rom"
 
+#ifdef	XDFS
+#define		XDFS_ROM		"xdfs0.70.rom"
+#endif
+  
 /*
  * Default snapshot name
  */
@@ -141,20 +319,53 @@
          YOU SHOULDN'T NEED TO CHANGE ANYTHING FROM HERE DOWN
  ********************************************************************/
 
+#ifdef	EMUL_FS
+
+/*
+ * Filenames to use in the EFS system
+ */
+
+#define		CAT_NAME		"__CATALOG__"
+
+#define		TMP_FILE		"__TMPSAVE__"
+#define		TMP_CAT			"__TMP_CAT__"
+#define		BAK_FILE		"__BAKFILE__"
+#define		BAK_CAT			"__BAK_CAT__"
+
+#endif	/* EMUL_FS */
+
+
+/*
+ * The R65C02 includes all the R65C12 instructions...
+ */
+
+#ifdef		R65C02
+#define		R65C12
+#endif
+
+
 /*
  * handy typedefs
  */
 
-typedef	unsigned char	byteval;
+typedef	unsigned char		byteval;
 
 /*
- * Bits to handle instructions disassembly
+ * Bits to handle instruction disassembly
  */
 
 #ifdef	DISASS
+
 #define	Disassemble1(x)		if ( DebugLevel & DISASSEMBLE ) printf ( x )
 #define	Disassemble2(x,y)	if ( DebugLevel & DISASSEMBLE ) printf ( x, y )
-#else
+#define	Disassemble3(x,y,z)	if ( DebugLevel & DISASSEMBLE ) printf ( x, y, z )
+
+#else	/* DISASS */
+
 #define	Disassemble1(x)		/* nothing */
 #define	Disassemble2(x,y)	/* nothing */
-#endif
+#define	Disassemble3(x,y,z)	/* nothing */
+
+#endif	/* DISASS */
+
+#endif	/* CONFIG_H */

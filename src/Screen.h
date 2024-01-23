@@ -1,5 +1,8 @@
 /*
- * Copyright (c) James Fidell 1994.
+ *
+ * $Id: Screen.h,v 1.8 1996/10/09 23:19:10 james Exp $
+ *
+ * Copyright (c) James Fidell 1994, 1995, 1996.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -22,6 +25,47 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Screen.h,v $
+ * Revision 1.8  1996/10/09 23:19:10  james
+ * Added support for using the MIT X11 Shared Memory Extensions.
+ *
+ * Revision 1.7  1996/10/09 22:06:56  james
+ * Overhaul of the bitmapped screen handling code with particular respect to
+ * colour maps.
+ *
+ * Revision 1.6  1996/10/08 00:04:33  james
+ * Added InfoWindow to show LED status.  Also required addition of the
+ * SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up
+ * whenever the sound buffer is full, which means that far too much
+ * time can be spent re-drawing the LED.
+ *
+ * Revision 1.5  1996/09/24 23:05:43  james
+ * Update copyright dates.
+ *
+ * Revision 1.4  1996/09/23 16:09:52  james
+ * Initial implementation of bitmap MODEs -- including modification of
+ * screen handling to use different windows for teletext and bitmapped
+ * modes and corrections/improvements to colour- and cursor-handling
+ * code.
+ *
+ * Revision 1.3  1996/09/21 23:16:13  james
+ * Loading of new X fonts for double height.  Unloading of all fonts.
+ *
+ * Revision 1.2  1996/09/21 22:13:50  james
+ * Replaced "unsigned char" representation of 1 byte with "byteval".
+ *
+ * Revision 1.1  1996/09/21 17:20:40  james
+ * Source files moved to src directory.
+ *
+ * Revision 1.1.1.1  1996/09/21 13:52:48  james
+ * Xbeeb v0.1 initial release
+ *
+ *
+ */
+
 
 #ifndef	SCREEN_H
 #define	SCREEN_H
@@ -33,7 +77,8 @@ extern	void			ScreenAddressStartHi ( byteval );
 extern	void			ScreenAddressStartLo ( byteval );
 extern	void			RecalculateScreenInfo ( void );
 
-extern	unsigned char	ScreenChanged;
+extern	unsigned char	ScreenMemoryChanged;
+extern	unsigned char	ScreenImageChanged;
 
 #ifdef	_XLIB_H_
 
@@ -56,12 +101,22 @@ extern	Font			TtextSeparateMosaicDblL;
 extern	Display			*dpy;
 extern	Window			TeletextScreen;
 extern	Window			BitmapScreen;
+extern	Window			InfoWindow;
 extern	Pixmap			BitmapPixmap;
-extern	GC				DefaultGraphicsContext;
-extern	GC				CursorGC;
-extern	Colormap		Cmap;
+extern	GC				CursorGC, InfoWindowGC;
+extern	Colormap		DefCmap;
+extern	unsigned long	InfoWindowRed, InfoWindowWhite, InfoWindowBlack;
 
-#endif
+#ifdef	MITSHM
+
+extern	unsigned char	UseSharedXimage;
+extern	unsigned char	UseSharedPixmap;
+extern	char			*ImageData;
+extern	int				BytesPerImageLine;
+extern	XImage			*BitmapImage;
+
+#endif	/* MITSHM */
+#endif	/* _XLIB_H_ */
 
 extern	unsigned long	Cells [ 16 ];
 extern	unsigned long	Masks [ 4 ];
@@ -87,4 +142,4 @@ extern	byteval			ScreenLengthIndex;
 #define	CyanRed			Cells [ 14 ]
 #define	WhiteBlack		Cells [ 15 ]
 
-#endif
+#endif	/* SCREEN_H */
