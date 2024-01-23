@@ -1,6 +1,6 @@
 /*
  *
- * $Id: Patchlevel.h,v 1.8 2002/01/15 15:46:43 james Exp $
+ * $Id: Patchlevel.h,v 1.9 2002/01/15 17:06:19 james Exp $
  *
  * Copyright (C) James Fidell 1994-2002.
  *
@@ -31,6 +31,6 @@
 
 #define	VERSION		0
 #define	RELEASE		4
-#define	PATCHLEVEL	0
+#define	PATCHLEVEL	2
 
 #endif	/* PATCHLEVEL_H */
