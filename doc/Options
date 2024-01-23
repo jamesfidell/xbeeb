@@ -1,0 +1,33 @@
+Xbeeb Command Line Options
+==========================
+
+The following command-line options are supported :
+
+	-o <filename>
+
+	Loads the specified file as the OS.
+
+	-p[slot] <filename>
+
+	Loads the specified file as a paged ROM into the given slot (between 0
+	and 15).  If no slot is given, then the default is to use slot 15.
+
+	-w[slot]
+
+	Makes the specified paged ROM slot writeable.  This effectively turns
+	it into paged RAM.
+
+	-d <directory>
+
+	Sets the directory for the disk emulation.
+
+	-V
+
+	Display version and exit.
+
+	-h, -?
+
+	Give help on the command line options.
+
+The emulator checks the specified filename and then XBEEBROOT/roms/<name>
+for the OS and paged ROMs.  XBEEBROOT is defined in Config.h.

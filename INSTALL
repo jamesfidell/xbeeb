@@ -1,21 +1,30 @@
-$Id$
-
 xbeeb Installation
 ==================
 
-First off you'll need a copy of the OS ROM and a language ROM.
+First off you'll need a copy of the OS1.2 ROM and a language ROM.  For the
+emulated filesystem, the OS ROM needs to be patched.  See doc/RomPatches
+for details on how to do that.
 
-Then edit Config.h for your system.  In practice, you'll probably only
-need to change the LITTLE_ENDIAN define and XBEEBROOT, which is the default
-location of the ROMs images and snapshots.
+Then edit src/Config.h for your system.  In practice, you'll probably only
+need to change the LITTLE_ENDIAN define, NEED_STRCASECMP and XBEEBROOT, which
+is the default location of the ROMs images and snapshots.
 
 There is an Imakefile for the emulator.  To use it you need to do :
 
-	$ xmkmf
-	$ make depend
+    $ cd src
+	$ xmkmf -a
 	$ make
 
-and finally, to install the executable :
+( If your xmkmf doesn't support the "-a" flag, try :
+
+    $ cd src
+    $ xmkmf
+    $ make depend
+    $ make
+
+That should work.)
+
+To install the executable :
 
 	$ make install
 
@@ -33,8 +42,16 @@ like :
 	$ done
 
 These files will then need to be installed somewhere where the X server
-can find them.
+can find them.  A simple way to do this is :
+
+    $ mkdir /new/font/directory
+	$ cp *.pcf /new/font/directory
+	$ touch /new/font/directory/fonts.alias
+	$ mkfontdir /new/font/directory
+	$ xset fp+ /new/font/directory/
+	$ xset fp rehash
 
 The OS and language ROMs should be placed in XBEEBROOT/roms/...  By
-default, the emulator will try to load OS1.2.rom and BASIC2.rom when it
+default, the emulator will try to load OS1.2p1.rom (or OS1.2.rom if you
+don't have the emulated filing system enabled) and BASIC2.rom when it
 starts.

@@ -1,11 +1,8 @@
-$Id$
+This is the second source release of my BBC Micro emulator for UNIX and X11.
 
-This is the first source release of my BBC Micro emulator for UNIX and X11.
-The emulation is far from complete and much work remains, but I have had
-a number of requests to see the code, so here it is.  Remember that it is
-very, very, very pre-alpha :-)
-
-The code is known to compile and run on SVR4, Linux and Solaris 2.3.
+The code is known to compile and run on Linux.  If it works on any
+other systems, please let me know.  If you need to make changes to
+get it to work, please tell me that, too.
 
 
 What has been implemented
@@ -13,35 +10,33 @@ What has been implemented
 
 All of the instruction set of a standard 6502 CPU.  No 65C02 or 65C12
 operands are currently implemented, although I do plan this for a future
-release.
+release.  None of the undocumented 6502 instructions are implemented
+either, which means at the moment that, for instance, Zalaga will not
+run.
 
 The 6522 VIA implementation is almost complete.  The emulation of the
 system VIA is sufficient to provide clock interrupts and keyboard handling
 for the OS.
 
 The CRTC, Serial ULA and display implementation is complete enough to
-provide a reasonable emulation of a MODE 7 display.  X11 fonts for teletext
-text, contiguous mosaic, separated mosiac and double-height text are
-provided.  I have not completed the other required fonts yet.
+provide a reasonable emulation of the display.  X11 fonts for all the
+teletext characters are provided.
 
 The keyboard handling is pretty much there, but not quite perfect as the
 Beeb has a somewhat non-standard keyboard layout compared with most I've
-used.
+used.  See doc/Keyboard for more information on this.
+
+There's a sort-of disk emulation.  Documentation on the format is in the
+doc/DiskEmulation file.
 
 Paged ROMs/RAM are supported.
 
-There is a snapshot format for saving the complete machine state.
+There is a snapshot format for saving the complete machine state.  See
+doc/SnapshotFormat for the specification of the snapshot format.
 
 
 What isn't supported
 ====================
-
-None of the bit-mapped screen modes are yet supported.  This will be in the
-next release, honest :-)
-
-There is no disk/tape emulation.  This means that although there's a snapshot
-format, it's a bit of a pain to find some way of creating them.  I usually
-hack the code to do this sort of stuff (did I say it was pre-alpha ?  OK :-)
 
 Sound, serial IO, the ADC, Econet, the FRED and JIM memory-mapped IO pages,
 the Tube and User VIA are pretty much all ignored.
@@ -64,64 +59,7 @@ or if you want to run a snapshot :
 
 	$ xbeeb <snapshot-name>
 
-The following command-line options are also supported :
-
-	-o <filename>
-
-	Loads the specified file as the OS.
-
-	-p[slot] <filename>
-
-	Loads the specified file as a paged ROM into the given slot (between 0
-	and 15).  If no slot is given, then the default is to use slot 15.
-
-	-w[slot]
-
-	Makes the specified paged ROM slot writeable.  This effectively turns
-	it into paged RAM.
-
-	-h, -?
-
-	Give help on the command line options.
-
-The emulator checks the specified filename and then XBEEBROOT/roms/<name>
-for the OS and paged ROMs.  XBEEBROOT is defined in Config.h.
-
-Some of the less obvious key functions are COPY being emulated by INSERT,
-END terminating the emulator and HOME creating a snapshot called home.sst
-in the current directory.
-
-
-
-Known Bugs
-==========
-
-There are probably plenty of bugs I don't know about, though I think that
-the CPU emulation is reasonably OK as long as you stick to legal, documented
-opcodes.  Here's a few problems I know about...
-
-The CAPS LOCK key has to be pressed twice to ``do the right thing'' in
-the emulator.
-
-The keyboard emulation may well still have problems where key/shifted key
-character pairs on the BBC Micro keyboard are not the same as those the
-keyboard in use with the emulator.
-
-The teletext emulation will break if stressed -- it doesn't always perform
-correctly.
-
-The mark/space ratio for flashing teletext is a guess.  I haven't a clue
-what it really is.
-
-The emulator probably only works on pseudo-colour X displays.  I haven't
-tried it on any others.  Because I was getting brain damage when I was
-trying to get the cursor to work, I gave up and went for the sledge-hammer
-approach, allocating my own colour map.  It's ugly, but it works and I'll
-think of a better implementation later.
-
-The screen emulation flickers because it updates the whole screen when
-it changes, rather than just the changed bits, but I haven't worked
-out a suitable way to optimise that yet.
+For details of all the command line options, see the doc/Options file.
 
 
 General Comments
@@ -134,4 +72,8 @@ the performance I wanted, so I gave up.
 Performance is now roughly the same as that of the original machine
 on my 486DX2 Linux machine.
 
-Please mail any comments, suggestions, whatever, to jfid@mfltd.co.uk
+I use 4-character tab settings in vi.  If you read the code using
+8-character tab settings, it will look even worse than it already does.
+
+Please mail any comments, suggestions, whatever, to
+james@hermione.demon.co.uk.

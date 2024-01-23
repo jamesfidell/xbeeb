@@ -1,0 +1,140 @@
+Setting up Config.h
+===================
+
+Many of the configuration #defines in Config.h can be ignored in most
+cases.  However, if you want to play about with the emulator, you'll
+probably need to know what they are at some stage or other...
+
+LO_PAGE
+
+ defining this means that the emulator assumes there will be no strange
+ side effects of writing to pages 0 and 1. I'm particularly thinking
+ about the situation where screen memory is mapped onto page 0 here
+ -- if you don't care if that won't work properly, defining LO_PAGE
+ means that no checks are made to see if the screen has changed and the
+ emulator runs faster.
+
+
+FASTCLOCK
+
+ Given excessive amounts of CPU power, it's probably possible to do all
+ the work of updating the VIA timers etc. depending on the duration of
+ each instruction, after every instruction. Generally, though, that does
+ slow things down somewhat. Defining FASTCLOCK means that the timers are
+ only updated every 100 or so cycles, which greatly reduces the overhead
+ involved in updating the timers and checking for interrupts. The code
+ may not even function correctly with this undefined at the moment.
+
+
+LITTLE_ENDIAN
+
+ Pretty obvious, this one.  If you have a LITTLE_ENDIAN machine, define
+ this.  It allows for certain optimisations because the 6502 is little
+ endian, too.
+
+
+NO_FRED_JIM
+
+ Currently there's no emulation of the Fred and Jim memory-mapped IO. If
+ you're not interested in emulating them, or never use them, defining
+ this just means they get completely ignored when handling memory-mapped
+ IO, resulting in faster emulation.
+
+
+LIMIT
+
+ Define this to a number of instructions after which the emulator should
+ exit.  Only really useful for debugging and timing purposes.
+
+
+DISASS
+
+ Define this to enable the executing instruction disassembler.  Defining it
+ to be 0 means that disassembly is turned off initially, defining it as
+ DISASSEMBLE means that it's turned on initially.  Once running, disassembly
+ can be controlled by the keypad "+" and "-" keys.  This produces lots of
+ output very fast and slows the emulator down no end.  Only really useful
+ for debugging.
+
+
+INFO
+
+ Causes all sorts of informational messages about the emulator's internals
+ to be displayed.  Not very interesting to many.
+
+
+RANGE_CHECK
+
+ Defining this enables some range-checking code in the emulator.  Useful
+ for debugging, not every useful at any other time, since it does slow
+ things down somewhat.
+
+
+NEED_STRCASECMP
+
+ Define this to use the supplied strcasecmp if your C library doesn't
+ have that function.
+
+
+EMUL_FS
+
+ Defining this enables the emulated filing system.  Without it, you won't
+ be able to load or save anything.
+
+
+COUNT_INSTRS
+
+ Defining this causes instruction counting code to be enabled in the
+ emulator.  I used this for determining which instructions were executed
+ most in order to better decide where I should spend time trying to
+ optimise code.  It produces quite unexpected results -- the instruction
+ execution frequencies are very skewed.
+
+
+EFS_CATALOG_SIZE
+
+ Defined to be 31 -- the maximum number of files on a DFS disk.  This
+ is because I want to be able to migrate the emulated filing system to
+ something more integrated with the OS later on.  Feel free to increase
+ it if you really don't care about that.
+
+
+XBEEBROOT
+
+ Where to find all of the Xbeeb files -- roms, snapshots, EFS "disks" and
+ (if/when I write the tape system support, tape images, too).
+
+
+CAT_NAME
+
+ The name of the catalog file in the emulated filing system.
+
+
+TMP_FILE
+TMP_CAT
+BAK_FILE
+BAK_CAT
+
+ Names of temporary files and catalogs used whilst manipulating entries
+ in the emulated filesystem.
+
+
+OS_ROM
+
+ The name of the OS ROM image
+
+
+LANG_ROM
+
+ The name of the default language ROM image
+
+
+SNAPSHOT_EXT
+
+ The snapshot file extension.
+
+
+DEF_SNAPSHOT
+
+ The name of the default snapshot file -- if you just press return at
+ the snapshot name prompt.

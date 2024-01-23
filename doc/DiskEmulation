@@ -1,0 +1,26 @@
+The Emulated Filing System
+==========================
+
+The emulated disk system (EFS.[ch]) requires a directory containing
+a set of files present on a given disk, exactly as they would appear
+on a BBC disk.  In addition, there's a file called "__CATALOG__"
+which contains the name, load/execution address, length and sector
+number for each file as it would be displayed by *INFO.
+
+The sector number is unused in this emulation -- it's just there for
+the sake of completeness.  In a future release, I may make the EFS
+code more like the disk implementation, at which point the sector
+number may become useful.
+
+The emulation is not complete -- it's also not easy to implement all the
+features the normal DFS. For example, *CAT displays the disk catalog in
+the text window that Xbeeb was run from, not on the Xbeeb screen. The
+other major problem at the moment is that, unlike the beeb, filenames
+are case sensitive.
+
+To "change" a "disk", press the "Enter" key on the keypad.  Xbeeb will
+then display the current "disk" directory name and prompt for a new
+one.  The "~" character may be used to represent $HOME and "+" may be
+used to represent the compiled in value of XBEEBDISKS (in Config.h).
+
+A demo "disk" is set up in the efs-demo directory.

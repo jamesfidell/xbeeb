@@ -1,0 +1,24 @@
+Thanks to the following people, who have helped me along the way...
+
+Daniel Piponi <dpdp19801@ggr.co.uk>
+	For help getting the proper colours working without having to
+	create my own colourmap.
+
+The BBC Micro mailing list
+The BBC Micro Emulator mailing list
+	For ideas, suggestions and shootings down in flames :-)
+
+Messrs Bray, Dickens and Holmes
+	who, with the odd error here and there, produced the Advanced User
+	Guide for the BBC Micro, without which I wouldn't even have been able
+	to start this.
+
+Des Herriott <des@doobie.demon.co.uk>
+	who has written such a good ZX Spectrum emulator (xzx) that I decided
+	I had to do one for the Beeb.  Many's the time when we've drunk beer
+	and talked emulators when we could have been doing something far
+	more productive and far less fun.
+
+Dave Thomas <dave@hermione.demon.co.uk>
+	for not trying to break my arms and legs when I wanted to hack Xbeeb
+	and he wanted to play Nethack.

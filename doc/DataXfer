@@ -1,0 +1,32 @@
+Transferring data between the Beeb and Linux
+============================================
+
+There are probably many ways to do this easily.  One of the ones that
+doesn't appear to work very well is trying to read Beeb disks on the
+PC.  Apparently very few modern FDCs will support the format any more.
+If you have ADFS disks, you may have some success with some programs
+under DOS which attempt to read such disks.  Sadly, I don't have a
+source for the software.  One of the ones that should work is getting
+a copy of kermit for both systems.
+
+I didn't have two compatible terminal emulators, so I had to be a little
+more brutal in my approach. What I did when transferring files from my
+Beeb to my Linux PC was to make up a cable to connect the Beeb's RS423
+port to a 25-pin connector that could be used with one of my PC's serial
+ports. See pages 406/7 of the Beeb User Guide for details on connector
+pin-outs. Before I do the next release of Xbeeb, I'll find my cable,
+test it and list the exact pin connections I used.
+
+Once the two machines are connected together, it's really just a case of
+setting the baud rate correctly at either end (I used kermit for the PC
+end, *FX7 & *FX8 calls for the Beeb end, 9600 baud, I think).  If you
+have kermit for both systems then you're well away by this point.
+
+What I did was to set the PC end to capture any data sent down the serial
+line and then used *FX3 to direct output to the serial line on the Beeb.
+To avoid problems with the handling of non-ASCII characters in the files,
+I used *DUMP to display everything in hex and then wrote a small program
+to convert this output back to binary on the PC.
+
+As I said -- it's a little brutal, but it did allow me to transfer something
+like 6Mb of programs and data to my PC without any real problem.

@@ -1,0 +1,29 @@
+There's still a lot left to be done.  However, here's what's next on my
+list :
+
+o Use shared memory for the X11 windows.
+
+o Add some representation of the keyboard LEDs to the window.
+
+o Add buttons/windows for EFS disk changes.
+
+o Allow the specification of the keyboard DIP switch settings on the
+  command line.
+
+o Some sort of sound emulation.
+
+o Add a way of handling the "pound" key.
+
+o Add a "BREAK" key.
+
+o Add a "SHIFT LOCK" key.
+
+o Allow configuration of a 16K Model A or 32K Model B.
+
+o Set up a keymap to map Beeb keys to their positions on a PC keyboard.
+
+o Add 65c02 support
+
+o Add 65c12 support
+
+o Fixed as many known bugs as possible.

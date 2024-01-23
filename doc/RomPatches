@@ -1,0 +1,26 @@
+Patching the OS ROM for the emulated filesystem
+===============================================
+
+The emulated filesystem works by intercepting calls to OSFILE and OSFSC
+by inserting unused op-codes at the first instruction executed as part
+of these routines.  (Basically we're looking at the locations to which
+the OSFILEV and OSFSCV vectores point here.)
+
+Given that you have your copy of the 1.2 OS ROM, in the pch directory
+that will read that in, make the patches and write it out again.  You need
+to make a copy of the ROM called "OS1.2p1.rom" before you start -- it's
+this file that gets modified.
+
+OSFILE is trapped by putting in the unused opcode 0xd4 and OSFSC is trapped
+with 0xd7.  The addresses at which these op-codes are inserted are &f27d
+and &f1b1 respectively.
+
+If you want to run the emulator with a different ROM, you'll need to
+set the locations in the program itself.  Everything *should* work OK once
+those changes have been made -- if you do get it to work, let me know
+the OS version and the addresses so that I can update the program.
+
+Emulation of the filing system in this way is not too difficult, but
+causes problems where it can't be sufficiently well integrated into the
+OS.  In places the emulator will terminate because there's no way to
+handle any given error properly (ie, as it would be handled by the OS).

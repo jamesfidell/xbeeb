@@ -1,0 +1,210 @@
+Software that works properly under Xbeeb
+========================================
+
+This is a list of all the software I have tried to run on Xbeeb.  Anything
+not here is untested by me.  In some cases, that's because I don't have the
+software any more, in others, such as Elite, I have the software but can't
+transfer it from BBC disk.
+
+Some of the programs listed as not working can probably be sorted out with
+trivial fixes -- mostly where the program writes to a register that I don't
+have an emulation for yet (or just a value that I don't know how to handle),
+or where there's an illegal op-code I could implement.  I expect to sort
+these out in the next release.
+
+If there's any other software that can be tested, please get in touch
+with me (james@hermione.demon.co.uk).
+
+
+Programs that appear to work
+============================
+
+program                         comments
+----------------------------------------------------------------------
+Acornsoft Arcadians
+Acornsoft Aviator
+Acornsoft Breakout				Teletext version (Arcade Action 4-game set)
+Acornsoft Carousel
+Acornsoft Castle of Riddles
+Acornsoft Countdown to Doom
+Acornsoft Cubemaster
+Acornsoft Chess					Can't load a saved game
+Acornsoft Dodgems				(Arcade Action 4-game set)
+Acornsoft Freefall
+Acornsoft Hopper
+Acornsoft Invader
+Acornsoft JCB Digger
+Acornsoft Kingdom of Hamil
+Acornsoft Magic Mushrooms		Sets CRTC R5 oddly when you die
+Acornsoft Maze
+Acornsoft Meteors
+Acornsoft Missile Base
+Acornsoft Mission
+Acornsoft Monsters
+Acornsoft Philosophers Quest
+Acornsoft Rocket Raid			Sideways scrolling is incorrect.
+Acornsoft Sliding Block Puzzles
+Acornsoft Snake					(Arcade Action 4-game set)
+Acornsoft Snapper
+Acornsoft Snapper (v2)
+Acornsoft Space Invaders		Teletext version (Arcade Action 4-game set)
+Acornsoft Sphinx Adventure
+Acornsoft Starship Command
+Acornsoft Tetrapod
+Acornsoft Tracer
+
+AI Questprobe One				can't load/save game
+AI Secret Mission
+AI Voodoo Castle
+AI Ten Little Indians
+AI Pirate Adventure
+AI Perseus & Andromeda			hangs on exit
+AI Escape from Pulsar 7
+
+A&F Software Chuckie Egg
+A&F Software Chuckie Egg II
+A&F Software Cylon Attack
+
+Atari Pole Position
+
+Durrell Software Combat Lynx
+
+Dynabyte Lemming Syndrome
+Dynabyte 3D Tank Zone
+
+Firebird Hacker
+
+Hopesoft Xanadu Adventure
+
+Imagine Wizadore
+
+Level 9 Lords of Time			can't load/save.
+Level 9 Adventure Quest			can't load/save.  Hangs on exit.
+Level 9 Colossal Cave			can't load/save.
+Level 9 Snowball				can't load/save.
+
+MRM Castle Assault
+MRM Diamond Mine
+
+Micro Power Mr. EE
+
+Program Power Swoop
+Program Power Cybertron
+
+Superior Software Citadel
+Superior Software Space Pilot
+Superior Software Crazy Painter
+Superior Software Smash & Grab
+
+Software Invasion Super Pool
+Software Invasion Vortex
+
+Software Projects Karl's Cavern
+
+Ultimate Atic Atac				Weird CRTC R2 -- screen corrupted
+
+White Knight Chess
+
+????????? Grand Prix			CRTC R5 set to odd value
+????????? Overdrive
+????????? The Horse Lord
+????????? Gideon's Gamble
+????????? Scrabble
+????????? MR Wiz
+????????? Blitzkrieg	
+????????? Star Trek
+????????? Lost City
+????????? Star Striker
+????????? Bumble Bee
+????????? Space Jailer
+????????? Dracula Island
+????????? Felix in the Factory
+????????? Felix & Evil Weevils
+????????? Nemesis
+????????? Stock Car
+????????? Killer Gorilla
+????????? Bouncer
+????????? Xanadu
+????????? El Dorado Gold
+????????? Old Father Time
+????????? Way of the Exploding Fist
+????????? 747
+????????? Ledgeman
+????????? Colditz Adventure
+????????? Harvey Headbanger
+????????? Xor
+????????? Chess
+????????? Fairground
+????????? Jetpac
+
+
+Programs that don't work
+========================
+
+program                         reason
+----------------------------------------------------------------------
+
+Aardvark Software Frak!			hangs.
+
+Acornsoft Acheton				Bad FS error from program
+Acornsoft Labrynth				Writes to system VIA ORA
+Acornsoft Defender				hangs
+Acornsoft Gateway to Karos		crashes on the second command
+Acornsoft REVS					screen corrupts
+Acornsoft REVS 5 tracks			screen corrupts
+Acornsoft Planetoid				hangs.
+Acornsoft Hellforce				illegal opcode.
+Acornsoft Volcano				Appears to hang after the starting screen
+
+Elite Commando					hangs.
+
+Icon Software Chrysalis			hangs.
+Icon Software Contraption		CRTC R2 set odd, hangs with corrupt screen
+
+Ivan Berg Software "I do"		hangs.
+
+Micro Power Dune Rider			hangs.
+
+Ocean Software Matchday			hangs
+
+Program Power The Mine			illegal opcode 0x52
+
+Sunspot Transistor's Revenge	weird read of system VIA
+
+Superior Software Zany Kong Jr.	weird CRTC R2 screen corrupted
+Superior Software Repton		reads CRTC R0
+Superior Software Repton II		missing 2nd program
+Superior Software Repton II		illegal opcode 0x0B, CRTC R2 set odd
+Superior Software Airlift		Illegal opcode 0x1F
+Superior Software Jeremy Goes Jumping  screen corrupted.
+
+Ultimate Alien8					CRTC R2 set oddly, illegal opcode 0x5c
+Ultimate Sabre Wulf				Illegal opcode 0x64
+Ultimate Knight's Lore			CRTC R2 set oddly -- Screen corrupted
+
+????????? Hunchback				Illegal opcode 0x1c
+????????? Jet Boat				Screen gets corrupted once game starts
+????????? Pharoah's Curse		Mods. System VIA PCR, reads CRTC R1
+????????? Penguin				Mods. System VIA PCR, reads CRTC R1
+????????? Android Attack		hangs.
+????????? Eagle					Read from system VIA IRA
+????????? Zalaga				Illegal opcode 0xDC
+????????? Manic Miner			write to system VIA ORA
+????????? Galaxians				hangs.
+????????? Eagles Wing			hangs.
+????????? Danger UXB			illegal opcode 0x32
+????????? Airwolf				hangs.
+????????? Spy Hunter			write to system ORA
+????????? Blagger				hangs.
+????????? Felix & Fruit Monster	screen corrupted.
+????????? Frenzy                MODE 7 wierd, program exits.
+????????? Ghouls				MODE 7 wierd, floating point exception
+????????? Go					hangs.
+????????? Snooker				illegal write to CRTC R2
+????????? Beta					won't work at all
+????????? Erik the Viking		CRTC R2 set odd, floating point exception
+????????? Nutcraka				write to user VIA SR.
+????????? Nightshade			CRTC R2 set odd.  Hangs after titles.
+????????? Monaco				Hangs after titles.
+????????? Bounce				illegal opcode 0x22
+????????? The Hobbit			hangs

@@ -1,0 +1,42 @@
+BBC Micro keyboard emulation
+============================
+
+Obviously these notes only apply to a UK/US keyboard -- it's been some
+time since I had any experience of any other type.
+
+There are a number of keys on the BBC Micro that do not work the same
+way as a standard PC keyboard.  For instance :
+
+    On the Beeb, shift-6 is ampersand (&), which is normally shift-7.
+
+    Shift-7 on the Beeb produces a single right quote.
+
+	The colon character is an unshifted key on the Beeb.  Not so on a PC --
+	it's shift-semi-colon.  This also applies to the circumflex/caret/hat
+	character, which is shift-6 on a PC.
+
+	The equals sign is a shifted underscore on the Beeb and an unshifted
+	key on a PC.
+
+	The PC has no "COPY" key.  I have used the "Insert" key on the PC
+	keyboard for this.
+
+	Beeb function keys start at f0, PC ones start at F1.  Just use the
+	keys as if F1 on the PC is f0.
+
+    The "pound" symbol (that is, GBP, not the hash symbol) doesn't appear
+    on anything other than a UK PC keyboard.
+
+
+In the cases where there is a conflict between the shift key being
+up/down, the emulator tries to give the correct state of the shift key
+as it would be seen on the Beeb, but the code is not perfect.
+
+Other keys work as follows :
+
+	"End"		quits the emulator
+	"Home"		creates a snapshot
+	"Enter"		(on the keypad) allows a change of directory in the
+				emulated filing system.
+	"-"			(on the keypad) turns off instruction disassembly
+	"+"			(on the keypad) turns on instruction disassembly
