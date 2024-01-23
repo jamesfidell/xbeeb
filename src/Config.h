@@ -318,7 +318,7 @@
  */
 
 #ifndef	XBEEBROOT
-#define		XBEEBROOT		"/home/users/james/beeb/"
+#define		XBEEBROOT		""
 #endif
 #define		XBEEBROMS		XBEEBROOT"roms/"
 #define		XBEEBSNAPS		XBEEBROOT"snaps/"
