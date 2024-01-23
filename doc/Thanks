@@ -1,13 +1,12 @@
-$Id: Thanks,v 1.2 1996/09/24 22:49:26 james Exp $
+$Id: Thanks,v 1.4 2002/01/14 23:54:48 james Exp $
 
 Thanks to the following people, who have helped me along the way...
 
-Daniel Piponi <dpdp19801@ggr.co.uk>
+Daniel Piponi
 	For help getting the proper colours working without having to
 	create my own colourmap.
 
 The BBC Micro mailing list
-The BBC Micro Emulator mailing list
 	For ideas, suggestions and shootings down in flames :-)
 
 Messrs Bray, Dickens and Holmes
@@ -15,23 +14,26 @@ Messrs Bray, Dickens and Holmes
 	Guide for the BBC Micro, without which I wouldn't even have been able
 	to start this.
 
-Des Herriott <des@doobie.demon.co.uk>
-	who has written such a good ZX Spectrum emulator (xzx) that I decided
+Des Herriott
+	who wrote such a good ZX Spectrum emulator (xzx) that I decided
 	I had to do one for the Beeb.  Many's the time when we've drunk beer
 	and talked emulators when we could have been doing something far
 	more productive and far less fun.
 
-Dave Thomas <dave@hermione.demon.co.uk>
+Dave Thomas
 	for not trying to break my arms and legs when I wanted to hack Xbeeb
 	and he wanted to play Nethack.
 
-James Murray <jsm@jsm-net.demon.co.uk>
+James Murray
 	for contributing the original sound code for Linux.
 
-Rick Gough <rjg1@doc.ic.ac.uk>
-David Ralph Stacey <drs1@doc.ic.ac.uk>
+Rick Gough
+David Ralph Stacey
 	for bug-fixes, outstanding contributions (notably XDFS) and
 	much-needed (on occasion :-) encouragement.
 
 And let's not forget the numerous others who have helped with little
 bits and pieces here and there.  You know who you are.  Thanks again.
+
+Last, but far from least, I must thank my wife, Sarah, for her patience
+and understanding.  Without those, xbeeb would have died a long time ago.

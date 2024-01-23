@@ -1,10 +1,10 @@
 /*
  *
- * $Id: SystemVia.c,v 1.8 1996/10/01 00:33:03 james Exp $
+ * $Id: SystemVia.c,v 1.14 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,27 @@
  * Modification History
  *
  * $Log: SystemVia.c,v $
+ * Revision 1.14  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.13  2002/01/13 22:27:19  james
+ * Fix compile-time warnings
+ *
+ * Revision 1.12  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
+ * Revision 1.11  1996/11/24 22:13:27  james
+ * Timer values need to be updated before they are read or over-written
+ * in the 6522 User and System VIA code.  From a fix by David Ralph Stacey.
+ *
+ * Revision 1.10  1996/11/19 00:56:07  james
+ * Writing to T2CL should clear any outstanding T2 interrupt.  Fix from
+ * David Ralph Stacey.
+ *
+ * Revision 1.9  1996/11/15 08:50:57  james
+ * When the IER is written, disabled interrupts need to be cleared as well
+ * as setting newly enabled interrupts.  (Fix from David Ralph Stacey.)
+ *
  * Revision 1.8  1996/10/01 00:33:03  james
  * Created separate hardware reset code for each emulated unit and called
  * these from the main initialisation section of the code to do all of the
@@ -94,6 +115,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "Config.h"
 #include "6502.h"
@@ -352,11 +374,19 @@ ReadSystemVia ( int addr )
 			break;
 
 		case T1CL :
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			SystemViaClearInterrupt ( INT_T1 );
 			return SystemViaTimer1 & 0xff;
 			break;
 
 		case T1CH :
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			return SystemViaTimer1 >> 8;
 			break;
 
@@ -369,11 +399,20 @@ ReadSystemVia ( int addr )
 			break;
 
 		case T2CL :
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			SystemViaTimer2InterruptEnable = 1;
+			SystemViaClearInterrupt ( INT_T2 );
 			return SystemViaTimer2 & 0xff;
 			break;
 
 		case T2CH :
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			return SystemViaTimer2 >> 8;
 			break;
 
@@ -674,6 +713,10 @@ WriteSystemVia ( int addr, byteval val )
 			 * output
 			 */
 
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			SystemVia [ T1CH ] = SystemVia [ T1LH ] = val;
 			SystemVia [ T1CL ] = SystemVia [ T1LL ];
 			SystemViaTimer1 = SystemVia [ T1CH ] * 256 + SystemVia [ T1CL ];
@@ -699,6 +742,10 @@ WriteSystemVia ( int addr, byteval val )
 			 * interrupt flag in the IFR.
 			 */
 
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			SystemVia [ T2CH ] = val;
 			SystemVia [ T2CL ] = SystemVia [ T2LL ];
 			SystemViaTimer2 = SystemVia [ T2CH ] * 256 + SystemVia [ T2CL ];
@@ -765,21 +812,23 @@ WriteSystemVia ( int addr, byteval val )
 			 * If bit 7 is set, then each set bit in sets the corresponding
 			 * bit in the IER.
 			 *
+			 * Having set up new flags, it may be required that we set/clear
+			 * some of the interrupts in the IFR.
 			 */
 
 			if ( val & 0x80 )
+			{
 				SystemVia [ IER ] |= ( val & 0x7f );
+				SystemViaSetInterrupt ( SystemVia [ IFR ] );
+			}
 			else
+			{
 				SystemVia [ IER ] &= ( val ^ 0x7f );
+				SystemViaClearInterrupt ( val );
+			}
 #ifdef	INFO
 			printf ( "System VIA IER = %02x\n", SystemVia [ IER ] );
 #endif
-
-			/*
-			 * Now check to see if we need to cause an IRQ.
-			 */
-
-			SystemViaSetInterrupt ( SystemVia [ IFR ] );
 			break;
 
 		case IFR :
@@ -939,6 +988,10 @@ SaveSystemVia ( int fd )
 {
 	byteval		via [ 32 ];
 
+#ifdef	FASTCLOCK
+	ViaClockUpdate ( ClockCyclesSoFar );
+	ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 	SystemVia [ T1CL ] = SystemViaTimer1 & 0xff;
 	SystemVia [ T1CH ] = SystemViaTimer1 >> 8;
 	SystemVia [ T2CL ] = SystemViaTimer2 & 0xff;

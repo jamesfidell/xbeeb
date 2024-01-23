@@ -1,10 +1,10 @@
 /*
  *
- * $Id: VideoUla.h,v 1.6 1996/10/09 22:06:59 james Exp $
+ * $Id: VideoUla.h,v 1.9 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,16 @@
  * Modification History
  *
  * $Log: VideoUla.h,v $
+ * Revision 1.9  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.8  2000/08/16 17:58:29  james
+ * Update copyright message
+ *
+ * Revision 1.7  1996/11/09 23:02:33  james
+ * Take account of the horizontal start of display based on the clock rate
+ * set in the Video ULA and the CRTC Horiz. Sync. register.
+ *
  * Revision 1.6  1996/10/09 22:06:59  james
  * Overhaul of the bitmapped screen handling code with particular respect to
  * colour maps.
@@ -77,5 +87,7 @@ extern	unsigned char		ByteWidth;
 extern	unsigned char		PixelsPerByte;
 extern	unsigned char		CursorByteWidth;
 extern	unsigned char		MasterCursorWidth;
+extern	unsigned char		ClockRate;
+extern	byteval				VidRegister0;
 
 #endif	/* VIDEOULA_H */

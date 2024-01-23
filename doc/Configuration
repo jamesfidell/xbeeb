@@ -1,4 +1,4 @@
-$Id: Configuration,v 1.8 1996/10/08 00:04:21 james Exp $
+$Id: Configuration,v 1.10 2000/09/02 18:48:25 james Exp $
 
 Setting up Config.h
 ===================
@@ -70,6 +70,12 @@ NEED_STRCASECMP
  have that function.
 
 
+NEED_STRTOUL
+
+ Define this to use the supplied strtoul if your C library doesn't have
+ it.
+
+
 EMUL_FS
 
  Defining this enables the emulated filing system.  Without it, you won't
@@ -109,7 +115,7 @@ SHIFTLOCK_SOUND_HACK
  Disable the Shift Lock key indicating that the sound buffer is full.
  This is recommended because having the Shift Lock key flickering whilst
  playing sound dramatically slows down the emulator.  Use this even
- if you don't have VOXWARE_SOUND defined.
+ if you don't have SOUND_OSS defined.
 
 
 M6502
@@ -132,9 +138,9 @@ DIP_SWITCHES
  Sets the default setting for the keyboard DIP switches.
 
 
-VOXWARE_SOUND
+SOUND_OSS
 
- Use the VoxWare sound emulation code.
+ Use the OSS sound emulation code.
 
 
 KEYMAP_STRICT
@@ -186,6 +192,12 @@ Revision History
 ================
 
 $Log: Configuration,v $
+Revision 1.10  2000/09/02 18:48:25  james
+Changed all VoxWare references to OSS
+
+Revision 1.9  1996/10/13 17:12:39  james
+Add local version of "strtoul" for those systems that don't have it.
+
 Revision 1.8  1996/10/08 00:04:21  james
 Added InfoWindow to show LED status.  Also required addition of the
 SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up

@@ -1,10 +1,10 @@
 /*
  *
- * $Id: VideoUla.c,v 1.9 1996/10/09 23:43:49 james Exp $
+ * $Id: VideoUla.c,v 1.15 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,28 @@
  * Modification History
  *
  * $Log: VideoUla.c,v $
+ * Revision 1.15  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.14  2000/08/16 17:58:29  james
+ * Update copyright message
+ *
+ * Revision 1.13  1996/11/17 23:19:39  james
+ * Only update the screen on a flashing colour swap if there are flashing
+ * colours in the colour map.  From an idea from David Ralph Stacey.
+ *
+ * Revision 1.12  1996/11/17 22:43:43  james
+ * Convert the DecodeColour function to use lookup tables.  (Code from
+ * David Ralph Stacey.)  Much faster, but eats memory :-)
+ *
+ * Revision 1.11  1996/11/09 23:02:32  james
+ * Take account of the horizontal start of display based on the clock rate
+ * set in the Video ULA and the CRTC Horiz. Sync. register.
+ *
+ * Revision 1.10  1996/10/13 17:23:38  james
+ * Renamed Register0 to VidRegister0 because of potential confusion with the
+ * Serial ULA Register 0
+ *
  * Revision 1.9  1996/10/09 23:43:49  james
  * Sort out Video ULA register wrap around.  Also tidy up setting of
  * BitsForColourInfo.
@@ -93,13 +115,14 @@ unsigned char				ByteWidth;
 unsigned char				PixelsPerByte;
 unsigned char				CursorByteWidth = 0;
 unsigned char				MasterCursorWidth = 0;
+unsigned char				ClockRate;
 
 static	unsigned char		FlashColour = 0;
+static	unsigned char		FlashColourCount;
 static	unsigned char		Teletext = 0;
-static	unsigned char		ClockRate;
 
 static	byteval				ColourMap [ 16 ];
-static	byteval				Register0;
+static	byteval				VidRegister0;
 
 static	byteval				oldval = 0xff;
 
@@ -107,6 +130,10 @@ static	byteval				FlashMap [ 16 ] =
 {
 	0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7
 };
+
+static	byteval				TwoColourTable [ 256 * 8 ];
+static	byteval				FourColourTable [ 256 * 4 ];
+static	byteval				SixteenColourTable [ 256 * 2 ];
 
 
 void
@@ -117,6 +144,97 @@ ResetVideoUla()
 	 *
 	 * I don't know what happens to this chip on power-up/reset
 	 */
+
+	int			i, j;
+	byteval		bits;
+
+	/*
+	 * Set up the colour map tables...
+	 */
+
+	for ( i = 0; i < 256; i++ )
+	{
+		for ( j = 0; j < 8; j++ )
+			TwoColourTable [ i << 3 | j ] = (( i >> ( 7 - j )) & 0x1 ) * 15;
+
+		for ( j = 0; j < 4; j++ )
+		{
+			bits = (( i >> ( 3 - j )) & 0x11 );
+			switch ( bits )
+			{
+				case 0x00:
+					FourColourTable [ i << 2 | j ] = 0;
+					break;
+				case 0x01:
+					FourColourTable [ i << 2 | j ] =  2;
+					break;
+				case 0x10:
+					FourColourTable [ i << 2 | j ] =  8;
+					break;
+				case 0x11:
+					FourColourTable [ i << 2 | j ] = 10;
+					break;
+			}
+		}
+
+		for ( j = 0; j < 2; j ++ )
+		{
+			bits = (( i >> ( 1 - j )) & 0x55 );
+			switch ( bits )
+			{
+				case 0x55:
+					SixteenColourTable [ i << 1 | j ] = 15;
+					break;
+				case 0x54:
+					SixteenColourTable [ i << 1 | j ] = 14;
+					break;
+				case 0x51:
+					SixteenColourTable [ i << 1 | j ] = 13;
+					break;
+				case 0x50:
+					SixteenColourTable [ i << 1 | j ] = 12;
+					break;
+				case 0x45:
+					SixteenColourTable [ i << 1 | j ] = 11;
+					break;
+				case 0x44:
+					SixteenColourTable [ i << 1 | j ] = 10;
+					break;
+				case 0x41:
+					SixteenColourTable [ i << 1 | j ] =  9;
+					break;
+				case 0x40:
+					SixteenColourTable [ i << 1 | j ] =  8;
+					break;
+				case 0x15:
+					SixteenColourTable [ i << 1 | j ] =  7;
+					break;
+				case 0x14:
+					SixteenColourTable [ i << 1 | j ] =  6;
+					break;
+				case 0x11:
+					SixteenColourTable [ i << 1 | j ] =  5;
+					break;
+				case 0x10:
+					SixteenColourTable [ i << 1 | j ] =  4;
+					break;
+				case 0x05:
+					SixteenColourTable [ i << 1 | j ] =  3;
+					break;
+				case 0x04:
+					SixteenColourTable [ i << 1 | j ] =  2;
+					break;
+				case 0x01:
+					SixteenColourTable [ i << 1 | j ] =  1;
+					break;
+				case 0x00:
+					SixteenColourTable [ i << 1 | j ] =  0;
+					break;
+			}
+		}
+	}
+
+	FlashColourCount = 0;
 
 	return;
 }
@@ -177,6 +295,19 @@ WriteVideoUla ( int addr, byteval val )
 
 		if ( ColourMap [ logical ] != physical )
 		{
+			/*
+			 * Update the number of flashing colours that are in the colour
+			 * map
+			 */
+
+			if (( ColourMap [ logical ] ^ physical ) & 0x8 )
+			{
+				if ( ColourMap [ logical ] < 0x8 )
+					FlashColourCount++;
+				else
+					FlashColourCount--;
+			}
+
 			ColourMap [ logical ] = physical;
 
 			/*
@@ -196,9 +327,16 @@ WriteVideoUla ( int addr, byteval val )
 	{
 		unsigned char		ocbw, omcw, ot;
 
-		Register0 = val;
+		VidRegister0 = val;
 
-		if ( FlashColour != ( Register0 & 0x01 ))
+		/*
+		 * FIX ME
+		 *
+		 * Hmmm.  This only has relevance for bitmapped modes.  Do we want
+		 * to enforce that ?
+		 */
+
+		if ( FlashColour != ( VidRegister0 & 0x01 ))
 		{
 			register int		i;
 
@@ -213,7 +351,14 @@ WriteVideoUla ( int addr, byteval val )
 			 * flash colour change! ?
 			 */
 
-			( void ) memset (( void* ) ScreenCheck, 1, 32768 );
+			/*
+			 * Only redraw the screen because of the flash colour swap
+			 * if we actually have physical flashing colours in the
+			 * colour map.
+			 */
+
+			if ( FlashColourCount )
+				( void ) memset (( void* ) ScreenCheck, 1, 32768 );
 		}
 
 		/*
@@ -229,7 +374,7 @@ WriteVideoUla ( int addr, byteval val )
 		 */
 
 		ot = Teletext;
-		Teletext = Register0 & 0x02;
+		Teletext = VidRegister0 & 0x02;
 #ifdef	INFO
 		if ( Teletext )
 			printf ( "teletext mode selected\n" );
@@ -244,23 +389,24 @@ WriteVideoUla ( int addr, byteval val )
 		 * In bitmapped mode, it appears to stretch the characters
 		 * somehow, so that they fit across the whole screen.  I'm not
 		 * exactly sure how the stretching works, however.
-		 */
-
-		/*
+		 *
 		 * FIX ME
 		 *
-		 * When the clock rate changes, we also need to change the position
-		 * across the screen where the display starts.
+		 * Where do the numbers come from here ?
 		 */
 
-		ClockRate = Register0 & 0x10;
+		ClockRate = VidRegister0 & 0x10;
+		if ( ClockRate )
+			StartPosnX = ( 98 - HorizSync ) * 8;
+		else
+			StartPosnX = ( 49 - HorizSync ) * 16;
 
 		/*
 		 * PixelWidth is the number of pixels in our real display that
 		 * each Beeb screen pixel takes up.
 		 */
 
-		switch ( Register0 & 0x0c )
+		switch ( VidRegister0 & 0x0c )
 		{
 			case 0x00 :
 				CharsPerLine = 10;
@@ -300,7 +446,7 @@ WriteVideoUla ( int addr, byteval val )
 		ocbw = CursorByteWidth;
 		omcw = MasterCursorWidth;
 
-		switch ( Register0 & 0x60 )
+		switch ( VidRegister0 & 0x60 )
 		{
 			case 0x00 :
 				CursorByteWidth = 1;
@@ -315,7 +461,7 @@ WriteVideoUla ( int addr, byteval val )
 				break;
 		}
 
-		MasterCursorWidth = Register0 >> 7;
+		MasterCursorWidth = VidRegister0 >> 7;
 
 		if ( ocbw != CursorByteWidth )
 			CursorResized = 1;
@@ -326,10 +472,10 @@ WriteVideoUla ( int addr, byteval val )
 			CursorMoved = 1;
 		}
 
-		if (( oldval & 0xfe ) != ( Register0 & 0xfe ))
+		if (( oldval & 0xfe ) != ( VidRegister0 & 0xfe ))
 		{
 #ifdef	INFO
-			switch ( Register0 )
+			switch ( VidRegister0 )
 			{
 				case 0x9c : case 0x9d :
 					printf ( "mode 0 or 3 selected\n" );
@@ -360,7 +506,7 @@ WriteVideoUla ( int addr, byteval val )
 			else
 				InitialiseBitmap();
 		}
-		oldval = Register0;
+		oldval = VidRegister0;
 	}
 	return;
 }
@@ -369,7 +515,7 @@ WriteVideoUla ( int addr, byteval val )
 byteval
 DecodeColour ( byteval info, byteval pixel )
 {
-	byteval			bits, col = 0;
+	byteval			col = 0;
 
 	/*
 	 * FIX ME
@@ -380,79 +526,13 @@ DecodeColour ( byteval info, byteval pixel )
 	switch ( BitsForColourInfo )
 	{
 		case 1 :
-			col = (( info >> ( 7 - pixel )) & 0x1 ) * 15;
+			col = TwoColourTable [ ( info << 3 ) | pixel ];
 			break;
 		case 2 :
-			bits = ( info >> ( 3 - pixel )) & 0x11;
-			switch ( bits )
-			{
-				case 0x11 :
-					col = 10;
-					break;
-				case 0x10 :
-					col = 8;
-					break;
-				case 0x01 :
-					col = 2;
-					break;
-				case 0x00 :
-					col = 0;
-					break;
-			}
+			col = FourColourTable [ ( info << 2 ) | pixel ];
 			break;
 		case 4 :
-			bits = ( info >> ( 1 - pixel )) & 0x55;
-			switch ( bits )
-			{
-				case 0x55 :
-					col = 15;
-					break;
-				case 0x54 :
-					col = 14;
-					break;
-				case 0x51 :
-					col = 13;
-					break;
-				case 0x50 :
-					col = 12;
-					break;
-				case 0x45 :
-					col = 11;
-					break;
-				case 0x44 :
-					col = 10;
-					break;
-				case 0x41 :
-					col = 9;
-					break;
-				case 0x40 :
-					col = 8;
-					break;
-				case 0x15 :
-					col = 7;
-					break;
-				case 0x14 :
-					col = 6;
-					break;
-				case 0x11 :
-					col = 5;
-					break;
-				case 0x10 :
-					col = 4;
-					break;
-				case 0x05 :
-					col = 3;
-					break;
-				case 0x04 :
-					col = 2;
-					break;
-				case 0x01 :
-					col = 1;
-					break;
-				case 0x00 :
-					col = 0;
-					break;
-			}
+			col = SixteenColourTable [ ( info << 1 ) | pixel ];
 			break;
 		default :
 			/*
@@ -492,7 +572,7 @@ SaveVideoUla ( int fd )
 	 */
 
 	memcpy ( vid, ColourMap, 16 );
-	vid [ 16 ] = Register0;
+	vid [ 16 ] = VidRegister0;
 
 	if ( write ( fd, vid, 32 ) != 32 )
 		return -1;
@@ -526,13 +606,13 @@ RestoreVideoUla ( int fd, unsigned int ver )
 
 	memcpy ( ColourMap, vid, 16 );
 
-	Register0 = vid [ 16 ];
-	oldval = Register0;
+	VidRegister0 = vid [ 16 ];
+	oldval = VidRegister0;
 
-	FlashColour = Register0 & 0x01;
-	Teletext = Register0 & 0x02;
-	ClockRate = Register0 & 0x10;
-	switch ( Register0 & 0x0c )
+	FlashColour = VidRegister0 & 0x01;
+	Teletext = VidRegister0 & 0x02;
+	ClockRate = VidRegister0 & 0x10;
+	switch ( VidRegister0 & 0x0c )
 	{
 		case 0x00 :
 			CharsPerLine = 10;
@@ -558,7 +638,7 @@ RestoreVideoUla ( int fd, unsigned int ver )
 	PixelsPerByte = 8 / BitsForColourInfo;
 	ByteWidth = PixelWidth * PixelsPerByte;
 
-	switch ( Register0 & 0x60 )
+	switch ( VidRegister0 & 0x60 )
 	{
 		case 0x00 :
 			CursorByteWidth = 1;
@@ -573,7 +653,7 @@ RestoreVideoUla ( int fd, unsigned int ver )
 			break;
 	}
 
-	MasterCursorWidth = Register0 >> 7;
+	MasterCursorWidth = VidRegister0 >> 7;
 
 	if ( Teletext )
 		InitialiseTeletext();

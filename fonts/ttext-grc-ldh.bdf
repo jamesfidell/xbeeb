@@ -1,10 +1,10 @@
 STARTFONT 2.1
 COMMENT  
-COMMENT   $Id: ttext-grc-ldh.bdf,v 1.2 1996/09/24 23:05:24 james Exp $
+COMMENT   $Id: ttext-grc-ldh.bdf,v 1.5 2002/01/15 15:46:39 james Exp $
 COMMENT  
-COMMENT   Copyright (c) James Fidell 1995, 1996.
+COMMENT   Copyright (C) James Fidell 1995-2002.
 COMMENT  
-COMMENT   Permission to use, copy, modify, distribute, and sell this
+COMMENT   Permission to use, copy, modify and distribute this
 COMMENT   software and its documentation for any purpose is hereby
 COMMENT   granted without fee, provided that the above copyright notice
 COMMENT   appear in all copies and that both that copyright notice and
@@ -29,6 +29,15 @@ COMMENT
 COMMENT   Revision History
 COMMENT
 COMMENT   $Log: ttext-grc-ldh.bdf,v $
+COMMENT   Revision 1.5  2002/01/15 15:46:39  james
+COMMENT   *** empty log message ***
+COMMENT
+COMMENT   Revision 1.4  2000/09/08 00:08:57  james
+COMMENT   more copyright message updates
+COMMENT
+COMMENT   Revision 1.3  2000/08/16 17:58:24  james
+COMMENT   Update copyright message
+COMMENT
 COMMENT   Revision 1.2  1996/09/24 23:05:24  james
 COMMENT   Update copyright dates.
 COMMENT

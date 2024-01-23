@@ -1,7 +1,10 @@
 /*
- * Copyright (c) James Fidell 1994, 1995, 1996.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * $Id: Bitmap.c,v 1.29 2002/01/15 15:46:43 james Exp $
+ *
+ * Copyright (C) James Fidell 1994-2002.
+ *
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -22,6 +25,74 @@
  *
  */
 
+/*
+ * Modification History
+ *
+ * $Log: Bitmap.c,v $
+ * Revision 1.29  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.28  2002/01/13 22:27:19  james
+ * Fix compile-time warnings
+ *
+ * Revision 1.27  2000/09/07 23:10:34  james
+ * Tidyups and correct fix for not correctly handling bitmap screens where
+ * existing colour matches current
+ *
+ * Revision 1.26  2000/09/07 22:05:09  james
+ * Fix bug with drawing new pixels on the screen (not checking that both
+ * components of the pixel needed to change colour).
+ *
+ * Revision 1.25  2000/09/07 21:59:03  james
+ * Add FASTHOST configurable.  Make bitmap displays read data properly rather
+ * than direct from the memory array when this is enabled.
+ *
+ * Revision 1.24  2000/09/07 21:30:39  james
+ * Fix coredump
+ *
+ * Revision 1.23  2000/08/17 22:57:43  james
+ * Make screen updates work when they're restricted to only the area of the
+ * display that has changed.
+ *
+ * Revision 1.22  2000/08/16 17:58:26  james
+ * Update copyright message
+ *
+ * Revision 1.21  2000/08/16 17:41:45  james
+ * Changes to work on TrueColor displays
+ *
+ * Revision 1.20  1996/11/25 00:01:16  james
+ * Remove the "Default Vertical Sync value" magic number.
+ *
+ * Revision 1.19  1996/11/24 21:54:07  james
+ * Change MIN to XBEEB_MIN to avoid clashes with some OSes.
+ *
+ * Revision 1.18  1996/11/18 01:01:27  james
+ * Changes to comments.
+ *
+ * Revision 1.17  1996/11/16 23:49:54  james
+ * Only update blanked lines if they don't already have the correct colour.
+ *
+ * Revision 1.16  1996/11/11 23:52:30  james
+ * Corrections for non-MITSHM code.
+ *
+ * Revision 1.15  1996/11/09 23:16:05  james
+ * Clear scan line to end of screen display in non-shared memory
+ * configuration.
+ *
+ * Revision 1.14  1996/11/09 23:02:27  james
+ * Take account of the horizontal start of display based on the clock rate
+ * set in the Video ULA and the CRTC Horiz. Sync. register.
+ *
+ * Revision 1.13  1996/11/09 22:32:53  james
+ * Updated bitmapped screen-handling code to take account of the Vertical
+ * Adjust register in the CRTC.
+ *
+ * Revision 1.12  1996/11/07 23:41:36  james
+ * Add CVS headers.
+ *
+ *
+ */
+
 
 #include <stdio.h>
 #include <memory.h>
@@ -36,6 +107,7 @@
 #include "Modes.h"
 #include "Crtc.h"
 #include "VideoUla.h"
+#include "Sheila.h"
 
 #ifdef	MITSHM
 #include <sys/ipc.h>
@@ -44,8 +116,10 @@
 #endif
 
 byteval					BitsForColourInfo;
-int						BitmapWindowX = 0;
-int						BitmapWindowY = 0;
+int						BitmapWindowX = BMAP_WIN_X;
+int						BitmapWindowY = BMAP_WIN_Y;
+
+unsigned short			StartPosnX;
 
 static int				CursorTimer;
 static byteval			CursorOnScreen;
@@ -62,10 +136,10 @@ static unsigned int		CursorViewable = 0;
 static void				DrawCursor();
 #endif
 
-#define	MIN(x,y)		((( x ) < ( y )) ? ( x ) : ( y ))
 
 #ifdef	MITSHM
-static unsigned int		Xmax = 0, Xmin = 639, Ymin = 511, Ymax = 0;
+static unsigned int		Xmin = BMAP_WIN_W - 1, Xmax = 0;
+static unsigned int		Ymin = BMAP_WIN_H - 1, Ymax = 0;
 #endif
 
 
@@ -132,6 +206,13 @@ InitialiseBitmap()
 	( void ) memset (( void* ) ScreenCheck, 1, 32768 );
 
 	/*
+	 * Default vertical sync. position (so we put the window somewhere
+	 * sane on the screen...
+	 */
+
+	DefaultVertSync = 35;
+
+	/*
 	 * FIX ME
 	 *
 	 * And do the rest...
@@ -151,11 +232,11 @@ BitmapScanlineUpdate ( unsigned int scanline )
 {
 	unsigned int			p, byte, h, scanline2;
 	byteval					colour_info, pix, colour;
-	char					*ip;
 #ifdef	MITSHM
+	unsigned int			dX = 0, dY;
 	unsigned int			Xcurr = 0;
 #else
-	unsigned int			hpos = 0;
+	unsigned int			hpos;
 #endif	/* MITSHM */
 
 	/*
@@ -175,6 +256,8 @@ BitmapScanlineUpdate ( unsigned int scanline )
 	LastScanline = scanline;
 
 	/*
+	 * All given that TV_LINES = 625 :
+	 *
 	 * FIX ME
 	 *
 	 * I think that scanlines 0 thru' 311 go down the screen one scan line
@@ -190,17 +273,27 @@ BitmapScanlineUpdate ( unsigned int scanline )
 	 *
 	 * FIX ME
 	 *
-	 * The 312 figure shouldn't come out of thin air here -- it should
-	 * come from CRTC R4/R5.
+	 * The TV_LINES / 2 figure shouldn't come out of thin air here -- it
+     * should come from CRTC R4/R5.
 	 */
 
-	if ( scanline > 312 )
+	if (( scanline + 1 ) > ( TV_LINES / 2 ))
 		return;
 
 	scanline2 = scanline * 2;
 
+	/*
+	 * FIX ME
+	 *
+	 * Below we cope with the Vertical Adjust value for shared memory
+	 * configurations.  Code is required for the non-shared memory
+	 * implementation too.
+	 */
+
 #ifdef	MITSHM
-	ip = ImageData + ( scanline2 * BytesPerImageLine );
+	dY = scanline2 + VertAdjust2;
+	if ( dY > BMAP_WIN_H )
+		return;
 #endif
 
 	/*
@@ -216,20 +309,36 @@ BitmapScanlineUpdate ( unsigned int scanline )
 						scanline >= ( VertDisplayed * ScanLinesPlus1 ))
 	{
 #ifdef	MITSHM
-		for ( p = 0; p < 640; p++, ip++ )
+
+		/*
+		 * FIX ME
+		 *
+		 * Not only is this flawed... It doesn't work, either.
+		 */
+
+		for ( p = 0; p < BMAP_WIN_W; p++ )
 		{
-			*ip = Cells [ 0 ];
-			ip [ BytesPerImageLine ] = Cells [ 0 ];
+			/*
+			 * If the image already has the right colour, don't bother
+			 * changing it.
+			 */
+
+			if (( XGetPixel ( BitmapImage, p, dY )) != Cells[0] )
+			{
+				XPutPixel ( BitmapImage, p, dY, Cells[0] );
+				XPutPixel ( BitmapImage, p, dY+1, Cells[0] );
+				ScreenImageChanged = 1;
+			}
 		}
 		Xmin = 0;
-		Xmax = 639;
+		Xmax = BMAP_WIN_W - 1;
 		if ( scanline2 < Ymin )
 			Ymin = scanline2;
 		if ( scanline2 > Ymax )
 			Ymax = scanline2 + 1;
 #else
 		XFillRectangle ( dpy, BitmapPixmap, BitmapGC [ 0 ], 0, scanline2,
-																	639, 2 );
+														BMAP_WIN_W - 1, 2 );
 #endif	/* MITSHM */
 		return;
 	}
@@ -239,6 +348,12 @@ BitmapScanlineUpdate ( unsigned int scanline )
 	if ( p > 0x8000 )
 		p -= ScreenLength;
 
+#ifndef	MITSHM
+	if (( hpos = StartPosnX ) > 0 )
+		 XFillRectangle ( dpy, BitmapPixmap, BitmapGC [ 0 ], 0, scanline2,
+																	 hpos, 2 );
+#endif	/* MITSHM */
+
 	for ( byte = 0; byte < HorizDisplayed; byte++, p += 8 )
 	{
 		if ( p >= 0x8000 )
@@ -246,51 +361,36 @@ BitmapScanlineUpdate ( unsigned int scanline )
 
 		if ( ScreenCheck [ p ] )
 		{
-			/*
-			 * POSSIBLE ENHANCEMENT ?
-			 *
-	 		 * Really shouldn't address memory directly here because we
-			 * don't know what effect it might have on the system if it's
-			 * mapped to somewhere strange.  It's a damn sight faster,
-			 * though.
-			 */
-	
 #ifdef	MODEL_B_ONLY
+#ifdef	FASTHOST
+			colour_info = ReadByte ( p );
+#else
 			colour_info = Mem [ p ];
+#endif	/* FASTHOST */
+#else	/* MODEL_B_ONLY */
+#ifdef	FASTHOST
+			colour_info = ReadByte ( p & MaxRAMAddress );
 #else
 			colour_info = Mem [ p & MaxRAMAddress ];
+#endif	/* FASTHOST */
 #endif
 #ifdef	MITSHM
 			for ( pix = 0; pix < PixelsPerByte; pix++ )
 			{
 				colour = DecodeColour ( colour_info, pix );
-
-				/*
-				 * FIX ME
-				 *
-				 * There's a problem here that causes a line to be left on
-				 * the far right-hand side of the screen.  Don't know
-				 * what it is yet.
-				 */
-
-				if ( *ip != Cells [ colour ] )
+				for ( h = 0; h < PixelWidth; h++, dX++ )
 				{
-					for ( h = 0; h < PixelWidth; h++, ip++ )
+					if ( XGetPixel ( BitmapImage, dX, dY ) != Cells[colour] )
 					{
-						*ip = Cells [ colour ];
-						ip [ BytesPerImageLine ] = Cells [ colour ];
+						XPutPixel ( BitmapImage, dX, dY, Cells[colour] );
+						XPutPixel ( BitmapImage, dX, dY+1, Cells[colour] );
+						ScreenImageChanged = 1;
+						if ( Xcurr < Xmin )
+							Xmin = Xcurr;
+						if ( Xcurr > Xmax )
+							Xmax = Xcurr;
 					}
-					ScreenImageChanged = 1;
-					if ( Xcurr < Xmin )
-						Xmin = Xcurr;
-					Xcurr += PixelWidth;
-					if ( Xcurr > Xmax )
-						Xmax = Xcurr - 1;
-				}
-				else
-				{
-					Xcurr += PixelWidth;
-					ip += PixelWidth;
+					Xcurr++;
 				}
 			}
 #else	/* MITSHM */
@@ -318,13 +418,27 @@ BitmapScanlineUpdate ( unsigned int scanline )
 #ifdef	MITSHM
 		else
 		{
-			ip += ( PixelsPerByte * PixelWidth );
+			dX += ( PixelsPerByte * PixelWidth );
 			Xcurr += PixelWidth;
 		}
 #else	/* MITSHM */
 		hpos += ByteWidth;
 #endif	/* MITSHM */
 	}
+
+#ifndef	MITSHM
+	/*
+	 * FIX ME
+	 *
+	 * This doesn't take account of the fact that the colour shouldn't be
+	 * affected by colour map changes -- a bit like the missing scanlines
+	 * in MODEs 3 and 6.
+	 */
+
+	if ( hpos < BMAP_WIN_X )
+		XFillRectangle ( dpy, BitmapPixmap, BitmapGC [ 0 ], hpos, scanline2,
+											( BMAP_WIN_X - hpos ), 2 );
+#endif	/* MITSHM */
 
 	return;
 }
@@ -344,16 +458,13 @@ BitmapScreenUpdate()
 	{
 #ifdef	MITSHM
 		/*
-		 * FIX ME
-		 *
-		 * This doesn't work properly because of interactions that I don't
-		 * yet understand...  So, set the values to copy the whole screen.
-		 * 
+		 * Bit of a hack, this, but we may have set Ymax to be one too
+		 * many, above, reduce it if required here.
 		 */
-	
-		Xmax = 639;
-		Ymax = 511;
-		Xmin = Ymin = 0;
+
+		if ( Ymax >= BMAP_WIN_H )
+			Ymax = BMAP_WIN_H - 1;
+
 		if ( Xmin <= Xmax && Ymin <= Ymax )
 		{
 			unsigned int		Xsize = Xmax - Xmin + 1;
@@ -362,17 +473,18 @@ BitmapScreenUpdate()
 			XShmPutImage ( dpy, BitmapScreen, CopyAreaGC, BitmapImage,
 					Xmin, Ymin, Xmin, Ymin, Xsize, Ysize, False );
 			Xmax = Ymax = 0;
-			Xmin = 639;
-			Ymin = 511;
+			Xmin = BMAP_WIN_W - 1;
+			Ymin = BMAP_WIN_H - 1;
 			XFlush ( dpy );
 		}
 #else
-		XCopyArea ( dpy, BitmapPixmap, BitmapScreen, CopyAreaGC,
-													0, 0, 640, 512, 0, 0 );
+		XCopyArea ( dpy, BitmapPixmap, BitmapScreen, CopyAreaGC, BMAP_WIN_X,
+								BMAP_WIN_Y, BMAP_WIN_W, BMAP_WIN_H, 0, 0 );
 		XFlush ( dpy );
 #endif	/* MITSHM */
 		ScreenImageChanged = 0;
 	}
+
 	return;
 }
 
@@ -420,7 +532,8 @@ DrawCursor()
 					else
 						CursorViewable = 1;
 					CursorY = NewCursorY * 19 + CursorStartLine;
-					CursorDepth = MIN(19, CursorEndLine - CursorStartLine + 1);
+					CursorDepth = XBEEB_MIN ( 19, ( CursorEndLine -
+														CursorStartLine + 1 ));
 					CursorWidth = ( CursorByteWidth - 1 + MasterCursorWidth )
 																		* 12;
 					CursorResized = 0;
@@ -450,7 +563,8 @@ DrawCursor()
 					else
 						CursorViewable = 1;
 					CursorY = NewCursorY * 19 + CursorStartLine;
-					CursorDepth = MIN(19, CursorEndLine - CursorStartLine + 1);
+					CursorDepth = XBEEB_MIN ( 19, ( CursorEndLine -
+														CursorStartLine + 1 ));
 					CursorWidth = ( CursorByteWidth - 1 + MasterCursorWidth )
 																		* 12;
 					CursorResized = 0;
@@ -492,8 +606,8 @@ DrawCursor()
 						else
 							CursorViewable = 1;
 						CursorY = NewCursorY * 19 + CursorStartLine;
-						CursorDepth = MIN ( 19, CursorEndLine -
-														CursorStartLine + 1 );
+						CursorDepth = XBEEB_MIN ( 19, ( CursorEndLine -
+														CursorStartLine + 1 ));
 						CursorWidth = ( CursorByteWidth - 1 +
 													MasterCursorWidth ) * 12;
 						CursorResized = 0;
@@ -522,8 +636,8 @@ DrawCursor()
 					else
 						CursorViewable = 1;
 					CursorY = NewCursorY * 19 + CursorStartLine;
-					CursorDepth = MIN ( 19, CursorEndLine -
-													CursorStartLine + 1 );
+					CursorDepth = XBEEB_MIN ( 19, ( CursorEndLine -
+													CursorStartLine + 1 ));
 					CursorWidth = ( CursorByteWidth - 1 + MasterCursorWidth )
 																		* 12;
 					CursorResized = 0;

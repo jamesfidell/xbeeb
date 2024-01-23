@@ -1,10 +1,10 @@
 /*
  *
- * $Id: KeymapStrict.c,v 1.2 1996/10/10 21:55:45 james Exp $
+ * $Id: KeymapStrict.c,v 1.8 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1996.
+ * Copyright (C) James Fidell 1996-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,25 @@
  * Modification History
  *
  * $Log: KeymapStrict.c,v $
+ * Revision 1.8  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.7  2002/01/14 22:22:12  james
+ * correctly interpret function keys
+ *
+ * Revision 1.6  2002/01/14 22:18:51  james
+ * Added support for .inf files
+ *
+ * Revision 1.5  2002/01/13 23:36:13  james
+ * Add patch from Russell Marks to allow more meta keys to work as CTRL and
+ * SHIFT LOCK
+ *
+ * Revision 1.4  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
+ * Revision 1.3  1996/10/12 15:43:22  james
+ * Configured Pause key to BREAK.
+ *
  * Revision 1.2  1996/10/10 21:55:45  james
  * Correctly place #ifdef's for KEYMAP_LEGEND & KEYMAP_STRICT.
  *
@@ -48,7 +67,7 @@
 #include "Beeb.h"
 #include "Keyboard.h"
 #include "Keymap.h"
-#include "EFS.h"
+#include "EmulFS.h"
 
 
 #ifdef	KEYMAP_STRICT
@@ -63,43 +82,43 @@ HandleKey ( XKeyEvent *key_event, signed char action )
 			break;
 
 		case XK_F1 :	/* F1 */
-			KeyboardMatrixUpdate ( KEY_F1, action );
+			KeyboardMatrixUpdate ( KEY_F0, action );
 			break;
 
 		case XK_F2 :	/* F2 */
-			KeyboardMatrixUpdate ( KEY_F2, action );
+			KeyboardMatrixUpdate ( KEY_F1, action );
 			break;
 
 		case XK_F3 :	/* F3 */
-			KeyboardMatrixUpdate ( KEY_F3, action );
+			KeyboardMatrixUpdate ( KEY_F2, action );
 			break;
 
 		case XK_F4 :	/* F4 */
-			KeyboardMatrixUpdate ( KEY_F4, action );
+			KeyboardMatrixUpdate ( KEY_F3, action );
 			break;
 
 		case XK_F5 :	/* F5 */
-			KeyboardMatrixUpdate ( KEY_F5, action );
+			KeyboardMatrixUpdate ( KEY_F4, action );
 			break;
 
 		case XK_F6 :	/* F6 */
-			KeyboardMatrixUpdate ( KEY_F6, action );
+			KeyboardMatrixUpdate ( KEY_F5, action );
 			break;
 
 		case XK_F7 :	/* F7 */
-			KeyboardMatrixUpdate ( KEY_F7, action );
+			KeyboardMatrixUpdate ( KEY_F6, action );
 			break;
 
 		case XK_F8 :	/* F8 */
-			KeyboardMatrixUpdate ( KEY_F8, action );
+			KeyboardMatrixUpdate ( KEY_F7, action );
 			break;
 
 		case XK_F9 :	/* F9 */
-			KeyboardMatrixUpdate ( KEY_F9, action );
+			KeyboardMatrixUpdate ( KEY_F8, action );
 			break;
 
 		case XK_F10 :	/* F10 */
-			KeyboardMatrixUpdate ( KEY_F0, action );
+			KeyboardMatrixUpdate ( KEY_F9, action );
 			break;
 
 		case XK_1 :
@@ -303,6 +322,9 @@ HandleKey ( XKeyEvent *key_event, signed char action )
 			break;
 
 		case XK_Alt_L :
+		case XK_Meta_L :
+		case XK_Super_L : case XK_Super_R :
+		case XK_Hyper_L : case XK_Hyper_R :
 			KeyboardMatrixUpdate ( KEY_CTRL, action );
 			break;
 
@@ -343,6 +365,7 @@ HandleKey ( XKeyEvent *key_event, signed char action )
 			break;
 
 		case XK_Alt_R :
+		case XK_Meta_R :
 			KeyboardMatrixUpdate ( KEY_SHIFTLOCK, action );
 			break;
 

@@ -1,17 +1,11 @@
-$Id: README,v 1.3 1996/10/10 22:40:33 james Exp $
+$Id: README,v 1.6 2002/01/14 23:20:28 james Exp $
 
-This is the third release of my BBC Micro emulator for UNIX and X11.
+This is the fourth release of my BBC Micro emulator for UNIX and X11.
 
-The code is known to compile and run on Linux (Slackware 2.1) and on
-Sparc Solaris 2.5. If it works on any other systems, please let me know.
-If you need to make changes to get it to work, please tell me that, too.
-
-NOTE:  The trap values used for entry to the emulated file system have
-changed since v0.2 to allow the original values to be properly implemented
-as on the chip.  The new values used are ones which hang the original
-6502 and so it should not be necessary to change things again.  It does
-mean that ROMs patched to work with v0.2 will need to be changed again,
-though.  pch/pch.c has been updated to do this.
+The code is known to compile and run on Linux (RedHat 7.2 and an unknown
+but relatively recent version of Debian).  If it works on any other systems,
+please let me know.  If you need to make changes to get it to work, please
+tell me that, too.
 
 See the files in the doc directory for further information, including
 installation instructions.
@@ -36,20 +30,17 @@ The keyboard handling is pretty much there, but not quite perfect as the
 Beeb has a somewhat non-standard keyboard layout compared with most I've
 used.  See doc/Keyboard for more information on this.
 
-There are two disk emulations.  Documentation on the formats are in the
+There are several disk emulations.  Documentation on the formats are in the
 doc/DiskEmulation file.
 
 Paged ROMs/RAM are supported.
 
-There is a snapshot format for saving the complete machine state.  See
-doc/SnapshotFormat for the specification of the snapshot format.  This is
-due for a complete rewrite Real Soon Now(tm).
+Sound is supported via OSS, but needs further work.
 
-A very much alpha sound implementation is included for VoxWare under
-Linux.  Support for non-standard shape/size screens is there but not
-perfect.
+Support for non-standard shape/size screens is there but not perfect.
 
-All bitmapped graphics MODEs are supported.
+All bitmapped graphics MODEs are supported, but the cursor doesn't work
+properly.
 
 
 What isn't supported
@@ -72,10 +63,6 @@ To start as if from power-up, just :
 
 	$ xbeeb
 
-or if you want to run a snapshot :
-
-	$ xbeeb <snapshot-name>
-
 For details of all the command line options, see the doc/Options file.
 
 
@@ -86,13 +73,13 @@ The code is somewhat ugly -- I started out writing clean modular code
 and found that there was just no way I could get anything approaching
 the performance I wanted, so I gave up.
 
-Performance is now roughly the same as that of the original machine
-on my 486DX2 Linux machine though it does vary somewhat depending on
-the type of program -- possibly the fastest I've seen is about twice
-the speed of a Beeb, going down to around two thirds of the speed.
+Performance obviously depends on hardware, but also on the type of
+program.  Sound has a large impact on performance and can get 
+little lagged at times.  On my 733MHz Pentium III I've run it up to
+20 times faster than the original machine, which makes it completely
+unusable.  The default configuration is therefore to try to slow
+the emulation down to run at the correct speed.  Just about any
+Pentium-class machine should be able to run the emulator without
+speed problems, unless you happen to have something like a Pentium 90.
 
-I use 4-character tab settings in vi.  If you read the code using
-8-character tab settings, it will look even worse than it already does.
-
-Please mail any comments, suggestions, whatever, to
-james@hermione.demon.co.uk.
+Please mail any comments, suggestions, whatever, to james@cloud9.co.uk.

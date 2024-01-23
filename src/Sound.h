@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Sound.h,v 1.5 1996/10/01 22:30:33 james Exp $
+ * $Id: Sound.h,v 1.9 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,18 @@
  * Modification History
  *
  * $Log: Sound.h,v $
+ * Revision 1.9  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.8  2002/01/13 22:50:23  james
+ * Add -q option to turn off sound
+ *
+ * Revision 1.7  2000/09/06 11:41:13  james
+ * First cut at "proper" sound code
+ *
+ * Revision 1.6  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
  * Revision 1.5  1996/10/01 22:30:33  james
  * Added VoxWare sound code from James Murray <jsm@jsm-net.demon.co.uk>.
  *
@@ -83,9 +95,13 @@
 #ifndef	SOUND_H
 #define	SOUND_H
 
-extern void		InitialiseSound();
-extern void		SoundWrite ( byteval );
-extern byteval	SpeechRead();
-extern void		SpeechWrite ( byteval );
+extern void				InitialiseSound();
+extern void				SoundWrite ( byteval );
+extern void				SoundRefresh();
+extern byteval			SpeechRead();
+extern void				SpeechWrite ( byteval );
+
+extern unsigned long 	SoundCallSecs, SoundCallUsecs;
+extern unsigned int		SoundOn;
 
 #endif	/* SOUND_H */

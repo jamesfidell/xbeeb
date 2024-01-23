@@ -1,0 +1,34 @@
+.TH xbeeb 1 "X11 BBC Micro Emulator" "14 January 2002"
+.SH NAME
+xbeeb \- BBC Micro Emulator for X Windows
+.sp
+.SH SYNOPSIS
+.nf
+xbeeb \fI[-Vh?aq] [-o <OS ROM>][-p[0-15] <paged ROM>] [-w <num>] [-s <num>] [-d <dir>]\fR 
+.fi
+.SH DESCRIPTION
+xbeeb is an emulator for the BBC Microcomputer systems produced by Acorn
+in the early 1980's.  It runs much of the available original BBC Micro
+software.
+.SH OPTIONS
+.B -o
+specifies the image to load for the OS ROM
+.B -p num
+loads a paged ROM image into the specified paged ROM slot.  Where the slot
+number is not specified, the default is 15.
+.B -w num
+makes the specified paged ROM slot writable
+.B -s num
+specifies the settings for the keyboard DIP switches
+.B -d dir
+specifies a directory containing file images for the emulator
+.B -q
+turns off sound
+.B -a
+starts the emulator as a "Model A" \- with 16K RAM rather than 32K.
+.B -V
+displays the emulator version
+-B -h -?
+displays the help message
+.SH AUTHOR
+James Fidell (james@cloud9.co.uk)

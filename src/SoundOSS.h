@@ -1,10 +1,10 @@
 /*
  *
- * $Id: EFS.h,v 1.2 1996/09/24 23:05:37 james Exp $
+ * $Id: SoundOSS.h,v 1.3 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1995-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -28,23 +28,26 @@
 /*
  * Modification History
  *
- * $Log: EFS.h,v $
- * Revision 1.2  1996/09/24 23:05:37  james
- * Update copyright dates.
+ * $Log: SoundOSS.h,v $
+ * Revision 1.3  2002/01/15 15:46:43  james
+ * *** empty log message ***
  *
- * Revision 1.1  1996/09/22 19:23:21  james
- * Add the emulated filing system code.
+ * Revision 1.2  2000/09/06 11:41:13  james
+ * First cut at "proper" sound code
+ *
+ * Revision 1.1  2000/09/02 18:48:26  james
+ * Changed all VoxWare references to OSS
+ *
  *
  *
  */
 
 
-#ifndef	EFS_H
-#define	EFS_H
+#ifndef	SOUNDOSS_H
+#define	SOUNDOSS_H
 
-extern  byteval			Emulate_OSFILE ( byteval, byteval, byteval );
-extern  unsigned int	Emulate_OSFSC ( byteval, byteval, byteval, int* );
-extern  int				ChangeDiskDirectory ( char * );
-extern  void			ChangeDisk();
+extern void		InitialiseOSS();
+extern void		OSSWrite ( byteval );
+extern void		OSSSoundRefresh();
 
-#endif	/* EFS_H */
+#endif	/* SOUNDOSS_H */

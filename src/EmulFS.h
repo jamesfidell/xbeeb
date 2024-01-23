@@ -1,7 +1,10 @@
 /*
- * Copyright (c) James Fidell 1996.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * $Id: EmulFS.h,v 1.2 2002/01/15 15:46:43 james Exp $
+ *
+ * Copyright (C) James Fidell 2002.
+ *
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -22,38 +25,26 @@
  *
  */
 
-#ifndef	PERMS_H
-#define	PERMS_H
-
 /*
- * This file exists only to fill in bits that appear to be missing
- * on some operating systems.  In particular in is derived from
- * patches that Robert Schmidt (robert@idt.unit.no) sent me to build
- * Xbeeb for eXceed and Win32
- */
-
-/*
- * F_OK and R_OK are used in calls to "access" to check file permissions.
- * On a UNIX system, I'd expect to find them in <unistd.h>
- */
-
-#ifndef	F_OK
-#define	F_OK		0
-#endif
-
-#ifndef	R_OK
-#define	R_OK		4
-#endif
-
-/*
- * O_BINARY is a nasty non-UNIX thing to tell the OS we're using binary
- * files. UNIX doesn't use/have this, so I just #define it as zero here
- * -- it's only ORed with lots of other file attributes...
+ * Modification History
+ *
+ * $Log: EmulFS.h,v $
+ * Revision 1.2  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.1  2002/01/14 22:18:51  james
+ * Added support for .inf files
+ *
+ *
  */
 
 
-#ifndef	O_BINARY
-#define	O_BINARY	0
-#endif
+#ifndef	EMULFS_H
+#define	EMULFS_H
 
-#endif	/* PERMS_H */
+extern  byteval			Emulate_OSFILE ( byteval, byteval, byteval );
+extern  unsigned int	Emulate_OSFSC ( byteval, byteval, byteval, int* );
+extern  int				ChangeDiskDirectory ( char * );
+extern  void			ChangeDisk();
+
+#endif	/* EMULFS_H */

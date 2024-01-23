@@ -1,10 +1,10 @@
 /*
  *
- * $Id: InfoWindow.h,v 1.1 1996/10/10 21:52:20 james Exp $
+ * $Id: InfoWindow.h,v 1.3 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1996.
+ * Copyright (C) James Fidell 1996-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,12 @@
  * Modification History
  *
  * $Log: InfoWindow.h,v $
+ * Revision 1.3  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.2  2000/08/16 17:58:27  james
+ * Update copyright message
+ *
  * Revision 1.1  1996/10/10 21:52:20  james
  * Add Info Window with status LEDs.
  *

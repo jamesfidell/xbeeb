@@ -1,38 +1,36 @@
-$Id: MailingLists,v 1.2 1996/10/10 22:32:14 james Exp $
+$Id: MailingLists,v 1.4 2000/08/16 18:07:15 james Exp $
 
 Mailing lists
 =============
 
-The BBC micro mailing list has moved to bbc-micro@OiT.co.uk.  To subscribe,
-send a message to bbc-micro-request@OiT.co.uk with the word "subscribe" as
-the body of the message.  Send the word "help" as the body to the same
-address for information about the mailing list.  I volunteered to take
-this list over because it needed a new home.
+The BBC micro mailing list has moved to bbc-micro@cloud9.co.uk.  To
+subscribe, send a message to majordomo@cloud9.co.uk with the line
 
-The BBC micro emulators mailing list has moved to
-beeb-emulators@OiT.co.uk. To subscribe, send a message to
-beeb-emulators-request@OiT.co.uk with the word "subscribe" as the body
-of the message. Send the word "help" as the body to the same address for
-information about the mailing list.  This list just appeared to die
-last year, possibly because it was run from a student account.  I'm
-starting it up again.
+    subscribe bbc-micro
 
-The Xbeeb mailing list is at xbeeb@OiT.co.uk. To subscribe, send a
-message to xbeeb-request@OiT.co.uk with the word "subscribe" as the body
-of the message. Send the word "help" as the body to the same address for
-information about the mailing list.
+as the body of the message.  Send the word "help" as the body to the
+same address for information about the mailing lists and using majordomo.
 
+Also, the Xbeeb mailing list is at xbeeb@cloud9.co.uk.  To subscribe,
+you've probably guessed by now that you need to send a message to
+majordomo@cloud9.co.uk with the line
 
-At some stage in the near future I hope to move these lists elsewhere,
-since I no longer work at OiT.  I'll make sure that everyone knows
-when that happens and make sure something sane happens to the OiT
-e-mail when I'm ready.
+    subscribe xbeeb
+
+in the body of the message.
+
 
 
 Revision History
 ================
 
 $Log: MailingLists,v $
+Revision 1.4  2000/08/16 18:07:15  james
+Updates for CloudNine domain
+
+Revision 1.3  1996/10/13 17:17:17  james
+Updates for move to NETCOM.
+
 Revision 1.2  1996/10/10 22:32:14  james
 Update because I've moved jobs :-)
 

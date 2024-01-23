@@ -1,10 +1,10 @@
 /*
  *
- * $Id: pch.c,v 1.4 1996/10/10 22:15:14 james Exp $
+ * $Id: pch.c,v 1.6 2002/01/15 15:46:40 james Exp $
  *
- * Copyright (c) James Fidell 1995, 1996.
+ * Copyright (C) James Fidell 1995-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,12 @@
  * Modification History
  *
  * $Log: pch.c,v $
+ * Revision 1.6  2002/01/15 15:46:40  james
+ * *** empty log message ***
+ *
+ * Revision 1.5  2000/08/16 17:58:25  james
+ * Update copyright message
+ *
  * Revision 1.4  1996/10/10 22:15:14  james
  * Oops!  Got the traps the wrong way around.
  *

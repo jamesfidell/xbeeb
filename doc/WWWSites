@@ -1,4 +1,4 @@
-$Id: WWWSites,v 1.1 1996/09/24 22:51:09 james Exp $
+$Id: WWWSites,v 1.4 2002/01/14 23:54:48 james Exp $
 
 BBC Micro Emulator WWW Sites
 ============================
@@ -7,31 +7,31 @@ There are numerous sites missing from this list -- it was created in
 something of a hurry.  I'll add any others that I know about as soon
 as I can.
 
-http://www.oit.co.uk/~james/BBCMicro/
+http://www.cloud9.co.uk/james/BBCMicro/
 
-    My own site.  Due to move as soon as I can because I no longer work
-    for OiT.
-
-
-http://www.idt.unit.no/~robert/bbc/bbc.html
-
-    Robert Schmidt's site.  Definitely work a visit.
+    My own site.
 
 
-http://www.cistron.nl/~wouters/bbc/bbc-etc.html
+http://www.nvg.ntnu.no/bbc/
 
-    Wouter Scholten's BBC B, emulators and classic videogames page
+    The BBC Lives.  Robert Schmidt's site.  Probably the definitive
+    BBC Micro site and without doubt worth a visit.
 
-
-http://www.ncl.ac.uk/~n5013784/bbcmicro.html
-
-    Tomm Seddon's emulator page.
 
 
 Revision History
 ================
 
 $Log: WWWSites,v $
+Revision 1.4  2002/01/14 23:54:48  james
+Updates for v0.4
+
+Revision 1.3  2000/08/16 18:07:15  james
+Updates for CloudNine domain
+
+Revision 1.2  1996/10/13 17:17:17  james
+Updates for move to NETCOM.
+
 Revision 1.1  1996/09/24 22:51:09  james
 Locations of BBC Micro-related WWW sites.
 

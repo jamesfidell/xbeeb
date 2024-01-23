@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Screen.h,v 1.8 1996/10/09 23:19:10 james Exp $
+ * $Id: Screen.h,v 1.12 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,18 @@
  * Modification History
  *
  * $Log: Screen.h,v $
+ * Revision 1.12  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.11  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
+ * Revision 1.10  1996/11/24 22:23:59  james
+ * Comment on Boffin screen size.
+ *
+ * Revision 1.9  1996/10/13 21:59:58  james
+ * Changed all window size/position parameters to #defined values.
+ *
  * Revision 1.8  1996/10/09 23:19:10  james
  * Added support for using the MIT X11 Shared Memory Extensions.
  *
@@ -141,5 +153,38 @@ extern	byteval			ScreenLengthIndex;
 #define	MagentaGreen	Cells [ 13 ]
 #define	CyanRed			Cells [ 14 ]
 #define	WhiteBlack		Cells [ 15 ]
+
+
+/*
+ * Sizes and locations of the various windows
+ */
+
+/*
+ * FIX ME
+ *
+ * Boffin requires the bitmapped window width to be 752, according to DRS.
+ */
+
+#define	TTXT_WIN_H		475
+#define	TTXT_WIN_W		480
+
+#define	BMAP_WIN_H		528
+#define	BMAP_WIN_W		640
+
+#define	INFO_WIN_H		40
+#define	INFO_WIN_W		400
+
+#define	MAIN_WIN_H		568		/* Should be biggest window + info window */
+#define	MAIN_WIN_W		640		/* Should be biggest window */
+
+#define	TTXT_WIN_X		(( MAIN_WIN_W - TTXT_WIN_W ) / 2 )
+#define	TTXT_WIN_Y		0
+
+#define	BMAP_WIN_X		(( MAIN_WIN_W - BMAP_WIN_W ) / 2 )
+#define	BMAP_WIN_Y		0
+
+#define	INFO_WIN_X		(( MAIN_WIN_W - INFO_WIN_W ) / 2 )
+#define	INFO_WIN_Y		( MAIN_WIN_H - INFO_WIN_H )
+
 
 #endif	/* SCREEN_H */

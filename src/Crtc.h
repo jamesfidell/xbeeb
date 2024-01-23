@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Crtc.h,v 1.6 1996/10/10 21:44:03 james Exp $
+ * $Id: Crtc.h,v 1.14 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,34 @@
  * Modification History
  *
  * $Log: Crtc.h,v $
+ * Revision 1.14  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.13  2000/09/07 23:10:35  james
+ * Tidyups and correct fix for not correctly handling bitmap screens where
+ * existing colour matches current
+ *
+ * Revision 1.12  2000/08/16 17:58:27  james
+ * Update copyright message
+ *
+ * Revision 1.11  1996/12/04 23:39:59  james
+ * Remove the whole VSYNC_TIME thing.
+ *
+ * Revision 1.10  1996/11/25 00:01:18  james
+ * Remove the "Default Vertical Sync value" magic number.
+ *
+ * Revision 1.9  1996/11/09 22:32:55  james
+ * Updated bitmapped screen-handling code to take account of the Vertical
+ * Adjust register in the CRTC.
+ *
+ * Revision 1.8  1996/10/13 22:03:55  james
+ * Set up constant TV_LINES (=625) and used that instead of local magic numbers.
+ *
+ * Revision 1.7  1996/10/13 16:38:31  james
+ * Screen addresses need to be recalculated on switching between bitmapped
+ * and non-bitmapped modes because they're calculated differently from the
+ * values in the registers.
+ *
  * Revision 1.6  1996/10/10 21:44:03  james
  * Fixes from David Ralph Stacey for scan-line updates.
  *
@@ -63,6 +91,7 @@
 #define	CRTC_H
 
 extern	byteval				CrtcRegisters[18];
+extern	byteval				DefaultVertSync;
 extern	unsigned char		CursorBlinkEnable;
 extern	unsigned char		CursorBlinkFrequency;
 extern	unsigned char		CursorStartLine;
@@ -106,12 +135,15 @@ extern	int					RestoreCRTC ( int, unsigned int );
 
 extern	byteval				ScanLinesPlus1;
 extern	unsigned short		HorizDisplayed8;
+extern	unsigned short		VertAdjust2;
+
 
 /*
- * Something of a "bodge-up" constant that I don't really understand
- * right now, but it does appear to make things work.
+ * TV display parameters
  */
 
-#define	VSYNC_TIME			1900
+#define	TV_LINES			625
+#define	uS_PER_LINE			64
+#define	uS_PER_FRAME		TV_LINES * uS_PER_LINE
 
 #endif	/* CRTC_H */

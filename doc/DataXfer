@@ -1,4 +1,4 @@
-$Id: DataXfer,v 1.1 1996/09/21 19:14:31 james Exp $
+$Id: DataXfer,v 1.3 2002/01/14 23:54:48 james Exp $
 
 Transferring data between the Beeb and Linux
 ============================================
@@ -9,14 +9,14 @@ PC.  Apparently very few modern FDCs will support the format any more.
 If you have ADFS disks, you may have some success with some programs
 under DOS which attempt to read such disks.  Sadly, I don't have a
 source for the software.  One of the ones that should work is getting
-a copy of kermit for both systems.
+a copy of Kermit for both systems.
 
 I didn't have two compatible terminal emulators, so I had to be a little
 more brutal in my approach. What I did when transferring files from my
 Beeb to my Linux PC was to make up a cable to connect the Beeb's RS423
 port to a 25-pin connector that could be used with one of my PC's serial
 ports. See pages 406/7 of the Beeb User Guide for details on connector
-pin-outs. Before I do the next release of Xbeeb, I'll find my cable,
+pin-outs. Before I do the next release of Xbeeb, I'll try to find my cable,
 test it and list the exact pin connections I used.
 
 Once the two machines are connected together, it's really just a case of
@@ -38,6 +38,12 @@ Revision History
 ================
 
 $Log: DataXfer,v $
+Revision 1.3  2002/01/14 23:54:48  james
+Updates for v0.4
+
+Revision 1.2  1996/10/13 17:14:39  james
+Typo correction.
+
 Revision 1.1  1996/09/21 19:14:31  james
 Added new documenation files : doc/Configuration doc/DataXfer
 doc/DiskEmulation doc/Keyboard doc/KnownBugs doc/MailingLists doc/Options

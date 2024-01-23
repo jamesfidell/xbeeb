@@ -1,10 +1,10 @@
 /*
  *
- * $Id: 6502.c,v 1.16 1996/10/08 23:05:22 james Exp $
+ * $Id: 6502.c,v 1.23 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,29 @@
  * Modification History
  *
  * $Log: 6502.c,v $
+ * Revision 1.23  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.22  2000/08/16 17:58:25  james
+ * Update copyright message
+ *
+ * Revision 1.21  1996/11/15 23:04:49  james
+ * Misc. tidying up of code.
+ *
+ * Revision 1.20  1996/11/15 08:54:50  james
+ * Corrected instruction display for RRA
+ *
+ * Revision 1.19  1996/11/15 08:34:00  james
+ * Correction to flag-handling for 65C12 BIT #imm operation (from David Ralph
+ * Stacey).
+ *
+ * Revision 1.18  1996/11/15 00:00:43  james
+ * Forced address wrap-around for (Ind),Y  Abs,X and Abs,X instructions.
+ * Some games rely on this wrap-around to write into zero page.
+ *
+ * Revision 1.17  1996/10/10 23:06:02  james
+ * Opcodes 82, C2 & E2 are NOPs, not HALTs.
+ *
  * Revision 1.16  1996/10/08 23:05:22  james
  * Corrections to allow clean compilation under GCC 2.7.2 with -Wall -pedantic
  *
@@ -513,7 +536,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				Ora ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00) ? CLK_INDIDX_READ : CLK_INDIDX_READ_PAGECROSS);
@@ -572,7 +595,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = Accumulator;
 
 				/*
@@ -724,7 +747,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				Ora ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00 ) ? CLK_ABI_READ : CLK_ABI_READ_PAGECROSS );
@@ -767,7 +790,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 
 				/*
 				 * POSSIBLE ENHANCEMENT ?
@@ -857,7 +880,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				Ora ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00 ) ? CLK_ABI_READ : CLK_ABI_READ_PAGECROSS );
@@ -882,7 +905,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -919,7 +942,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 
 				/*
 				 * POSSIBLE ENHANCEMENT ?
@@ -1287,7 +1310,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				And ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00) ? CLK_INDIDX_READ : CLK_INDIDX_READ_PAGECROSS);
@@ -1348,7 +1371,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY );
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -1495,7 +1518,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				And ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00 ) ? CLK_ABI_READ : CLK_ABI_READ_PAGECROSS );
@@ -1538,7 +1561,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -1608,7 +1631,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 				Bit ( temp1 );
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -1635,7 +1658,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				And ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00 ) ? CLK_ABI_READ : CLK_ABI_READ_PAGECROSS );
@@ -1661,7 +1684,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -1698,7 +1721,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -2042,7 +2065,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				Eor ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00) ? CLK_INDIDX_READ : CLK_INDIDX_READ_PAGECROSS);
@@ -2102,7 +2125,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -2232,7 +2255,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				Eor ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00 ) ? CLK_ABI_READ : CLK_ABI_READ_PAGECROSS );
@@ -2272,7 +2295,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress  + RegisterY;
+				Address = ( BaseAddress  + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -2340,7 +2363,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				Eor ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00 ) ? CLK_ABI_READ : CLK_ABI_READ_PAGECROSS );
@@ -2365,7 +2388,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress  + RegisterX;
+				Address = ( BaseAddress  + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -2401,7 +2424,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress  + RegisterX;
+				Address = ( BaseAddress  + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -2597,7 +2620,7 @@
 				register byteval		temp2;
 
 				ZeroPageAddress = *EmulatorPC++;
-				Disassemble2 ( "SLO &%02x\n", ZeroPageAddress );
+				Disassemble2 ( "RRA &%02x\n", ZeroPageAddress );
 				temp1 = ReadLoPageByte ( ZeroPageAddress );
 
 				/*
@@ -2724,7 +2747,7 @@
 				}
 				else
 #endif	/* M6502 */
-					Address = ReadWord ( OperandAddress );
+				Address = ReadWord ( OperandAddress );
 				SetProgramCounter ( Address );
 				AddClockCycles ( CLK_ABS_INDIRECT );
 				break;
@@ -2841,7 +2864,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 				Adc ( temp1 );
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -2888,7 +2911,7 @@
 				register unsigned int   Address;
 
 				ZeroPageAddress = ( *EmulatorPC++);
-				Disassemble2 ( "SLO (&%02x),Y\n", ZeroPageAddress );
+				Disassemble2 ( "RRA (&%02x),Y\n", ZeroPageAddress );
 				if ( ZeroPageAddress == 0xff )
 				{
 					BaseAddress = ReadLoPageByte ( 0xff );
@@ -2905,7 +2928,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY );
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -3050,7 +3073,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 				Adc ( temp1 );
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -3094,7 +3117,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -3181,7 +3204,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 				Adc ( temp1 );
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -3208,7 +3231,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -3245,7 +3268,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -3438,7 +3461,14 @@
 
 				Disassemble2 ( "BIT #&%02x\n", *EmulatorPC );
 				temp1 = *EmulatorPC++;
-				Bit ( temp1 );
+
+				/*
+				 * When immediate addressing is used, the V and N flags
+				 * are not changed (New AUG, page 40), so we don't use
+				 * the normal BIT routine here.
+				 */
+
+				ResetZeroFlag (( temp1 & Accumulator ) == 0x0 );
 				AddClockCycles ( CLK_IMMEDIATE );
 				break;
 			}
@@ -3552,6 +3582,7 @@
 				 */
 
 				OperandAddress += RegisterY;
+				OperandAddress &= 0xffff;
 				WriteByte ( OperandAddress, Accumulator );
 				AddClockCycles ( CLK_INDIDX_WRITE );
 				break;
@@ -3608,7 +3639,7 @@
 				if ((( OperandAddress & 0xff ) + RegisterY ) > 0xff )
 					OperandAddress = ( OperandAddress & 0xff ) +
 													( temp1 << 8 );
-				WriteByte ( OperandAddress + RegisterY, temp1 );
+				WriteByte (( OperandAddress + RegisterY ) & 0xffff, temp1 );
 				AddClockCycles ( CLK_INDIDX_WRITE );
 				break;
 			}
@@ -3695,7 +3726,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				WriteByte ( Address, Accumulator );
 				AddClockCycles ( CLK_ABI_WRITE );
 				break;
@@ -3791,7 +3822,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				WriteByte ( Address, Accumulator );
 				AddClockCycles ( CLK_ABI_WRITE );
 				break;
@@ -3842,7 +3873,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				WriteByte ( Address, 0x0 );
 				AddClockCycles ( CLK_ABI_WRITE );
 				break;
@@ -3866,12 +3897,19 @@
 				OperandAddress = ReadWordAtPC();
 				Disassemble2 ( "SHA &%04x,Y", OperandAddress );
 				EmulatorPC += 2;
+
+				/*
+				 * FIX ME
+				 *
+				 * Does this one need to wrap-around ?
+				 */
+
 				temp1 = Accumulator & RegisterX;
 				temp1 &= ((( OperandAddress >> 8 ) + 1 ) & 0xff );
 				if ((( OperandAddress & 0xff ) + RegisterY ) > 0xff )
 					OperandAddress = ( OperandAddress & 0xff ) +
 													( temp1 << 8 );
-				WriteByte ( OperandAddress + RegisterY, temp1 );
+				WriteByte (( OperandAddress + RegisterY ) & 0xffff, temp1 );
 				AddClockCycles ( CLK_ABI_WRITE );
 				break;
 			}
@@ -4147,7 +4185,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				LoadA ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00) ? CLK_INDIDX_READ : CLK_INDIDX_READ_PAGECROSS);
@@ -4206,7 +4244,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				LoadA ( ReadByte ( Address ));
 				RegisterX = Accumulator;
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -4295,7 +4333,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				LoadA ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00 ) ? CLK_ABI_READ : CLK_ABI_READ_PAGECROSS );
@@ -4352,7 +4390,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				LoadY ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00 ) ? CLK_ABI_READ : CLK_ABI_READ_PAGECROSS );
@@ -4376,7 +4414,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				LoadA ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00 ) ? CLK_ABI_READ : CLK_ABI_READ_PAGECROSS );
@@ -4400,7 +4438,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				LoadX ( ReadByte ( Address ));
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
 					0xff00 ) ? CLK_ABI_READ : CLK_ABI_READ_PAGECROSS );
@@ -4425,7 +4463,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				LoadA ( ReadByte ( Address ));
 				RegisterX = Accumulator;
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -4785,7 +4823,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 				Cmp ( Accumulator, temp1 );
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -4848,7 +4886,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address ) - 1;
 
 				/*
@@ -4981,7 +5019,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 				Cmp ( Accumulator, temp1 );
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -5022,7 +5060,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address ) - 1;
 
 				/*
@@ -5084,7 +5122,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 				Cmp ( Accumulator, temp1 );
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -5110,7 +5148,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -5148,7 +5186,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address ) - 1;
 
 				/*
@@ -5525,7 +5563,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 				Sbc ( temp1 );
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -5588,7 +5626,7 @@
 				 * high byte of the effective address is fixed up.
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -5723,7 +5761,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 				Sbc ( temp1 );
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -5766,7 +5804,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + Y ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterY;
+				Address = ( BaseAddress + RegisterY ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*
@@ -5836,7 +5874,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 				Sbc ( temp1 );
 				AddClockCycles (( BaseAddress & 0xff00 ) == ( Address &
@@ -5862,7 +5900,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress  + RegisterX;
+				Address = ( BaseAddress  + RegisterX ) & 0xffff;
 				temp1 = ReadByte( Address );
 
 				/*
@@ -5900,7 +5938,7 @@
 				 * (( BaseAddress & 0xff00 )+(( BaseAddress + X ) & 0xff ))
 				 */
 
-				Address = BaseAddress + RegisterX;
+				Address = ( BaseAddress + RegisterX ) & 0xffff;
 				temp1 = ReadByte ( Address );
 
 				/*

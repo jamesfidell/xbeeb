@@ -1,9 +1,9 @@
 ###
-### $Id: Makefile.v,v 1.11 1996/10/08 00:04:32 james Exp $
+### $Id: Makefile.v,v 1.15 2002/01/15 15:46:43 james Exp $
 ###
-### Copyright (c) James Fidell 1994, 1995, 1996.
+### Copyright (C) James Fidell 1994-2002.
 ###
-### Permission to use, copy, modify, distribute, and sell this software
+### Permission to use, copy, modify and distribute this software
 ### and its documentation for any purpose is hereby granted without fee,
 ### provided that the above copyright notice appear in all copies and
 ### that both that copyright notice and this permission notice appear in
@@ -28,6 +28,18 @@
 ### Modification History
 ###
 ### $Log: Makefile.v,v $
+### Revision 1.15  2002/01/15 15:46:43  james
+### *** empty log message ***
+###
+### Revision 1.14  2000/09/02 18:48:26  james
+### Changed all VoxWare references to OSS
+###
+### Revision 1.13  2000/08/16 17:58:28  james
+### Update copyright message
+###
+### Revision 1.12  1996/10/12 16:02:13  james
+### Moved my own version of the strcasecmp function into Compat.c
+###
 ### Revision 1.11  1996/10/08 00:04:32  james
 ### Added InfoWindow to show LED status.  Also required addition of the
 ### SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up
@@ -113,7 +125,8 @@ SRCS		= Beeb.c Memory.c Fred.c Jim.c Sheila.c Crtc.c Acia.c \
 			  SerialUla.c VideoUla.c RomSelect.c SystemVia.c UserVia.c \
 			  Disk.c Econet.c ADC.c TubeUla.c 6522Via.c Keyboard.c \
 			  Screen.c Modes.c Teletext.c Display.c Sound.c Bitmap.c EFS.c \
-			  VoxWare.c Options.c KeymapStrict.c KeymapLegend.c InfoWindow.c
+			  SoundOSS.c Options.c KeymapStrict.c KeymapLegend.c InfoWindow.c \
+			  Compat.c
 
 OBJS		= $(SRCS:.c=.o)
 

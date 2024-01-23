@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Beeb.h,v 1.10 1996/10/01 22:09:58 james Exp $
+ * $Id: Beeb.h,v 1.14 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,18 @@
  * Modification History
  *
  * $Log: Beeb.h,v $
+ * Revision 1.14  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.13  2000/08/16 17:58:26  james
+ * Update copyright message
+ *
+ * Revision 1.12  1996/11/24 21:54:06  james
+ * Change MIN to XBEEB_MIN to avoid clashes with some OSes.
+ *
+ * Revision 1.11  1996/10/13 12:13:27  james
+ * Parenthesise all parameters to #defined macros.
+ *
  * Revision 1.10  1996/10/01 22:09:58  james
  * Split keyboard handling into kEYMAP_STRICT and KEYMAP_LEGEND models.
  *
@@ -84,8 +96,8 @@ extern unsigned char			BreakKeypress;
 extern unsigned char			DebugLevel;
 extern unsigned char			MaskableInterruptRequest;
 
-#define	SetProgramCounter(v)		EmulatorPC = Mem + ( v )
-#define	GetProgramCounter			( EmulatorPC - Mem )
+#define	SetProgramCounter(v)	EmulatorPC = Mem + ( v )
+#define	GetProgramCounter		( EmulatorPC - Mem )
 
 /*
  * The addresses of the OS call vectors
@@ -105,6 +117,13 @@ extern unsigned char			MaskableInterruptRequest;
  */
 
 #define	IRQ()				MaskableInterruptRequest++
+
+/*
+ * Return the minimum of two values
+ */
+
+#define	XBEEB_MIN(x,y)		((( x ) < ( y )) ? ( x ) : ( y ))
+
 
 /*
  * Debugging Levels

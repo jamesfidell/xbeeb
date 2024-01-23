@@ -1,10 +1,10 @@
 /*
  *
- * $Id: UserVia.c,v 1.9 1996/10/01 00:33:06 james Exp $
+ * $Id: UserVia.c,v 1.16 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,30 @@
  * Modification History
  *
  * $Log: UserVia.c,v $
+ * Revision 1.16  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.15  2002/01/13 22:27:19  james
+ * Fix compile-time warnings
+ *
+ * Revision 1.14  2000/08/16 17:58:29  james
+ * Update copyright message
+ *
+ * Revision 1.13  1996/11/24 22:13:28  james
+ * Timer values need to be updated before they are read or over-written
+ * in the 6522 User and System VIA code.  From a fix by David Ralph Stacey.
+ *
+ * Revision 1.12  1996/11/19 00:56:08  james
+ * Writing to T2CL should clear any outstanding T2 interrupt.  Fix from
+ * David Ralph Stacey.
+ *
+ * Revision 1.11  1996/11/15 08:50:59  james
+ * When the IER is written, disabled interrupts need to be cleared as well
+ * as setting newly enabled interrupts.  (Fix from David Ralph Stacey.)
+ *
+ * Revision 1.10  1996/10/10 23:20:52  james
+ * Corrections to some hideous counter roll-over problems.
+ *
  * Revision 1.9  1996/10/01 00:33:06  james
  * Created separate hardware reset code for each emulated unit and called
  * these from the main initialisation section of the code to do all of the
@@ -100,6 +124,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "Config.h"
 #include "6502.h"
@@ -290,11 +315,19 @@ ReadUserVia ( int addr )
 			break;
 
 		case T1CL :
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			UserViaClearInterrupt ( INT_T1 );
 			return UserViaTimer1 & 0xff;
 			break;
 
 		case T1CH :
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			return UserViaTimer1 >> 8;
 			break;
 
@@ -307,11 +340,20 @@ ReadUserVia ( int addr )
 			break;
 
 		case T2CL :
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			UserViaTimer2InterruptEnable = 1;
+			UserViaClearInterrupt ( INT_T2 );
 			return UserViaTimer2 & 0xff;
 			break;
 
 		case T2CH :
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			return UserViaTimer2 >> 8;
 			break;
 
@@ -510,6 +552,10 @@ WriteUserVia ( int addr, byteval val )
 			 * output.
 			 */
 
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			UserVia [ T1CH ] = UserVia [ T1LH ] = val;
 			UserVia [ T1CL ] = UserVia [ T1LL ];
 			UserViaTimer1 = UserVia [ T1CH ] * 256 + UserVia [ T1CL ];
@@ -535,6 +581,10 @@ WriteUserVia ( int addr, byteval val )
 			 * interrupt flag in the IFR.
 			 */
 
+#ifdef	FASTCLOCK
+			ViaClockUpdate ( ClockCyclesSoFar );
+			ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 			UserVia [ T2CH ] = val;
 			UserVia [ T2CL ] = UserVia [ T2LL ];
 			UserViaTimer2 = UserVia [ T2CH ] * 256 + UserVia [ T2CL ];
@@ -599,20 +649,23 @@ WriteUserVia ( int addr, byteval val )
 			 * If bit 7 is set, then each set bit in sets the corresponding
 			 * bit in the IER.
 			 *
+			 * Need also to cause/clear IRQs that are subsequently enabled
+			 * by changing the IER flags.
 			 */
 
 			if ( val & 0x80 )
+			{
 				UserVia [ IER ] |= ( val & 0x7f );
+				UserViaSetInterrupt ( UserVia [ IFR ] );
+			}
 			else
+			{
 				UserVia [ IER ] &= ( val ^ 0x7f );
+				UserViaClearInterrupt ( val );
+			}
 #ifdef	INFO
 			printf ( "User VIA IER = %2x\n", UserVia [ IER ] );
 #endif
-			/*
-			 * Now cause an IRQ if we've just enabled one...
-			 */
-
-			UserViaSetInterrupt ( UserVia [ IFR ] );
 			break;
 
 		case IFR :
@@ -744,6 +797,10 @@ SaveUserVia ( int fd )
 {
 	byteval		via [ 32 ];
 
+#ifdef	FASTCLOCK
+	ViaClockUpdate ( ClockCyclesSoFar );
+	ClockCyclesSoFar = 0;
+#endif	/* FASTCLOCK */
 	UserVia [ T1CL ] = UserViaTimer1 & 0xff;
 	UserVia [ T1CH ] = UserViaTimer1 >> 8;
 	UserVia [ T2CL ] = UserViaTimer2 & 0xff;

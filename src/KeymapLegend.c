@@ -1,10 +1,10 @@
 /*
  *
- * $Id: KeymapLegend.c,v 1.2 1996/10/10 21:55:44 james Exp $
+ * $Id: KeymapLegend.c,v 1.6 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1996.
+ * Copyright (C) James Fidell 1996-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,18 @@
  * Modification History
  *
  * $Log: KeymapLegend.c,v $
+ * Revision 1.6  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.5  2002/01/14 22:18:51  james
+ * Added support for .inf files
+ *
+ * Revision 1.4  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
+ * Revision 1.3  1996/10/12 15:43:22  james
+ * Configured Pause key to BREAK.
+ *
  * Revision 1.2  1996/10/10 21:55:44  james
  * Correctly place #ifdef's for KEYMAP_LEGEND & KEYMAP_STRICT.
  *
@@ -48,7 +60,7 @@
 #include "Beeb.h"
 #include "Keyboard.h"
 #include "Keymap.h"
-#include "EFS.h"
+#include "EmulFS.h"
 
 
 #ifdef	KEYMAP_LEGEND

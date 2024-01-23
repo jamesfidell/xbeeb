@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Memory.h,v 1.8 1996/10/09 22:18:55 james Exp $
+ * $Id: Memory.h,v 1.12 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,19 @@
  * Modification History
  *
  * $Log: Memory.h,v $
+ * Revision 1.12  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.11  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
+ * Revision 1.10  1996/11/19 00:37:00  james
+ * Improvements/corrections to stack/lo-memory handling, including one
+ * nasty patch to allow the stack pointer to wrap around correctly.
+ *
+ * Revision 1.9  1996/10/13 12:13:32  james
+ * Parenthesise all parameters to #defined macros.
+ *
  * Revision 1.8  1996/10/09 22:18:55  james
  * Remove ReadFastByte macro.
  *
@@ -95,6 +108,14 @@ extern	unsigned int	MaxRAMAddress;
  * stay reasonably sane without doing this...
  */
 
+/*
+ * FIX ME
+ *
+ * There's a potential wrap-around problem here if a == 0xffff.  I'm
+ * not going to worry about that at the moment, but it may bite some
+ * time.
+ */
+
 #ifdef	ENDIAN_6502
 
 #define	ReadWordAtPC()	*(( unsigned short * ) ( EmulatorPC ))
@@ -108,6 +129,9 @@ extern	unsigned int	MaxRAMAddress;
 #define	WriteWord(a,v)	Mem [ a ] = (v) & 0xff; Mem [ (a) + 1 ] = (v) >> 8
 
 #endif	/* ENDIAN_6502 */
+
+#define	ReadStackWord(a)	( Mem [(( a + 1 ) & 0xff ) | STACK_PAGE ] << 8 | \
+						Mem [(a) | STACK_PAGE ])
 
 
 #ifdef NO_FRED_JIM
@@ -128,7 +152,10 @@ extern	unsigned int	MaxRAMAddress;
 
 
 /*
- * Functions to speed up access to pages zero and one
+ * Functions to speed up access to pages zero and one.  ReadLoPageByte
+ * can remain a direct memory access even if we're being paranoid, because
+ * reading direct from memory that we know isn't connected with any nasty
+ * hardware type stuff should be safe.
  */
 
 #ifdef	LO_PAGE
@@ -138,7 +165,7 @@ extern	unsigned int	MaxRAMAddress;
 
 #else	/* LO_PAGE */
 
-#define	ReadLoPageByte			ReadByte
+#define	ReadLoPageByte(a)		( Mem [(a)] )
 #define	WriteLoPageByte			WriteByte
 
 #endif	/* LO_PAGE */

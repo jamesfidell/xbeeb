@@ -1,10 +1,10 @@
 /*
  *
- * $Id: 6502.h,v 1.6 1996/09/30 22:59:06 james Exp $
+ * $Id: 6502.h,v 1.9 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,15 @@
  * Modification History
  *
  * $Log: 6502.h,v $
+ * Revision 1.9  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.8  2000/08/16 17:58:26  james
+ * Update copyright message
+ *
+ * Revision 1.7  1996/10/10 23:17:08  james
+ * Corrected timings for branch instructions.
+ *
  * Revision 1.6  1996/09/30 22:59:06  james
  * Prevent multiple inclusion of header files.
  *

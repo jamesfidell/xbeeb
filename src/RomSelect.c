@@ -1,10 +1,10 @@
 /*
  *
- * $Id: RomSelect.c,v 1.5 1996/10/10 22:00:54 james Exp $
+ * $Id: RomSelect.c,v 1.7 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,12 @@
  * Modification History
  *
  * $Log: RomSelect.c,v $
+ * Revision 1.7  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.6  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
  * Revision 1.5  1996/10/10 22:00:54  james
  * Added missing brackets around code block for checking for paged RAM changes
  *

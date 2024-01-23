@@ -1,10 +1,10 @@
 /*
  *
- * $Id: 6522Via.h,v 1.4 1996/09/25 19:19:57 james Exp $
+ * $Id: 6522Via.h,v 1.7 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,16 @@
  * Modification History
  *
  * $Log: 6522Via.h,v $
+ * Revision 1.7  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.6  2000/08/16 17:58:26  james
+ * Update copyright message
+ *
+ * Revision 1.5  1996/11/24 22:13:24  james
+ * Timer values need to be updated before they are read or over-written
+ * in the 6522 User and System VIA code.  From a fix by David Ralph Stacey.
+ *
  * Revision 1.4  1996/09/25 19:19:57  james
  * Major overhaul of VIA emulation code :
  *
@@ -153,5 +163,6 @@ extern	void	ViaClockUpdate ( byteval );
 typedef byteval			Via[20];
 
 extern	void			ViaDump ( Via );
+extern	unsigned char	ClockCyclesSoFar;
 
 #endif	/* _6522VIA_H */

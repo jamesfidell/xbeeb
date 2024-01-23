@@ -1,4 +1,4 @@
-$Id: Help,v 1.2 1996/09/24 22:47:20 james Exp $
+$Id: Help,v 1.4 2002/01/14 23:54:48 james Exp $
 
 Beeb-related questions I'd like answered
 ========================================
@@ -6,18 +6,7 @@ Beeb-related questions I'd like answered
 There are lots of things you need to know to write an emulator that
 aren't sufficient well explained in the User Guides and manuals.
 If you know the answer to any of these questions, please e-mail me
-<james@hermione.demon.co.uk>.
-
-Also, if you can help in any way by providing documentation, software,
-hardware -- anything relevant, really, I'd like to hear from you. I
-have a Beeb at home, but I'd like to extend the emulator to cover the
-Electron and Master series of machines -- I have no documentation on
-these, so if you have anything sitting in the attic or the back of a
-cupboard gathering dust that you might be willing to donate or exchange
-for a small sum, please get in touch. If enough people ask, I'll try one
-way or another to convert the emulator to work under DOS as well.
-
-Anyway, to the questions...
+<james@cloud9.co.uk>.
 
 
 o What are the initial states of the 6850 ACIA registers ?
@@ -63,22 +52,15 @@ o What's the power-up state of the Econet controller ?
 o What's the power-up state of the serial ULA ?
 
 
-o What's the power-up state of a 6522 VIA ?
-
-
-o On the subject of the 6522 VIA, the manuals say that the T2
-  interrupt can only be re-enabled (after it has been triggered) by
-  writing to T2CH or reading from T2CL.  Is that because these actions
-  also reset the interrupt flag or does this happen completely
-  independently ?
+o In the 6522 VIA, the manuals say that the T2 interrupt can only be
+  re-enabled (after it has been triggered) by writing to T2CH or reading
+  from T2CL.  Is that because these actions also reset the interrupt flag
+  or does this happen completely independently ?
 
 
 o And another...  Read/Write of the ORA clears the interrupt flag
   in the IFR.  Does Read/Write of the non-handshaking copy of ORA do the
   same thing ?
-
-
-o What are the mark and space periods of flashing text in teletext mode ?
 
 
 o What is the power-up state of the Tube ULA registers ?
@@ -96,6 +78,12 @@ Revision History
 ================
 
 $Log: Help,v $
+Revision 1.4  2002/01/14 23:54:48  james
+Updates for v0.4
+
+Revision 1.3  2000/09/08 00:05:58  james
+Change from old hermione.demon.co.uk e-mail address
+
 Revision 1.2  1996/09/24 22:47:20  james
 Some clarification of questions.
 

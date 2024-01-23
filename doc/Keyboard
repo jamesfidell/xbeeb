@@ -1,4 +1,4 @@
-$Id: Keyboard,v 1.2 1996/10/10 22:30:33 james Exp $
+$Id: Keyboard,v 1.4 2002/01/14 23:54:48 james Exp $
 
 BBC Micro keyboard emulation
 ============================
@@ -23,7 +23,8 @@ way as a standard PC keyboard.  For instance :
 	The PC has no "COPY" key.  I have used the "Insert" key on the PC
 	keyboard for this.
 
-	Beeb function keys start at f0, PC ones start at F1.
+	Beeb function keys start at f0, PC ones start at F1, so when you want
+	f0 on the Beeb, press F1 on the PC keyboard.
 
     The "pound" symbol (that is, GBP, not the hash symbol) doesn't appear
     on anything other than a UK PC keyboard.
@@ -65,7 +66,7 @@ My keyboard now works something like :
 
 
 
-   ESC f1  f2  f3  f4  f5  f6  f7  f8  f9  f0
+   ESC f0  f1  f2  f3  f4  f5  f6  f7  f8  f9
 
      @  1! 2" 3# 4$ 5% 6& 7' 8( 9) 0  -= ^~
 
@@ -112,6 +113,12 @@ Revision History
 ================
 
 $Log: Keyboard,v $
+Revision 1.4  2002/01/14 23:54:48  james
+Updates for v0.4
+
+Revision 1.3  1996/10/13 07:02:25  james
+Documented Pause/BREAK changes.
+
 Revision 1.2  1996/10/10 22:30:33  james
 Upates for new keyboard handling.
 

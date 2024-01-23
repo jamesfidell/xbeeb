@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Options.c,v 1.1 1996/10/10 21:52:50 james Exp $
+ * $Id: Options.c,v 1.6 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1996.
+ * Copyright (C) James Fidell 1996-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,21 @@
  * Modification History
  *
  * $Log: Options.c,v $
+ * Revision 1.6  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.5  2002/01/14 22:18:51  james
+ * Added support for .inf files
+ *
+ * Revision 1.4  2002/01/13 22:52:16  james
+ * More -q support
+ *
+ * Revision 1.3  2002/01/13 22:50:23  james
+ * Add -q option to turn off sound
+ *
+ * Revision 1.2  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
  * Revision 1.1  1996/10/10 21:52:50  james
  * Separate option-handling code from the main program.
  *
@@ -48,9 +63,10 @@
 #include "Memory.h"
 #include "Patchlevel.h"
 #include "Keyboard.h"
+#include "Sound.h"
 
 #ifdef	EMUL_FS
-#include "EFS.h"
+#include "EmulFS.h"
 #endif
 
 
@@ -305,7 +321,12 @@ ProcessOptions ( int argc, char** argv )
 #endif	/* MODEL_B_ONLY */
 						break;
 
-					case 'h' : case '?' :		/* Help message and exit */
+					case 'q' :				/* Disable sound */
+						SoundOn = 0;
+						break;
+
+					case 'h' :				/* Help message and exit */
+					case '?' :
 						DisplayHelp();
 						exit ( 1 );
 						break;
@@ -363,7 +384,7 @@ ProcessOptions ( int argc, char** argv )
 static void
 DisplayHelp()
 {
-	printf ( "xbeeb\t-[Vh?a] [<snapshot>] [-o <OS ROM>]" );
+	printf ( "xbeeb\t-[Vh?aq] [<snapshot>] [-o <OS ROM>]" );
 	printf ( "[-p[0-15] <paged ROM>]\n\t[-w <num>] [-s <num>]" );
 #ifdef	EMUL_FS
 	printf ( " [-d <dir>]" );
@@ -372,6 +393,7 @@ DisplayHelp()
 	printf ( "\t-[h?]\t\tdisplay this help message\n" );
 	printf ( "\t-V\t\tdisplay the version of xbeeb\n" );
 	printf ( "\t-a\t\trun as a model A machine\n" );
+	printf ( "\t-q\t\tturn off sound\n" );
 	printf ( "\t-p[<num>] <rom>\tload <rom> as ROM <num> (default 15)\n" );
 	printf ( "\t-o <rom>\tload <rom> as the OS\n" );
 	printf ( "\t-w <rom>\tmake <rom> writeable\n" );

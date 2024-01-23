@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Beeb.c,v 1.25 1996/10/10 21:46:38 james Exp $
+ * $Id: Beeb.c,v 1.35 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,38 @@
  * Modification History
  *
  * $Log: Beeb.c,v $
+ * Revision 1.35  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.34  2002/01/14 23:20:44  james
+ * Prevent rolling over 31 disk catalog entries
+ *
+ * Revision 1.33  2002/01/14 22:18:51  james
+ * Added support for .inf files
+ *
+ * Revision 1.32  2000/09/07 21:59:03  james
+ * Add FASTHOST configurable.  Make bitmap displays read data properly rather
+ * than direct from the memory array when this is enabled.
+ *
+ * Revision 1.31  2000/09/06 11:41:13  james
+ * First cut at "proper" sound code
+ *
+ * Revision 1.30  2000/08/31 23:07:41  james
+ * Updated timing mechanism to run at a more realistic speed
+ *
+ * Revision 1.29  2000/08/16 17:58:26  james
+ * Update copyright message
+ *
+ * Revision 1.28  1996/11/24 22:13:25  james
+ * Timer values need to be updated before they are read or over-written
+ * in the 6522 User and System VIA code.  From a fix by David Ralph Stacey.
+ *
+ * Revision 1.27  1996/11/15 08:36:47  james
+ * ExitEmulator label is only required for base 6502.
+ *
+ * Revision 1.26  1996/10/12 15:15:01  james
+ * Compat.h added to support non-UNIXisms, in particular Win32.
+ *
  * Revision 1.25  1996/10/10 21:46:38  james
  * Corrected missed conversion of 100 cycles to FASTCLOCK
  *
@@ -167,6 +199,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <limits.h>
+#include <sys/time.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -195,10 +228,10 @@
 #include "VideoUla.h"
 #include "Options.h"
 #include "Sound.h"
-#include "Perms.h"
+#include "Compat.h"
 
 #ifdef	EMUL_FS
-#include "EFS.h"
+#include "EmulFS.h"
 #endif
 
 
@@ -212,6 +245,7 @@
 #define AddClockCycles(n) \
 { \
 	ClockCyclesSoFar += n; \
+	Cycles += n; \
 	if ( ClockCyclesSoFar > FASTCLOCK ) \
 	{ \
 		ViaClockUpdate ( ClockCyclesSoFar ); \
@@ -221,7 +255,9 @@
 
 #else   /* FASTCLOCK */
 
-#define AddClockCycles(n)	ViaClockUpdate(n)
+#define AddClockCycles(n) \
+	ViaClockUpdate(n); \
+	Cycles += n;
 
 #endif  /* FASTCLOCK */
 
@@ -291,7 +327,6 @@ unsigned char				QuitEmulator = 0;
 unsigned char				BreakKeypress = 0;
 
 unsigned char				MaskableInterruptRequest = 0;
-static unsigned char		ClockCyclesSoFar = 0;
 
 
 /*
@@ -367,7 +402,13 @@ Beeb()
 	register byteval		RegisterY;
 	register byteval		StackPointer;
 
+	unsigned int			Cycles;
 	unsigned int			OpCount = 0;
+#ifdef	FASTHOST
+	unsigned long			usec = 0;
+	long					timediff = 0;
+	struct timeval			tv;
+#endif
 
 	/*
 	 * Now load a snapshot if one was specified.
@@ -390,6 +431,13 @@ Beeb()
 #define	CONT_CONDITION		1
 #endif
 
+	Cycles = 0;
+
+#if defined(FASTHOST) && !defined(FASTCLOCK)
+		( void ) gettimeofday ( &tv, 0 );
+		usec = tv.tv_usec;
+#endif
+
 	while ( CONT_CONDITION )
 	{
 
@@ -401,6 +449,13 @@ Beeb()
  */
 
 #include "6502.c"
+
+#ifdef	FASTHOST
+		( void ) gettimeofday ( &tv, 0 );
+		if ( tv.tv_sec > SoundCallSecs || ( tv.tv_sec == SoundCallSecs
+				&& tv.tv_usec >= SoundCallUsecs ))
+			SoundRefresh();
+#endif
 
 		/*
 		 * Now check to see if we need to service an interrupt
@@ -465,9 +520,29 @@ Beeb()
 				}
 			}
 		}
+#if defined(FASTHOST) && !defined(FASTCLOCK)
+		/*
+		 * Wait for amount of time this instruction should have taken
+		 */
+
+		if ( Cycles > 1000 ) {
+			do {
+				( void ) gettimeofday ( &tv, 0 );
+				timediff = tv.tv_usec - usec;
+				if ( timediff < 0 ) timediff += 1000000;
+				if ( tv.tv_sec > SoundCallSecs || ( tv.tv_sec == SoundCallSecs
+						&& tv.tv_usec >= SoundCallUsecs ))
+					SoundRefresh();
+			} while ( timediff < ( Cycles / CPU_SPEED ));
+			usec = tv.tv_usec;
+			Cycles = 0;
+		}
+#endif
 	}
 
+#ifdef	M6502
 ExitEmulator:
+#endif
 
 	ShutdownScreen();
 	return;
@@ -520,6 +595,9 @@ void
 AddClockCycles ( byteval val )
 {
 	ClockCyclesSoFar += val;
+	Cycles += val;
+	SoundCycles -= val;
+	SoundCounter += val;
 	if ( ClockCyclesSoFar > FASTCLOCK )
 	{
 		ViaClockUpdate ( ClockCyclesSoFar );
@@ -535,6 +613,9 @@ void
 AddClockCycles ( byteval val )
 {
 	ViaClockUpdate ( val );
+	Cycles += val;
+	SoundCycles -= val;
+	SoundCounter += val;
 	return;
 }
 

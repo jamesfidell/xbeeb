@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Memory.c,v 1.7 1996/10/10 21:58:37 james Exp $
+ * $Id: Memory.c,v 1.12 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,22 @@
  * Modification History
  *
  * $Log: Memory.c,v $
+ * Revision 1.12  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.11  2002/01/13 22:27:19  james
+ * Fix compile-time warnings
+ *
+ * Revision 1.10  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
+ * Revision 1.9  1996/11/11 23:53:14  james
+ * Should set ScreenMemoryChanged, not ScreenImageChanged, when the screen
+ * memory is written.
+ *
+ * Revision 1.8  1996/10/12 15:15:04  james
+ * Compat.h added to support non-UNIXisms, in particular Win32.
+ *
  * Revision 1.7  1996/10/10 21:58:37  james
  * Cosmetic changes.
  *
@@ -67,6 +83,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <memory.h>
@@ -80,7 +97,7 @@
 #include "Sheila.h"
 #include "Screen.h"
 #include "Modes.h"
-#include "Perms.h"
+#include "Compat.h"
 
 
 /*
@@ -145,7 +162,7 @@ WriteByte ( unsigned int addr, byteval val )
 		if ( addr >= StartOfScreenMemory )
 		{
 			ScreenCheck [ addr ] = 1;
-			ScreenImageChanged = 1;
+			ScreenMemoryChanged = 1;
 		}
 		return;
 	}

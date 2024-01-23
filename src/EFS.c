@@ -1,10 +1,10 @@
 /*
  *
- * $Id: EFS.c,v 1.5 1996/10/08 23:05:31 james Exp $
+ * $Id: EFS.c,v 1.19 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,51 @@
  * Modification History
  *
  * $Log: EFS.c,v $
+ * Revision 1.19  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.18  2002/01/14 22:18:51  james
+ * Added support for .inf files
+ *
+ * Revision 1.17  2000/08/16 17:58:27  james
+ * Update copyright message
+ *
+ * Revision 1.16  1996/12/01 21:16:07  james
+ * Patch to random access file code from DRS to allow Tynesoft program
+ * loaders to work.
+ *
+ * Revision 1.15  1996/12/01 21:13:32  james
+ * XDFS uses BCD for the write-count in the catalog.
+ *
+ * Revision 1.14  1996/11/25 23:08:11  james
+ * Problems with overwriting existing file in SaveFile fixed (from DRS).
+ *
+ * Revision 1.13  1996/11/25 22:57:16  james
+ * OSFILE &FF with default addresses should store the exe address in the
+ * parameter block before returning.  Problem found by DRS.
+ *
+ * Revision 1.12  1996/11/20 00:36:01  james
+ * Tidy/update error/information messages.
+ *
+ * Revision 1.11  1996/11/18 00:53:57  james
+ * Add new XDFS code and ROM (v0.90) from David Ralph Stacey.
+ *
+ * Revision 1.10  1996/11/08 00:56:04  james
+ * Corrections to/additions of bounds checking.
+ *
+ * Revision 1.9  1996/10/13 15:14:47  james
+ * Fixed confusion between max. filename lengths and pathname lengths in the
+ * DFS emulation.
+ *
+ * Revision 1.8  1996/10/12 16:02:11  james
+ * Moved my own version of the strcasecmp function into Compat.c
+ *
+ * Revision 1.7  1996/10/12 15:55:23  james
+ * Misc. small bugfixes.
+ *
+ * Revision 1.6  1996/10/12 15:15:03  james
+ * Compat.h added to support non-UNIXisms, in particular Win32.
+ *
  * Revision 1.5  1996/10/08 23:05:31  james
  * Corrections to allow clean compilation under GCC 2.7.2 with -Wall -pedantic
  *
@@ -57,18 +102,12 @@
 #include	"Config.h"
 #include	"Beeb.h"
 #include	"Sheila.h"
-#include	"Perms.h"
+#include	"Compat.h"
 
 
-#ifdef	EMUL_FS
+#ifdef	EFS
 
-#ifdef	NEED_STRCASECMP
-#include	<ctype.h>
-
-int			strcasecmp ( char*, char* );
-#endif
-
-#include	"EFS.h"
+#include	"EmulFS.h"
 #include	"Memory.h"
 
 static int			LoadFile ( char*, int, int, unsigned int* );
@@ -117,7 +156,11 @@ static int			CatalogSize;
 #define	MAX_DISKNAME	12
 
 /*
- * These are special memory locations that XDFS uses.
+ * These are special memory locations that XDFS uses.  They could be
+ * changed for a different DFS ROM, though.
+ *
+ * Change any of these to be more than 0xffff and expect things to
+ * fail howwibly, though.
  */
 
 #define	XDFS_CATWS1		0x0e00
@@ -131,12 +174,29 @@ static int			CatalogSize;
 #define	XDFS_ADDRBASE	0x0f08
 #define	XDFS_SECTBASE	0x0f0f
 #define	XDFS_STATUS		0x1000
+#define	XDFS_DATA		0x1001
 #define	XDFS_CURR_DIR	0x10ca
 #define	XDFS_CURR_LIB	0x10cc
 
 static int				BootOption;
 static int				CatalogWrites;
 char					DiskName [ MAX_DISKNAME + 1 ];
+
+/*
+ * For the Random Access File code.
+ */
+
+#define	RAF_BUFFERSIZE	0x10000
+#define	RAF_READONLY	0x40
+#define	RAF_WRITEONLY	0x80
+#define	RAF_FILEHANDLE	0x11
+
+static int				RAF_FilesOpen;
+static int				RAF_FileType;
+static int				RAF_FileLength;
+static int				RAF_FilePointer;
+char					RAF_Filename [ DFS_FILE_MAX ];
+byteval					RAF_Buffer [ RAF_BUFFERSIZE ];
 
 #endif	/* XDFS */
 
@@ -151,6 +211,13 @@ char			DiskDirSet = 0;
 #ifndef	XDFS
 char			CurrentDirectory = '$';
 #endif
+
+/*
+ * Just to make it tidier to increment an address value and make sure
+ * it rolls over at 0xffff
+ */
+
+#define	Inc(x)	x++; x &= 0xffff
 
 
 byteval
@@ -178,7 +245,23 @@ Emulate_OSFILE ( byteval A, byteval X, byteval Y )
 				( void ) LoadFile ( fname, -1, LoadAddress, 0 );
 			}
 			else
-				( void ) LoadFile ( fname, 0, 0, 0 );
+			{
+				/*
+				 * The gospel according to DRS...
+				 *
+				 * Acorn DFS stuffs the exe address of the loaded file
+				 * back into the parameter block here and without it
+				 * Imogen won't work...
+				 */
+
+				unsigned int		exe;
+
+				( void ) LoadFile ( fname, 0, 0, &exe );
+				WriteByte (( param_block + 6 ), ( exe & 0xff ));
+				WriteByte (( param_block + 7 ), (( exe >> 8 ) & 0xff ));
+				WriteByte (( param_block + 8 ), (( exe >> 16 ) & 0xff ));
+				WriteByte (( param_block + 9 ), (( exe >> 24 ) & 0xff ));
+			}
 			return A;
 			break;
 		}
@@ -316,6 +399,7 @@ Emulate_OSFILE ( byteval A, byteval X, byteval Y )
 		{
 			short				idx;
 			unsigned char		byte;
+			unsigned int		p = ( param_block + 2 ) & 0xffff;
 
 			CopyFilename ( fname_address, fname );
 			if (( idx = FindFile ( fname )) < 0 )
@@ -324,41 +408,49 @@ Emulate_OSFILE ( byteval A, byteval X, byteval Y )
 				FatalError();
 			}
 
-			WriteByte ( param_block + 2, Catalog [ idx ].LoadAddress & 0xff );
-			WriteByte ( param_block + 3,
-						( Catalog [ idx ].LoadAddress >> 8 ) & 0xff );
+			WriteByte ( p, Catalog [ idx ].LoadAddress & 0xff );
+			Inc ( p );	/* p = param_block + 3 */
+			WriteByte ( p, ( Catalog [ idx ].LoadAddress >> 8 ) & 0xff );
+			Inc ( p );	/* p = param_block + 4 */
 
 			/*
 			 * Take care of TUBE/local adddresses
 			 */
 
 			byte = ( Catalog [ idx ].LoadAddress >> 16 ) & 0xff;
-			WriteByte ( param_block + 4, byte );
+			WriteByte ( p, byte );
+			Inc ( p );	/* p = param_block + 5 */
 			if ( byte != 0xff )
 				byte = 0;
-			WriteByte ( param_block + 5, byte );
+			WriteByte ( p, byte );
+			Inc ( p );	/* p = param_block + 6 */
 
-			WriteByte ( param_block + 6, Catalog [ idx ].ExeAddress & 0xff );
-			WriteByte ( param_block + 7,
-						( Catalog [ idx ].ExeAddress >> 8 ) & 0xff );
+			WriteByte ( p, Catalog [ idx ].ExeAddress & 0xff );
+			Inc ( p );	/* p = param_block + 7 */
+			WriteByte ( p, ( Catalog [ idx ].ExeAddress >> 8 ) & 0xff );
+			Inc ( p );	/* p = param_block + 8 */
+
 			/*
 			 * Take care of TUBE/local adddresses
 			 */
 
 			byte = ( Catalog [ idx ].ExeAddress >> 16 ) & 0xff;
-			WriteByte ( param_block + 8, byte );
+			WriteByte ( p, byte );
+			Inc ( p );	/* p = param_block + 9 */
 			if ( byte != 0xff )
 				byte = 0;
 			WriteByte ( param_block + 9, byte );
+			Inc ( p );	/* p = param_block + 10 */
 
-			WriteByte ( param_block + 10, Catalog [ idx ].FileLength & 0xff );
-			WriteByte ( param_block + 11,
-						( Catalog [ idx ].FileLength >> 8 ) & 0xff );
-			WriteByte ( param_block + 12,
-						( Catalog [ idx ].FileLength >> 16 ) & 0xff );
-			WriteByte ( param_block + 13, Catalog [ idx ].FileLength >> 24 );
-			WriteByte ( param_block + 14,
-							( Catalog [idx].LockFlag == 'L' ) ? 0x0a : 0x0 );
+			WriteByte ( p, Catalog [ idx ].FileLength & 0xff );
+			Inc ( p );	/* p = param_block + 11 */
+			WriteByte ( p, ( Catalog [ idx ].FileLength >> 8 ) & 0xff );
+			Inc ( p );	/* p = param_block + 12 */
+			WriteByte ( p, ( Catalog [ idx ].FileLength >> 16 ) & 0xff );
+			Inc ( p );	/* p = param_block + 13 */
+			WriteByte ( p, Catalog [ idx ].FileLength >> 24 );
+			Inc ( p );	/* p = param_block + 14 */
+			WriteByte ( p, ( Catalog [idx].LockFlag == 'L' ) ? 0x0a : 0x0 );
 			return A;
 			break;
 		}
@@ -546,6 +638,328 @@ Emulate_OSFILE ( byteval A, byteval X, byteval Y )
 			break;
 		}
 
+		case 0x0a :		/* OSFIND */
+		{
+			int					file_fd, i;
+			short				found = -1;
+			char				fullname [ PATH_MAX ];
+			unsigned char		filebyte;
+
+			/*
+			 * Bits 6 and 7 of the Accumulator determine the action we are to
+			 * take. XDFS stores the value of the accumulator in its status
+			 * byte.
+			 *
+			 */
+
+			RAF_FileType = (ReadByte ( XDFS_STATUS )) & 0xc0;
+
+			/*
+			 * XDFS looks for any error in the status byte, and any value is
+			 * returned in the data byte. We must clear both of those now.
+			 *
+			 */
+
+			WriteByte ( XDFS_STATUS, 0 );
+			WriteByte ( XDFS_DATA, 0 );
+
+			/*
+			 * If the file type is zero, then we may need to close the file.
+			 *
+			 */
+
+			if ( RAF_FileType == 0 )
+			{
+				/*
+				 * FIX ME
+				 *
+				 * If the file is opened for writing, we should write the file
+				 * out to disc now.
+				 *
+				 */
+
+				/*
+				 * Since we only have one channel at the moment, we can just
+				 * flag no files open.
+				 *
+				 */
+
+				RAF_FilesOpen = 0;
+			}
+			else
+			{
+				/*
+				 * If we have a file open already, we cater for that here.
+				 * Again, a "too many open" message is passed back to XDFS.
+				 *
+				 */
+
+
+				/*
+				 * FIX ME
+				 *
+				 * Tynesoft game loaders like to open random access files and
+				 * then just not close them again. This is very bad programming,
+				 * but we should attempt to support this. The propper code
+				 * should be:
+				 *
+				 * if ( RAF_FilesOpen )
+				 * {
+				 *     WriteByte ( XDFS_STATUS, 0x22 );
+				 *     return A;
+				 * }
+				 *
+				 * but I'm just going to leave it for now. The old random
+				 * access file will be closed and the new one opened. Things
+				 * will be better when XDFS supports more than one random
+				 * access file.
+				 */
+
+				/*
+				 * If a directory is not currently set then sort that out now.
+				 *
+				 */
+
+				while ( !DiskDirSet )
+				{
+					printf ( "No disk directory is currently set\n" );
+					printf ( "Set the directory now...\n" );
+					ChangeDisk();
+				}
+
+				/*
+				 * X and Y point to the filename. We must check that the file
+				 * is in the catalog, and if not return 0.
+				 *
+				 */
+
+				fname_address = ( Y << 8 ) + X;
+				CopyFilename ( fname_address, fname );
+
+				if ( RAF_FileType & RAF_WRITEONLY )
+				{
+					/*
+					 * This is unsupported, so die now.
+					 *
+					 */
+
+					fprintf ( stderr, "Cannot open files to write yet.\n" );
+					return A;
+				}
+
+				if ( RAF_FileType & RAF_READONLY )
+				{
+					if (( found = FindFile ( fname )) < 0 )
+						return 0;
+
+					/*
+					 * We copy the filename in the catalog to the file path,
+					 * not the name we are called with, because this gurantees
+					 * that we get the correct case.
+					 *
+					 */
+
+					( void ) strcpy ( fullname, DiskDirectory );
+
+					if (( strlen ( fullname ) + strlen ( fname ) + 2 )
+																> PATH_MAX )
+					{
+						fprintf ( stderr, "pathname is too long\n" );
+						fprintf (stderr, "EFS can't generate correct error\n");
+						return 0;
+					}
+
+					( void ) strcat ( fullname, "/" );
+					( void ) strcat ( fullname, Catalog [ found ].Filename );
+
+					/*
+					 * If we can't find the file in the Unix directory, again
+					 * all we have to do is return 0 - not found.
+					 *
+					 */
+
+					if (( file_fd = open ( fullname, O_RDONLY | O_BINARY ))
+																		< 0 )
+						return 0;
+
+					/*
+					 * Now to set up the file length and pointer.
+					 *
+					 */
+
+					RAF_FileLength = Catalog [ found ].FileLength;
+					RAF_FilePointer = 0;
+
+					/*
+					 * If the file we are trying to open is longer than our
+					 * buffer, then we're in trouble...
+					 *
+					 */
+
+					if ( RAF_FileLength >= RAF_BUFFERSIZE )
+					{
+						RAF_FileLength = RAF_BUFFERSIZE - 1;
+						fprintf ( stderr, "File is larger than buffer size.");
+						fprintf ( stderr, "\nYou can only read the first 0x%x",
+															RAF_FileLength );
+						fprintf ( stderr, " bytes.\n" );
+					}
+
+					/*
+					 * If we are required to read the file, we should do that
+					 * now. I'll read the data into the buffer one byte at a
+					 * time so that the buffer does not overflow.
+					 *
+					 */
+
+					for ( i = 0; i < RAF_FileLength; i++ )
+					{
+						if ( read ( file_fd, &filebyte, 1 ) != 1 )
+						{
+							fprintf ( stderr, "Read of file %s failed\n",
+																	fname );
+							FatalError();
+						}
+
+						RAF_Buffer [ i ] = filebyte;
+					}
+
+					/*
+					 * All to do now is to pass back the file handle in the
+					 * data byte and flag that we have a file open.
+					 *
+					 */
+
+					WriteByte ( XDFS_DATA, RAF_FILEHANDLE );
+					RAF_FilesOpen = 1;
+				}
+			}
+
+			return A;
+			break;
+		}
+
+		case 0x0c :		/* BGET */
+		{
+			/*
+			 * If Y does not equal the file handle, then we return a "Channel"
+			 * error via the XDFS status byte. Also need to generate an error
+			 * if we have no files open.
+			 *
+			 */
+
+			if (( Y != RAF_FILEHANDLE ) || ( !RAF_FilesOpen ))
+			{
+				WriteByte ( XDFS_STATUS, 0x33 );
+				return A;
+			}
+
+			/*
+			 * We need to see if we have gone passed the end of the file. If
+			 * so we set a flag in the status byte. The value we pass back
+			 * is invalid.
+			 *
+			 */
+
+			if ( RAF_FilePointer >= RAF_FileLength )
+				WriteByte ( XDFS_STATUS, 0xff );
+			else
+			{
+				/*
+				 * Write the data to the data byte, clear the status byte and
+				 * increment the pointer.
+				 *
+				 */
+
+				WriteByte ( XDFS_DATA, RAF_Buffer [ RAF_FilePointer ] );
+				WriteByte ( XDFS_STATUS, 0 );
+				RAF_FilePointer ++;
+			}
+
+			return A;
+			break;
+		}
+
+		case 0x0d :		/* OSARGS */
+		{
+
+			byteval		file_action;
+
+			/*
+			 * If Y is 0 then we have a problem, since XDFS should
+			 * have dealt with this.
+			 *
+			 */
+
+			if ( Y == 0 )
+			{
+				fprintf ( stderr, "OSARGS call with Y = 0\n");
+				FatalError ();
+			}
+
+			/*
+			 * If Y does not contain the file handle, then issue  a "Channel"
+			 * error via the XDFS status byte. Also generate an error if we
+			 * have no file open.
+			 *
+			 */
+
+			if (( Y != RAF_FILEHANDLE ) || ( !RAF_FilesOpen ))
+			{
+				WriteByte ( XDFS_STATUS, 0x33 );
+				return A;
+			}
+
+			/*
+			 * XDFS passes the accumulator value in the status byte.
+			 * This value determines the action we take
+			 *
+			 */
+
+			file_action = ReadByte ( XDFS_STATUS );
+			WriteByte ( XDFS_STATUS, 0 );
+
+			if ( file_action == 0 ) 	/* read pointer */
+			{
+				WriteByte ( X, RAF_FilePointer & 0xff );
+				WriteByte (( X + 1 ), ( RAF_FilePointer & 0xff00 ) >> 8 );
+				WriteByte (( X + 2 ), ( RAF_FilePointer & 0xff0000 ) >> 16 );
+				WriteByte (( X + 3 ), ( RAF_FilePointer & 0xff000000 ) >> 24 );
+				return A;
+			}
+
+			if ( file_action == 1 )		/* write pointer */
+			{
+				RAF_FilePointer  = ReadByte ( X + 3 ); RAF_FilePointer <<= 8;
+				RAF_FilePointer |= ReadByte ( X + 2 ); RAF_FilePointer <<= 8;
+				RAF_FilePointer |= ReadByte ( X + 1 ); RAF_FilePointer <<= 8;
+				RAF_FilePointer |= ReadByte ( X );
+
+				/*
+				 * If we are only reading the file and the new value of the
+				 * pointer lies outside the file, we inform XDFS
+				 *
+				 */
+
+				if (( RAF_FileType == RAF_READONLY ) && ( RAF_FilePointer >= RAF_FileLength ))
+					WriteByte ( XDFS_STATUS, 0x55 );
+
+				return A;
+			}
+
+			if ( file_action == 2 )		/* read file length */
+			{
+				WriteByte ( X, RAF_FileLength & 0xff );
+				WriteByte (( X + 1 ), ( RAF_FileLength & 0xff00 ) >> 8 );
+				WriteByte (( X + 2 ), ( RAF_FileLength & 0xff0000 ) >> 16 );
+				WriteByte (( X + 3 ), ( RAF_FileLength & 0xff000000 ) >> 24 );
+				return A;
+			}
+
+			fprintf ( stderr, "Unimplemented OSARGS A = %x\n", file_action );
+			FatalError ();
+			break;
+		}
 #endif	/* XDFS */
 
 		case 0x07 :		/* Prepare an area of disc space -- Master only */
@@ -603,7 +1017,7 @@ Emulate_OSFSC ( byteval A, byteval X, byteval Y, int *pPC )
 				 * 
 				 */
 
-				fprintf ( stderr, "EFS_OSFSC ignored *OPT command\n" );
+				fprintf ( stderr, "EFS_OSFSC ignored *OPT %d,%d\n", X, Y );
 
 			break;
 		}
@@ -741,8 +1155,8 @@ Emulate_OSFSC ( byteval A, byteval X, byteval Y, int *pPC )
 
 			for ( i = 0; i < 256; i++ )
 			{
-				WriteByte ( XDFS_CATWS1 + i, ' ' );
-				WriteByte ( XDFS_CATWS2 + i, 0x00 );
+				WriteByte (( XDFS_CATWS1 + i ) & 0xffff, ' ' );
+				WriteByte (( XDFS_CATWS2 + i ) & 0xffff, 0x00 );
 			}
 
 			/*
@@ -757,25 +1171,33 @@ Emulate_OSFSC ( byteval A, byteval X, byteval Y, int *pPC )
 				{
 					if (!( byte = Catalog [ i ].Filename [ j ] ))
 						break;
-					WriteByte ( fptr++, byte );
+					WriteByte ( fptr, byte );
+					Inc ( fptr );
 				}
 
 				byte = *Catalog [ i ].Filename; 		/* file directory */
 				byte |= ( Catalog [ i ].LockFlag == 'L' ) ? 0x80 : 0x0;
-				WriteByte ( XDFS_DIRBASE + off, byte );
+				WriteByte (( XDFS_DIRBASE + off ) & 0xffff, byte );
 
-				fptr = XDFS_ADDRBASE + off;
-				WriteByte( fptr++, Catalog[ i ].LoadAddress & 0xff );
-				WriteByte( fptr++, ( Catalog[ i ].LoadAddress >> 8 ) & 0xff );
+				fptr = ( XDFS_ADDRBASE + off ) & 0xffff;
+				WriteByte ( fptr, Catalog[ i ].LoadAddress & 0xff );
+				Inc ( fptr );
+				WriteByte ( fptr, ( Catalog[ i ].LoadAddress >> 8 ) & 0xff );
+				Inc ( fptr );
 
-				WriteByte( fptr++, Catalog[ i ].ExeAddress );
-				WriteByte( fptr++, ( Catalog[ i ].ExeAddress >> 8 ) & 0xff );
+				WriteByte ( fptr, Catalog[ i ].ExeAddress );
+				Inc ( fptr );
+				WriteByte ( fptr, ( Catalog[ i ].ExeAddress >> 8 ) & 0xff );
+				Inc ( fptr );
 
-				WriteByte( fptr++, Catalog[ i ].FileLength );
-				WriteByte( fptr++, ( Catalog[ i ].FileLength >> 8 ) & 0xff );
+				WriteByte ( fptr, Catalog[ i ].FileLength );
+				Inc ( fptr );
+				WriteByte ( fptr, ( Catalog[ i ].FileLength >> 8 ) & 0xff );
+				Inc ( fptr );
 
-				WriteByte( XDFS_SECTBASE + off,
+				WriteByte (( XDFS_SECTBASE + off ) & 0xffff,
 							Catalog [ i ].StartSector & 0xff );
+				Inc ( fptr );
 
 				byte = ( Catalog [ i ].ExeAddress & 0x30000 ) >> 10;
 				byte &= ( Catalog [ i ].FileLength & 0x30000 ) >> 12;
@@ -791,15 +1213,15 @@ Emulate_OSFSC ( byteval A, byteval X, byteval Y, int *pPC )
 			 */
 
 			for ( i = 0; i < 8; i++)
-				WriteByte ( XDFS_CATWS1 + i, 0x0 );
+				WriteByte (( XDFS_CATWS1 + i ) & 0xffff, 0x0 );
 
 			/* Put new disc title in memory */
 
 			for ( i = 0; i < 8; i++ )
-				WriteByte ( XDFS_CATWS1 + i, DiskName [ i ] );
+				WriteByte (( XDFS_CATWS1 + i ) & 0xffff, DiskName [ i ] );
 
 			for ( i = 8; i < 12; i++ )
-				WriteByte ( XDFS_CATWS2 + i - 8, DiskName [ i ] );
+				WriteByte (( XDFS_CATWS2 + i - 8 ) & 0xffff, DiskName [ i ] );
 
 			WriteByte ( XDFS_CATWR, CatalogWrites );	/* times written */
 			WriteByte ( XDFS_NOFILES, CatalogSize * 8 );	/* no. of files */
@@ -850,7 +1272,17 @@ Emulate_OSFSC ( byteval A, byteval X, byteval Y, int *pPC )
 			 * support.
 			 */
 
+			/*
+			 * For XDFS there's nothing to do here as the ROM handles it all
+			 */
+
+#ifdef	XDFS
+#ifdef	INFO
+			printf ( "EFS_OSFSC (A = 0x%02x)\n", A );
+#endif
+#else
 			fprintf ( stderr, "Unimplemented EFS_OSFSC (A = 0x%02x)\n", A );
+#endif
 			FatalError();
 			break;
 		}
@@ -952,7 +1384,8 @@ LoadFile ( char *fname, int got_address, int address, unsigned int *pExe )
 			FatalError();
 		}
 
-		WriteByte ( address++, filebyte );
+		WriteByte ( address, filebyte );
+		Inc ( address );
 	}
 
 	( void ) close ( file_fd );
@@ -1192,13 +1625,21 @@ ChangeDiskDirectory ( char *new )
 	 * FIX ME
 	 *
 	 * Really should handle errors here...
+	 *
+	 * XDFS uses BCD for CatalogWrites, so we need to fix that up here.
+	 * I don't know what Acorn DFS uses, so I'll leave things as they
+	 * are...
 	 */
 
-	if ( fgets ( buff, 6, cat_fp ) != 0 )
+	if ( fgets ( buff, 6, cat_fp ) > 0 )
+#ifdef	XDFS
+		sscanf ( buff, "%2X %1d", &CatalogWrites, &BootOption );
+#else
 		sscanf ( buff, "%2d %1d", &CatalogWrites, &BootOption );
+#endif
 
 	p = Catalog;
-	while ( fgets ( buff, 79, cat_fp ) != 0 && CatalogSize < EFS_CATALOG_SIZE )
+	while ( fgets ( buff, 79, cat_fp ) > 0 && CatalogSize < EFS_CATALOG_SIZE )
 	{
 
 		/*
@@ -1230,7 +1671,7 @@ SaveFile ( char *fname, unsigned int load, unsigned int exe,
 									unsigned int start, unsigned int end )
 {
 	int				fd,	size, p;
-	int				l, l1, l2, i, found;
+	int				l, l1, l2, i, idx, overwrite;
 	char			tempfile [ PATH_MAX ], tempcat [ PATH_MAX ];
 	char			newfile [ PATH_MAX ], savefile [ PATH_MAX ];
 	char			c, realfname [ 20 ];
@@ -1319,11 +1760,11 @@ SaveFile ( char *fname, unsigned int load, unsigned int exe,
 	 */
 
 	i = 0;
-	found = -1;
-	while ( i < CatalogSize && found < 0 )
+	idx = -1;
+	while ( i < CatalogSize && idx < 0 )
 	{
 		if ( strcasecmp ( Catalog [ i ].Filename, fname ) == 0 )
-			found = i;
+			idx = i;
 		i++;
 	}
 
@@ -1333,16 +1774,17 @@ SaveFile ( char *fname, unsigned int load, unsigned int exe,
 	 * over the old catalog entry.
 	 */
 
-	if ( found < 0 && CatalogSize == EFS_CATALOG_SIZE )
+	if ( idx < 0 && CatalogSize == EFS_CATALOG_SIZE )
 	{
 		fprintf ( stderr, "EFS catalog is full\n" );
 		fprintf ( stderr, "EFS cannot return correct error\n" );
 		return -1;
 	}
 
-	if ( found < 0 )
+	if ( idx < 0 )
 	{
-		found = CatalogSize;
+		idx = CatalogSize;
+		overwrite = 0;
 		CatalogSize++;
 	}
 	else
@@ -1352,21 +1794,22 @@ SaveFile ( char *fname, unsigned int load, unsigned int exe,
 		 * caseless comparison.
 		 */
 
-		( void ) strcpy ( realfname, Catalog [ found ].Filename );
+		( void ) strcpy ( realfname, Catalog [ idx ].Filename );
+		overwrite = 1;
 
 	/*
 	 * Set start sector to junk, because we don't have anything useful
 	 * there.
 	 */
 
-	( void ) strcpy ( Catalog [ found ].Filename, fname );
+	( void ) strcpy ( Catalog [ idx ].Filename, fname );
 #ifdef	XDFS
-	Catalog [ found ].LockFlag = ' ';
+	Catalog [ idx ].LockFlag = ' ';
 #endif
-	Catalog [ found ].LoadAddress = load;
-	Catalog [ found ].ExeAddress = exe;
-	Catalog [ found ].FileLength = end - start;
-	Catalog [ found ].StartSector = 0x3ff;
+	Catalog [ idx ].LoadAddress = load;
+	Catalog [ idx ].ExeAddress = exe;
+	Catalog [ idx ].FileLength = end - start;
+	Catalog [ idx ].StartSector = 0x3ff;
 
 	/*
 	 * Now write the new catalog.  If an error occurs, we abort.
@@ -1384,15 +1827,17 @@ SaveFile ( char *fname, unsigned int load, unsigned int exe,
 
 	if ( WriteCatalog ( tempcat ) < 0 )
 	{
-			unlink ( tempfile );
-			return -1;
+		fprintf (stderr, "Error in writing catalog. Unlinking %s\n",
+																tempfile );
+		unlink ( tempfile );
+		return -1;
 	}
 
 	( void ) strcpy ( newfile, DiskDirectory );
 	( void ) strcat ( newfile, "/" );
 	( void ) strcat ( newfile, realfname );
 
-	if ( found )
+	if ( overwrite )
 	{
 		/*
 	 	* FIX ME
@@ -1490,17 +1935,24 @@ WriteCatalog ( char* tempcat )
 #ifdef	XDFS
 	/*
 	 * Update the number of times the catalogue has been written,
-	 * wrapping around at 99.
+	 * wrapping around at 99.  XDFS uses BCD, so we need to fix that
+	 * up here, too.
 	 */
 
-	if ( ++CatalogWrites == 100 )
-		CatalogWrites = 0;
+	if (( ++CatalogWrites & 0x0f ) > 9 )
+	{
+		CatalogWrites &= 0xf0;
+		CatalogWrites += 0x10;
+
+		if ( CatalogWrites > 0x99 )
+			CatalogWrites = 0;
+	}
 
 	/*
 	 * Write the new catalogue
 	 */
 
-	sprintf ( catbuf, "%2.2d %1.1d\n", CatalogWrites, BootOption );
+	sprintf ( catbuf, "%2.2X %1.1d\n", CatalogWrites, BootOption );
 	if ( fputs ( catbuf, fp ) < 0 )
 	{
 		fprintf ( stderr, "error writing %s\n", cat );
@@ -1636,32 +2088,4 @@ CopyDirname ( unsigned int src, char *tgt )
 	return;
 }       
 
-
-#ifdef	NEED_STRCASECMP
-
-int
-strcasecmp ( char *s, char *t )
-{
-	char		m, n;
-
-	/*
-	 * Degenerative cases first
-	 */
-
-	if ( !s && !t )
-		return 0;
-
-	if ( !s )
-		return 1;
-
-	if ( !t )
-		return -1;
-
-	while ((( m = toupper ( *s++ )) == ( n = toupper ( *t++ ))) && m != '\0' );
-
-	return m - n;
-}
-
-#endif	/* NEED_STRCASECMP */
-
-#endif	/* EMUL_FS */
+#endif	/* EFS */

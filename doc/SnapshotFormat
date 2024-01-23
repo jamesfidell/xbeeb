@@ -1,4 +1,4 @@
-$Id: SnapshotFormat,v 1.3 1996/10/10 22:34:51 james Exp $
+$Id: SnapshotFormat,v 1.5 2000/08/16 18:07:15 james Exp $
 
 BBC Micro Emulator Snapshot Format
 ==================================
@@ -157,8 +157,8 @@ the Fred/Jim memory-mapped IO areas, the Tube ULA, the Econet interface
 or the disk interface.  I see these as being more appropriate for a later
 version when code has been produced and we know what needs to be saved.
 
-Comments please, mailed to beeb-emulators@OiT.co.uk so that everyone can
-see them.
+Comments please, mailed to bbc-micro@cloud9.co.uk so that everyone
+can see them.
 
 James.
 
@@ -167,6 +167,12 @@ Revision History
 ================
 
 $Log: SnapshotFormat,v $
+Revision 1.5  2000/08/16 18:07:15  james
+Updates for CloudNine domain
+
+Revision 1.4  1996/10/13 17:17:17  james
+Updates for move to NETCOM.
+
 Revision 1.3  1996/10/10 22:34:51  james
 Updates for v0.3.
 

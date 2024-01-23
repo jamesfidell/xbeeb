@@ -1,7 +1,18 @@
-$Id: DiskEmulation,v 1.2 1996/10/10 22:28:58 james Exp $
+$Id: DiskEmulation,v 1.3 2002/01/14 23:54:48 james Exp $
 
 The Emulated Filing System
 ==========================
+
+There are now two emulated filesystems for xbeeb.  The original version
+that I created before anyone had really much idea of what we were going
+to want to do, probably some time back in the mid 1990's, and a new
+one that uses the more common .inf files.
+
+The default is now to use the .inf files.  This works best in
+combination with the XDFS ROM below, which is also the default setup.
+In this case the emulator can be pointed to a directory of .inf
+format files using the -d flag and it fakes up a disk image inside
+the emulator containing those files.
 
 The emulated disk system (EFS.[ch]) requires a directory containing
 a set of files present on a given disk, exactly as they would appear
@@ -15,9 +26,9 @@ code more like the disk implementation, at which point the sector
 number may become useful.
 
 The emulation is not complete -- it's also not easy to implement all the
-features the normal DFS. For example, *CAT displays the disk catalog in
-the text window that Xbeeb was run from, not on the Xbeeb screen. The
-other major problem at the moment is that, unlike the beeb, filenames
+features the normal DFS. For example, without XDFS, *CAT displays the disk
+catalog in the text window that Xbeeb was run from, not on the Xbeeb screen.
+The other major problem at the moment is that, unlike the beeb, filenames
 are case sensitive.
 
 To "change" a "disk", press the "Enter" key on the keypad.  Xbeeb will
@@ -47,6 +58,9 @@ Revision History
 ================
 
 $Log: DiskEmulation,v $
+Revision 1.3  2002/01/14 23:54:48  james
+Updates for v0.4
+
 Revision 1.2  1996/10/10 22:28:58  james
 Documented DRS's XDFS code.
 

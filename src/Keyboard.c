@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Keyboard.c,v 1.7 1996/10/09 22:09:42 james Exp $
+ * $Id: Keyboard.c,v 1.13 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,25 @@
  * Modification History
  *
  * $Log: Keyboard.c,v $
+ * Revision 1.13  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.12  2002/01/13 23:59:12  james
+ * Fixed coredump on snapshot
+ *
+ * Revision 1.11  2002/01/13 23:40:37  james
+ * More keyboard-handling changes from Russell Marks
+ *
+ * Revision 1.10  2000/08/16 17:58:27  james
+ * Update copyright message
+ *
+ * Revision 1.9  1996/12/01 21:26:24  james
+ * Improved keyboard handling from DRS.
+ *
+ * Revision 1.8  1996/11/15 00:03:39  james
+ * Wrap vertical keyboard scan index when it reaches 9 (it's a 4-bit value).
+ * (Fix from David Ralph Stacey).
+ *
  * Revision 1.7  1996/10/09 22:09:42  james
  * Corrected setting of CA2 when a key is pressed.
  *
@@ -108,12 +127,13 @@ unsigned char				LockKeysChanged = 0;
 #endif
 
 
-unsigned char				Keys [ 80 ];
+#define	MAX_KEYS			128
+unsigned char				Keys [ MAX_KEYS ];
 unsigned long				DIPSwitches = DIP_SWITCHES;
 
 
 byteval
-KeyboardWrite ( byteval data )
+KeyboardWrite ( byteval idx )
 {
 	/*
 	 * The keyboard is polled as an 8x10 array, using the system VIA
@@ -125,13 +145,11 @@ KeyboardWrite ( byteval data )
 	 *
 	 */
 
-	unsigned char		vert, horiz, idx, op, result;
+	unsigned char		vert, op, result;
 
-	vert = data & 0x0f;
-	horiz = ( data & 0x70 ) >> 4;
-
-	idx = horiz * 10 + vert;
+	vert = idx & 0xf;
 	result = Keys [ idx ] ? 0x80 : 0x0;
+
 #ifdef	SHIFTLOCK_SOUND_HACK
 	if ( result && ( idx == KEY_CAPSLOCK || idx == KEY_SHIFTLOCK ))
 		LockKeysChanged = 1;
@@ -147,7 +165,7 @@ KeyboardWrite ( byteval data )
 	 */
 
 	op = 0;
-	for ( idx = vert; idx < 80; idx += 10 )
+	for ( idx = vert; idx < MAX_KEYS; idx += 0x10 )
 		op += Keys [ idx ];
 
 	if ( op )
@@ -197,7 +215,7 @@ InitialiseKeyboard()
 	int				i;
 	unsigned long	d = DIPSwitches;
 
-	for ( i = 0; i < 80; i++ )
+	for ( i = 0; i < MAX_KEYS; i++ )
 	{
 		Keys [ i ] = 0;
 	}
@@ -218,7 +236,7 @@ KeyboardMatrixUpdate ( unsigned char key, signed char action )
 	 * Mark the key array to show that the key has been pressed
 	 */
 
-	Keys [ key ] += action;
+	Keys [ key ] = action;
 
 	/*
 	 * At this point CA2 generates an interrupt for all keys not on row
@@ -246,13 +264,13 @@ KeyboardMatrixUpdate ( unsigned char key, signed char action )
 int
 SaveKeyboard ( int fd )
 {
-	unsigned char		kbd [ 96 ];
+	unsigned char		kbd [ MAX_KEYS + 16 ];
 
-	memcpy ( kbd, Keys, 80 );
-	kbd [ 88 ] = CapsLockLED;
-	kbd [ 89 ] = ShiftLockLED;
+	memcpy ( kbd, Keys, MAX_KEYS );
+	kbd [ MAX_KEYS + 1 ] = CapsLockLED;
+	kbd [ MAX_KEYS + 2 ] = ShiftLockLED;
 
-	if ( write ( fd, kbd, 96 ) != 96 )
+	if ( write ( fd, kbd, MAX_KEYS + 16 ) != ( MAX_KEYS + 16 ))
 		return -1;
 
 	return 0;
@@ -262,18 +280,18 @@ SaveKeyboard ( int fd )
 int
 RestoreKeyboard ( int fd, unsigned int val )
 {
-	unsigned char		kbd [ 96 ];
+	unsigned char		kbd [ MAX_KEYS + 16 ];
 
 	if ( val > 1 )
 		return -1;
 
-	if ( read ( fd, kbd, 96 ) != 96 )
+	if ( read ( fd, kbd, MAX_KEYS + 16 ) != ( MAX_KEYS + 16 ))
 		return -1;
 
-	memcpy ( Keys, kbd, 80 );
+	memcpy ( Keys, kbd, MAX_KEYS );
 
-	CapsLockLED = kbd [ 88 ];
-	ShiftLockLED = kbd [ 89 ];
+	CapsLockLED = kbd [ MAX_KEYS + 1 ];
+	ShiftLockLED = kbd [ MAX_KEYS + 2 ];
 
 	return 0;
 }

@@ -1,0 +1,87 @@
+Changes since Xbeeb v0.3
+========================
+
+o Mon Jan 14 23:21:12 GMT 2002
+
+  Have I really not touched this for so long?  Since the previous entry
+  we have better sound support, support for .inf files and many bugfixes.
+
+
+o Mon Mar  4 00:10:01 GMT 1996
+
+  Corrected handling of the 0x82, 0xc2 and 0xe2 opcodes -- they're
+  NOPs on my 6502A, not HALTs.
+
+
+o Thu Mar 14 22:45:42 GMT 1996
+
+  Numerous corrections for timer-handling/VIA emulation problems.
+
+
+o Mon Mar 18 22:50:45 GMT 1996
+
+  Corrections for number of cycles in branch instructions when the
+  condition is true.
+
+
+o Mon Mar 18 23:33:55 GMT 1996
+
+  Corrections for compilation errors under HPUX and for Robert Schmidt's
+  Win32/eXceed port.
+
+
+o Mon Mar 18 23:54:24 GMT 1996
+
+  Various bug-fixes in EFS.c
+
+
+o Mon Mar 18 23:56:08 GMT 1996
+
+  Added code to allow F12 to be used as the BREAK key if there is no
+  Pause key.
+
+
+o Thu Mar 21 23:53:53 GMT 1996
+
+  Documentation corrections.
+
+
+o Fri Jul 26 23:07:31 BST 1996
+
+  Updated doc/MailingLists and doc/SnapshotFormat to reflect changes
+  of address
+
+
+o Fri Jul 26 23:08:48 BST 1996
+
+  Updated doc/WWWSites for my new WWW site
+
+
+o Fri Jul 26 23:33:56 BST 1996
+
+  Replaced a whole pile of constants (mostly to do with screen handling)
+  with slightly more meaningful #defined names.
+
+  Changed the geometry of the windows.
+
+
+o Fri Jul 26 23:41:35 BST 1996
+
+  Corrections for a whole slew of potential wrap-around problems in
+  EFS.c
+
+
+o Fri Jul 26 23:45:08 BST 1996
+
+  Improved code for scan-line/vertical adjust handling
+
+
+o Sun Jul 28 19:06:44 BST 1996
+
+  Initial pass at strtoul code for systems that don't support it.  Removed
+  Perms.h & combined strcasecmp, strtoul and Perms.h into Compat.[ch]
+
+o Fri Sep  8 01:26:17 BST 2000
+
+  Lots of stuff has gone in recently.  Support for TrueColor displays.
+  Somewhat improved support for sound.  A load of bugfixes.

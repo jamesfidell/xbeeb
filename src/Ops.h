@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Ops.h,v 1.12 1996/09/24 23:05:40 james Exp $
+ * $Id: Ops.h,v 1.19 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,28 @@
  * Modification History
  *
  * $Log: Ops.h,v $
+ * Revision 1.19  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.18  2000/09/09 22:25:55  james
+ * *** empty log message ***
+ *
+ * Revision 1.17  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
+ * Revision 1.16  1996/12/03 01:15:17  james
+ * Correction to V-flag handling for SBC.
+ *
+ * Revision 1.15  1996/11/19 00:37:01  james
+ * Improvements/corrections to stack/lo-memory handling, including one
+ * nasty patch to allow the stack pointer to wrap around correctly.
+ *
+ * Revision 1.14  1996/11/08 00:58:20  james
+ * Commentary on R65C02 BCD mode.
+ *
+ * Revision 1.13  1996/10/13 15:38:29  james
+ * Fixed SBC -- the C flag was being set before we'd finished using it.
+ *
  * Revision 1.12  1996/09/24 23:05:40  james
  * Update copyright dates.
  *
@@ -122,6 +144,19 @@
 /*
  * Flag-setting for the ADC command is implemented as per Jouko Valta's
  * <jopi@stekt.oulu.fi> 65xx instruction code document.
+ */
+
+/*
+ * FIX ME
+ *
+ * The R65C02 uses extra cycles here to make sure the flags are correctly
+ * set for BCD mode
+ */
+
+/*
+ * FIX ME
+ *
+ * What happens if we're adding 0F and 0F in BCD mode (for example)?
  */
 
 #define	Adc(v) \
@@ -245,6 +280,13 @@
 	NegativeFlag = (v) & 0x80
 
 
+/*
+ * FIX ME
+ *
+ * The R65C02 uses extra cycles here to make sure the flags are correctly
+ * set for BCD mode
+ */
+
 #define Sbc(v) \
 { \
 	byteval			Aold = Accumulator; \
@@ -254,7 +296,7 @@
 	Accumulator = Anew & 0xff; \
 \
 	NegativeFlag = Accumulator & 0x80; \
-	ResetOverflowFlag ((!(( Aold ^ (v)) & 0x80 )) && \
+	ResetOverflowFlag ((( Aold ^ (v)) & 0x80 ) && \
 						(( Aold ^ Accumulator ) & 0x80 )); \
 	ResetZeroFlag ( Accumulator == 0x0 ); \
 \
@@ -328,22 +370,25 @@ else \
 
 #define	StackByte(v) \
 	WriteLoPageByte ( StackPointer | STACK_PAGE, (v)); \
-	StackPointer--;
+	StackPointer--; \
+	StackPointer &= 0xff;
 
 
 #define StackWord(v) \
-	StackPointer--; \
-	WriteWord ( StackPointer | STACK_PAGE, (v)); \
-	StackPointer--;
+	StackByte (( v ) >> 8 ); \
+	StackByte (( v ) & 0xff );
 
 
-#define	UnstackWord() ( \
-	StackPointer += 2, \
-	ReadWord ( StackPointer + STACK_PAGE - 1 ))
+#define UnstackWord() ( \
+    StackPointer += 2, \
+	StackPointer &= 0xff, \
+    ReadStackWord ( StackPointer - 1 ))
 
 
 #define UnstackByte() \
-	( StackPointer++, ReadLoPageByte ( StackPointer | STACK_PAGE ))
+	( StackPointer++, \
+	StackPointer &= 0xff, \
+	ReadLoPageByte ( StackPointer | STACK_PAGE ))
 
 
 #define	StackPC()		StackWord ( GetProgramCounter )

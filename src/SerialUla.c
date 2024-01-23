@@ -1,10 +1,10 @@
 /*
  *
- * $Id: SerialUla.c,v 1.9 1996/10/08 00:04:34 james Exp $
+ * $Id: SerialUla.c,v 1.12 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,16 @@
  * Modification History
  *
  * $Log: SerialUla.c,v $
+ * Revision 1.12  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.11  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
+ * Revision 1.10  1996/10/13 17:24:36  james
+ * Renamed Register0 to SerRegister0 to valid confusion with the Video ULA
+ * Register 0.
+ *
  * Revision 1.9  1996/10/08 00:04:34  james
  * Added InfoWindow to show LED status.  Also required addition of the
  * SHIFTLOCK_SOUND_HACK to prevent the Shift Lock LED being light up
@@ -83,7 +93,7 @@ static	unsigned char		RS423;
 static	unsigned char		XmitRate;
 static	unsigned char		RcvRate;
 
-static	unsigned char		Register0;
+static	unsigned char		SerRegister0;
 
 
 void
@@ -133,10 +143,10 @@ WriteSerialUla ( int addr, byteval val )
 	 * all the memory mapped addresses map to the same register.
 	 */
 
-	Register0 = val;
-	XmitRate = Register0 & 0x7;
-	RcvRate = ( Register0 >> 3 ) & 0x7;
-	if (( RS423 = ( Register0 & 0x40 )))
+	SerRegister0 = val;
+	XmitRate = SerRegister0 & 0x7;
+	RcvRate = ( SerRegister0 >> 3 ) & 0x7;
+	if (( RS423 = ( SerRegister0 & 0x40 )))
 	{
 		/*
 		 * Have to clear the DCD bit in the ACIA status register
@@ -157,7 +167,7 @@ WriteSerialUla ( int addr, byteval val )
 		AciaSRSet ( SR_DCD );
 	}
 
-	if (( MotorLED = Register0 & 0x80 ) != oldMotorLED )
+	if (( MotorLED = SerRegister0 & 0x80 ) != oldMotorLED )
 		DrawMotorLED();
 
 #ifdef	INFO
@@ -173,7 +183,7 @@ SaveSerialUla ( int fd )
 {
 	byteval					serial [ 8 ];
 
-	serial [ 0 ] = Register0;
+	serial [ 0 ] = SerRegister0;
 
 	if ( write ( fd, serial, 8 ) != 8 )
 		return -1;
@@ -193,12 +203,12 @@ RestoreSerialUla ( int fd, unsigned int ver )
 	if ( read ( fd, serial, 8 ) != 8 )
 		return -1;
 
-	Register0 = serial [ 0 ];
+	SerRegister0 = serial [ 0 ];
 
-	XmitRate = Register0 & 0x7;
-	RcvRate = ( Register0 >> 3 ) & 0x7;
-	RS423 = Register0 & 0x40;
-	MotorLED = Register0 & 0x80;
+	XmitRate = SerRegister0 & 0x7;
+	RcvRate = ( SerRegister0 >> 3 ) & 0x7;
+	RS423 = SerRegister0 & 0x40;
+	MotorLED = SerRegister0 & 0x80;
 
 	return 0;
 }

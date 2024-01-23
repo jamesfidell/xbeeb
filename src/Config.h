@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Config.h,v 1.20 1996/10/09 23:19:08 james Exp $
+ * $Id: Config.h,v 1.34 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,49 @@
  * Modification History
  *
  * $Log: Config.h,v $
+ * Revision 1.34  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.33  2002/01/14 23:20:44  james
+ * Prevent rolling over 31 disk catalog entries
+ *
+ * Revision 1.32  2002/01/14 22:18:51  james
+ * Added support for .inf files
+ *
+ * Revision 1.31  2002/01/13 22:27:19  james
+ * Fix compile-time warnings
+ *
+ * Revision 1.30  2000/09/07 21:59:03  james
+ * Add FASTHOST configurable.  Make bitmap displays read data properly rather
+ * than direct from the memory array when this is enabled.
+ *
+ * Revision 1.29  2000/09/07 21:30:39  james
+ * Fix coredump
+ *
+ * Revision 1.28  2000/09/06 11:41:13  james
+ * First cut at "proper" sound code
+ *
+ * Revision 1.27  2000/09/02 18:48:25  james
+ * Changed all VoxWare references to OSS
+ *
+ * Revision 1.26  2000/08/16 17:58:27  james
+ * Update copyright message
+ *
+ * Revision 1.25  2000/08/16 17:41:45  james
+ * Changes to work on TrueColor displays
+ *
+ * Revision 1.24  1996/12/04 23:39:58  james
+ * Remove the whole VSYNC_TIME thing.
+ *
+ * Revision 1.23  1996/11/24 22:21:56  james
+ * Don't use the FASTCLOCK mechanism by default.
+ *
+ * Revision 1.22  1996/11/18 00:53:55  james
+ * Add new XDFS code and ROM (v0.90) from David Ralph Stacey.
+ *
+ * Revision 1.21  1996/10/13 17:12:48  james
+ * Add local version of "strtoul" for those systems that don't have it.
+ *
  * Revision 1.20  1996/10/09 23:19:08  james
  * Added support for using the MIT X11 Shared Memory Extensions.
  *
@@ -165,12 +208,18 @@
  * MITSHM			Use MIT X11 Shared Memory Extensions if they are
  *					supported by the server.
  *
+ * also:
+ *
+ * FASTHOST			define this if your system can easily run the emulator
+ *					in excess of "real time" speed.
+ *
  */
 
-#define		LO_PAGE
-#define		FASTCLOCK	100
-#define		ENDIAN_6502
+#undef		LO_PAGE
+#undef		FASTCLOCK	/* 100 */
+#undef		ENDIAN_6502
 #define		MITSHM
+#define		FASTHOST
 
 /*
  * Misc. config. stuff
@@ -191,9 +240,13 @@
  *
  * NEED_STRCASECMP	If your system doesn't have the "strcasecmp" function.
  *
+ * NEED_STRTOUL		If your system doesn't have the "strtoul" function.
+ *
+ * EFS				Enable original Xbeeb emulated FS code
+ * INF_FS			Enable FS emulation using .inf files
  * EMUL_FS			Enables the emulated file-system code
  *
- * EFS_CATALOG_SIZE	The number of entries allowed in the EFS catalog
+ * CATALOG_SIZE		The number of entries allowed in the emulated disk catalog
  *
  * COUNT_INSTRS		Count how many times each op-code was executed
  *
@@ -207,7 +260,7 @@
  *
  * XBEEBROOT		The default root location of all of the disk images etc.
  *
- * VOXWARE_SOUND	Include Linux VoxWare sound support.
+ * SOUND_OSS		Include OSS sound support.
  *
  * SHIFTLOCK_SOUND_HACK
  *					Disable Shift Lock indicating that the sound buffer is
@@ -220,13 +273,16 @@
 
 #define		NO_FRED_JIM
 #undef		LIMIT			/* 5000000 */
-#undef		DISASS			/* DISASSEMBLE */
+#define		DISASS			0
 #undef		INFO
 #undef		NEED_STRCASECMP
 
+#undef		EFS
+#define		INF_FS
+#if defined(EFS) || defined(INF_FS)
 #define		EMUL_FS
-#define		EFS_CATALOG_SIZE	31
 #define		XDFS
+#endif
 
 #undef		COUNT_INSTRS
 
@@ -237,6 +293,12 @@
 #define		M6502
 #undef		R65C02
 #undef		R65C12
+
+/*
+ * Processor speed (in MHz)
+ */
+
+#define		CPU_SPEED	2
 
 /*
  * Model A/B support
@@ -256,7 +318,7 @@
  */
 
 #ifndef	XBEEBROOT
-#define		XBEEBROOT		"/home/james/beeb/"
+#define		XBEEBROOT		"/home/users/james/beeb/"
 #endif
 #define		XBEEBROMS		XBEEBROOT"roms/"
 #define		XBEEBSNAPS		XBEEBROOT"snaps/"
@@ -267,8 +329,8 @@
  * Sound emulation #defines
  */
 
-#define		VOXWARE_SOUND
-#define		SHIFTLOCK_SOUND_HACK
+#define		SOUND_OSS
+#undef		SHIFTLOCK_SOUND_HACK
 
 
 /*
@@ -287,10 +349,15 @@
 #else
 #define		OS_ROM			"OS1.2.rom"
 #endif
+
+#ifdef	M6502
 #define		LANG_ROM		"BASIC2.rom"
+#else
+#define		LANG_ROM		"BASIC4.rom"
+#endif
 
 #ifdef	XDFS
-#define		XDFS_ROM		"xdfs0.70.rom"
+#define		XDFS_ROM		"xdfs0.90.rom"
 #endif
   
 /*
@@ -321,6 +388,10 @@
 
 #ifdef	EMUL_FS
 
+#define	CATALOG_SIZE	31
+
+#ifdef	EFS
+
 /*
  * Filenames to use in the EFS system
  */
@@ -332,8 +403,15 @@
 #define		BAK_FILE		"__BAKFILE__"
 #define		BAK_CAT			"__BAK_CAT__"
 
-#endif	/* EMUL_FS */
+#endif	/* EFS */
 
+#ifdef	INF_FS
+
+#define		TMP_FILE		"__TMPSAVE__"
+#define		TMP_INF			"__TMP_INF__"
+
+#endif	/* INFO_FS */
+#endif	/* EMUL_FS */
 
 /*
  * The R65C02 includes all the R65C12 instructions...

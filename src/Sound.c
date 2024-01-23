@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Sound.c,v 1.5 1996/10/01 22:30:33 james Exp $
+ * $Id: Sound.c,v 1.10 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,21 @@
  * Modification History
  *
  * $Log: Sound.c,v $
+ * Revision 1.10  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.9  2002/01/13 22:50:23  james
+ * Add -q option to turn off sound
+ *
+ * Revision 1.8  2000/09/06 11:41:13  james
+ * First cut at "proper" sound code
+ *
+ * Revision 1.7  2000/09/02 18:48:26  james
+ * Changed all VoxWare references to OSS
+ *
+ * Revision 1.6  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
  * Revision 1.5  1996/10/01 22:30:33  james
  * Added VoxWare sound code from James Murray <jsm@jsm-net.demon.co.uk>.
  *
@@ -85,33 +100,20 @@
 #include "Config.h"
 #include "Sound.h"
 
-#ifdef	VOXWARE_SOUND
-#include "VoxWare.h"
+#ifdef	SOUND_OSS
+#include "SoundOSS.h"
 #endif
 
-#if defined(VOXWARE_SOUND)
-#define	SOUND_IMPLEMENTED
-#endif
-
+unsigned long		SoundCallSecs, SoundCallUsecs;
+unsigned int		SoundOn = 1;
 
 void
 SoundWrite ( byteval ora )
 {
-#ifdef	SOUND_IMPLEMENTED
-
-#ifdef	VOXWARE_SOUND
-	VoxWareWrite ( ora );
+#ifdef	SOUND_OSS
+	if ( SoundOn )
+		OSSWrite ( ora );
 #endif
-
-#else	/* SOUND_IMPLEMENTED */
-
-	/*
-	 * Not really sure what to do here -- let's just ignore the whole
-	 * thing...
-	 */
-
-#endif	/* SOUND_IMPLEMENTED */
-
 	return;
 }
 
@@ -147,17 +149,20 @@ SpeechWrite ( byteval data )
 void
 InitialiseSound()
 {
-#ifdef	SOUND_IMPLEMENTED
-
-#ifdef	VOXWARE_SOUND
-	InitialiseVoxWare();
+#ifdef	SOUND_OSS
+	if ( SoundOn )
+		InitialiseOSS();
 #endif
+	return;
+}
 
-#else	/* SOUND_IMPLEMENTED */
 
-	fprintf ( stderr, "warning: sound is not implemented\n" );
-
-#endif	/* SOUND_IMPLEMENTED */
-
+void
+SoundRefresh()
+{
+#ifdef	SOUND_OSS
+	if ( SoundOn )
+		OSSSoundRefresh();
+#endif
 	return;
 }

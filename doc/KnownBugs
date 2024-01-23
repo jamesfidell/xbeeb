@@ -1,4 +1,4 @@
-$Id: KnownBugs,v 1.2 1996/10/10 22:31:22 james Exp $
+$Id: KnownBugs,v 1.5 2002/01/14 23:54:48 james Exp $
 
 Known Bugs
 ==========
@@ -7,22 +7,12 @@ There are probably plenty of bugs I don't know about, though I think
 that the CPU emulation is good as long as you stick to legal, documented
 opcodes. Here's a few problems I know about...
 
-o The mark/space ratio for flashing teletext is a guess. I haven't a
-  clue what it really is.
-
-o The emulator possibly only works on pseudo-colour X displays. I
-  haven't tried it on any others.
-
 o The MODE 7 screen emulation flickers because it updates the whole
   screen when it changes, rather than just the changed bits, but I
   haven't worked out a suitable way to optimise that yet. The reason it
   works this way is because of the handling of double height characters
   -- the context of each line may change because of a change in the line
   above it.
-
-o The code for re-initialising the screen when a snapshot has been
-  loaded is quite horrid and is probably the source of a number of bugs.
-  It needs more thought and work.
 
 o There are numerous places where I don't know how the emulator should
   handle a given situation. These are usually documented in the code,
@@ -34,23 +24,15 @@ o Handling of mixed case in filenames is incomplete. If a filename is
   mixed case on the disk, it's exact name must be used in any command
   for loading or running it.
 
-o Not exactly a bug -- more of a feature, really. Although you won't
-  hear anything, the emulator still does all that's necessary from the
-  programming point of view to make sounds even if you don't have sound
-  support. This means that there will be delays in programs that play
-  sounds before they continue. The emulator hasn't crashed, honest :-)
-
-o Handling of hardware-scrolled screens isn't perfect.  In the efs-demo
-  and xdfs-demo directories there's a program called B.DEMO that will
-  usually demonstrate the problem.
-
-o Changing the Horizontal Sync. register in the CRTC isn't implemented
-  but is required for some games.
-
 o The counter in Hopper is screwy.  I did have this working at once
   stage, but I've broken it again.
 
-o The screen window overlaps the window with the LED status in sometimes.
+o Snapshots don't currently restore correctly.
+
+o Games such as Elite, that use split-mode screens and/or reduced width
+  displays don't work quite as perfectly as they might.  Some junk is
+  left in the window and the mode doesn't always split quite where it
+  should.
 
 
 There must be other bugs, too, because otherwise all the software I have
@@ -61,6 +43,15 @@ Revision History
 ================
 
 $Log: KnownBugs,v $
+Revision 1.5  2002/01/14 23:54:48  james
+Updates for v0.4
+
+Revision 1.4  2002/01/13 23:59:02  james
+Fixed coredump on snapshot
+
+Revision 1.3  2002/01/13 23:47:12  james
+Updated known bugs
+
 Revision 1.2  1996/10/10 22:31:22  james
 Updates for v0.3.
 

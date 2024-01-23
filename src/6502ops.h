@@ -1,10 +1,10 @@
 /*
  *
- * $Id: 6502ops.h,v 1.2 1996/09/24 23:05:33 james Exp $
+ * $Id: 6502ops.h,v 1.5 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1995, 1996.
+ * Copyright (C) James Fidell 1995-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,15 @@
  * Modification History
  *
  * $Log: 6502ops.h,v $
+ * Revision 1.5  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.4  2000/08/16 17:58:26  james
+ * Update copyright message
+ *
+ * Revision 1.3  1996/10/10 23:06:08  james
+ * Opcodes 82, C2 & E2 are NOPs, not HALTs.
+ *
  * Revision 1.2  1996/09/24 23:05:33  james
  * Update copyright dates.
  *

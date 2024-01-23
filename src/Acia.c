@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Acia.c,v 1.7 1996/10/01 00:32:57 james Exp $
+ * $Id: Acia.c,v 1.9 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,12 @@
  * Modification History
  *
  * $Log: Acia.c,v $
+ * Revision 1.9  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.8  2000/08/16 17:58:26  james
+ * Update copyright message
+ *
  * Revision 1.7  1996/10/01 00:32:57  james
  * Created separate hardware reset code for each emulated unit and called
  * these from the main initialisation section of the code to do all of the

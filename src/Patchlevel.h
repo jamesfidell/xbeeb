@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Patchlevel.h,v 1.4 1996/09/30 22:59:08 james Exp $
+ * $Id: Patchlevel.h,v 1.8 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -25,31 +25,12 @@
  *
  */
 
-/*
- * Modification History
- *
- * $Log: Patchlevel.h,v $
- * Revision 1.4  1996/09/30 22:59:08  james
- * Prevent multiple inclusion of header files.
- *
- * Revision 1.3  1996/09/24 23:05:40  james
- * Update copyright dates.
- *
- * Revision 1.2  1996/09/24 17:39:14  james
- * Update revision level.
- *
- * Revision 1.1  1996/09/22 20:28:53  james
- * Added Patchlevel.h and -V command line option.
- *
- *
- */
-
 
 #ifndef	PATCHLEVEL_H
 #define	PATCHLEVEL_H
 
 #define	VERSION		0
-#define	RELEASE		3
-#define	PATCHLEVEL	5
+#define	RELEASE		4
+#define	PATCHLEVEL	0
 
 #endif	/* PATCHLEVEL_H */

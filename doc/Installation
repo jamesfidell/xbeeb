@@ -1,4 +1,4 @@
-$Id: Installation,v 1.5 1996/09/24 18:22:30 james Exp $
+$Id: Installation,v 1.8 2002/01/14 23:54:48 james Exp $
 
 xbeeb Installation
 ==================
@@ -9,11 +9,12 @@ for details on how to do that.
 
 The ROMs are still under copyright, so I can't distribute them as part of
 this package.  Careful searching for BBC Micro Emulator WWW sites will
-no doubt help you out here, I'm sure.
+no doubt help you out here, I'm sure.  For a start, I'd recommend
+http://www.nvg.ntnu.no/bbc/
 
 Then edit src/Config.h for your system.  In practice, you'll probably only
-need to change the ENDIAN_6502 define, NEED_STRCASECMP and XBEEBROOT, which
-is the default location of the ROMs images and snapshots.
+need to change the ENDIAN_6502 define, NEED_STRCASECMP, NEED_STRTOUL and
+XBEEBROOT, which is the default location of the ROMs images and snapshots.
 
 There is an Imakefile for the emulator.  To use it you need to do :
 
@@ -72,13 +73,33 @@ try starting with :
 The OS and language ROMs should be placed in XBEEBROOT/roms/...  By
 default, the emulator will try to load OS1.2p1.rom (or OS1.2.rom if you
 don't have the emulated filing system enabled) and BASIC2.rom when it
-starts.
+starts.  If you're using XDFS, which will be the default case, you need
+to copy that to the same directory.
+
+If you start up xbeeb and see:
+
+BBC Computer 32K
+
+No such variable
+
+
+that's probably because it isn't loading the patched OS ROM.  See
+doc/RomPatches for details and copy it into XBEEBROOT/roms as above.
 
 
 Revision History
 ================
 
 $Log: Installation,v $
+Revision 1.8  2002/01/14 23:54:48  james
+Updates for v0.4
+
+Revision 1.7  1996/10/13 17:12:40  james
+Add local version of "strtoul" for those systems that don't have it.
+
+Revision 1.6  1996/10/13 07:02:11  james
+Added comments on HP-UX
+
 Revision 1.5  1996/09/24 18:22:30  james
 Change LITTLE_ENDIAN #define to ENDIAN_6502 because of a clash with
 header files on some systems.

@@ -1,10 +1,10 @@
 /*
  *
- * $Id: 6522Via.c,v 1.10 1996/10/10 21:44:01 james Exp $
+ * $Id: 6522Via.c,v 1.19 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,35 @@
  * Modification History
  *
  * $Log: 6522Via.c,v $
+ * Revision 1.19  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.18  2000/08/31 23:07:41  james
+ * Updated timing mechanism to run at a more realistic speed
+ *
+ * Revision 1.17  2000/08/16 22:52:08  james
+ * Temporary timing fix to slow execution
+ *
+ * Revision 1.16  2000/08/16 17:58:26  james
+ * Update copyright message
+ *
+ * Revision 1.15  1996/12/04 23:39:57  james
+ * Remove the whole VSYNC_TIME thing.
+ *
+ * Revision 1.14  1996/11/24 22:13:23  james
+ * Timer values need to be updated before they are read or over-written
+ * in the 6522 User and System VIA code.  From a fix by David Ralph Stacey.
+ *
+ * Revision 1.13  1996/11/17 23:21:17  james
+ * Firetrack no longer needs some of the System VIA interrupts stopping.
+ *
+ * Revision 1.12  1996/11/14 23:30:42  james
+ * Stop VIA timer interrupts getting repeated as the counters hit zero
+ * exactly.
+ *
+ * Revision 1.11  1996/10/10 23:20:51  james
+ * Corrections to some hideous counter roll-over problems.
+ *
  * Revision 1.10  1996/10/10 21:44:01  james
  * Fixes from David Ralph Stacey for scan-line updates.
  *
@@ -101,6 +130,7 @@
 
 
 #include <stdio.h>
+#include <unistd.h>
 
 #include "Config.h"
 #include "6522Via.h"
@@ -111,6 +141,9 @@
 #include "Bitmap.h"
 #include "Teletext.h"
 #include "Modes.h"
+
+
+unsigned char		ClockCyclesSoFar = 0;
 
 
 void
@@ -144,6 +177,7 @@ ViaClockUpdate ( byteval val )
 	static unsigned int			video_sync_ticks = 0;
 	static unsigned int			screen_frame_ticks = 0;
 	static unsigned int			extra_tick = 0;
+    static unsigned int			sleep = 0;
 
 	/*
 	 * FIX ME
@@ -165,6 +199,7 @@ ViaClockUpdate ( byteval val )
 	val >>= 1;				/* Convert 2Mhz CPU ticks to 1Mhz VIA ticks */
 	video_sync_ticks += val;
 	screen_frame_ticks += val;
+	sleep += val;
 
 	/*
 	 * System VIA CA1 needs to cause an interrupt every 20ms (50Hz) to
@@ -200,24 +235,9 @@ ViaClockUpdate ( byteval val )
 		 * for the current setting of the clock...
 		 */
 
-		/*
-		 * FIX ME
-		 *
-		 * There are lots of magic numbers in this.  I don't understand
-		 * their derivation fully.  Here's Dave Stacey's comments :
-		 *
-		 * The 1900 is being pulled out of a geniune piece of extremely thin
-		 * air. It is a universal constant not calculable from Crtc / System
-		 * VIA registers and is the time between v-sync flyback and the start
-		 * of the screen being redrawn. Since all floating line methods use
-		 * v-sync to calculate the timing, we must put this in.
-		 *
-		 * I #defined VSYNC_TIME to be 1900 in Crtc.c
-		 */
-
-		if ( screen_frame_ticks > ( CrtcMagicNumber + VSYNC_TIME ))
-			BitmapScanlineUpdate (( screen_frame_ticks - VSYNC_TIME -
-												CrtcMagicNumber ) / 64 );
+		if ( screen_frame_ticks > CrtcMagicNumber )
+			BitmapScanlineUpdate (( screen_frame_ticks -
+													CrtcMagicNumber ) / 64 );
 	}
 
 	/*
@@ -252,13 +272,16 @@ ViaClockUpdate ( byteval val )
 
 		/*
 		 * In continuous mode, we also need to re-load the counter
-		 * latches, otherwise just roll the counter over
+		 * latches, otherwise just roll the counter over.  If the counter
+		 * is zero, it is reset to 2^16 so that we don't meet the entry
+		 * condition for this code next time around.
 		 */
 
 		if ( SystemViaTimer1Continuous )
 			SystemViaTimer1 += (SystemVia[T1LL] + 256 * SystemVia[T1LH]);
 		else
-			SystemViaTimer1 &= 0xffff;
+			SystemViaTimer1 = SystemViaTimer1 ? ( SystemViaTimer1 & 0xffff ) :
+																	0x10000;
 
 		/*
 		 * And generate the interrupt if we can.
@@ -284,23 +307,18 @@ ViaClockUpdate ( byteval val )
 		{
 			if ( SystemViaTimer2InterruptEnable )
 			{
-				/*
-				 * FIX ME
-				 *
-				 * David Stacey commented this next line out to get
-				 * Firetrack working.  I really need to look into that
-				 * a little more.
-				 */
-
 				SystemViaSetInterrupt ( INT_T2 );
 				SystemViaTimer2InterruptEnable = 0;
 			}
 
 			/*
-			 * roll the counter over
+			 * roll the counter over.    If the counter is zero, it is
+			 * reset to 2^16 so that we don't meet the entry condition
+			 * for this code next time around.
 			 */
 
-			SystemViaTimer2 &= 0xffff;
+			SystemViaTimer2 = SystemViaTimer2 ? ( SystemViaTimer2 & 0xffff ) :
+																	0x10000;
 		}
 	}
 
@@ -336,13 +354,16 @@ ViaClockUpdate ( byteval val )
 
 		/*
 		 * In continuous mode, we also need to re-load the counter
-		 * latches, otherwise just roll the counter over.
+		 * latches, otherwise just roll the counter over.  If the counter
+		 * is zero, it is reset to 2^16 so that we don't meet the entry
+		 * condition for this code next time around.
 		 */
 
 		if ( UserViaTimer1Continuous )
 			UserViaTimer1 += (UserVia[T1LL] + 256 * UserVia[T1LH]);
 		else
-			UserViaTimer1 &= 0xffff;
+			UserViaTimer1 = UserViaTimer1 ? ( UserViaTimer1 & 0xffff ) :
+																	0x10000;
 
 		/*
 		 * And generate the interrupt
@@ -373,12 +394,13 @@ ViaClockUpdate ( byteval val )
 			}
 
 			/*
-			 * Now roll over the counter.
+			 * Now roll over the counter.  If the counter is zero, it is
+			 * reset to 2^16 so that we don't meet the entry condition
+			 * for this code next time around.
 			 */
 
-			UserViaTimer2 &= 0xffff;
+			UserViaTimer2 = UserViaTimer2 ? ( UserViaTimer2 & 0xffff ) :
+																	0x10000;
 		}
 	}
-
-	return;
 }

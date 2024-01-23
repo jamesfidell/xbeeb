@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Crtc.c,v 1.12 1996/10/10 21:44:02 james Exp $
+ * $Id: Crtc.c,v 1.25 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,50 @@
  * Modification History
  *
  * $Log: Crtc.c,v $
+ * Revision 1.25  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.24  2000/09/07 23:10:34  james
+ * Tidyups and correct fix for not correctly handling bitmap screens where
+ * existing colour matches current
+ *
+ * Revision 1.23  2000/08/16 17:58:27  james
+ * Update copyright message
+ *
+ * Revision 1.22  1996/11/25 00:01:17  james
+ * Remove the "Default Vertical Sync value" magic number.
+ *
+ * Revision 1.21  1996/11/24 22:37:32  james
+ * Updates to comments.
+ *
+ * Revision 1.20  1996/11/24 22:32:27  james
+ * Limit Crtc R5 to 5 valid bits.
+ *
+ * Revision 1.19  1996/11/24 21:54:09  james
+ * Change MIN to XBEEB_MIN to avoid clashes with some OSes.
+ *
+ * Revision 1.18  1996/11/19 01:13:42  james
+ * Tidy up display of register settings.
+ *
+ * Revision 1.17  1996/11/18 01:01:28  james
+ * Changes to comments.
+ *
+ * Revision 1.16  1996/11/15 23:45:57  james
+ * Oops!  Forgot to add the lo half of the screen start address back in
+ * when calculating the new top of (teletext) screen address when the hi
+ * byte is written to the CRTC.
+ *
+ * Revision 1.15  1996/11/09 23:02:29  james
+ * Take account of the horizontal start of display based on the clock rate
+ * set in the Video ULA and the CRTC Horiz. Sync. register.
+ *
+ * Revision 1.14  1996/11/09 22:32:54  james
+ * Updated bitmapped screen-handling code to take account of the Vertical
+ * Adjust register in the CRTC.
+ *
+ * Revision 1.13  1996/10/13 12:13:30  james
+ * Parenthesise all parameters to #defined macros.
+ *
  * Revision 1.12  1996/10/10 21:44:02  james
  * Fixes from David Ralph Stacey for scan-line updates.
  *
@@ -98,7 +142,9 @@
 static byteval			RegisterToAccess = 0xff;
 byteval					CrtcRegisters [ 18 ];
 byteval					ScanLinesPlus1;
+byteval					DefaultVertSync = 0;
 unsigned short			HorizDisplayed8;
+unsigned short			VertAdjust2;
 
 unsigned char			CursorBlinkEnable;
 unsigned char			CursorBlinkFrequency;
@@ -114,9 +160,6 @@ unsigned char			NewCursorX = 255;
 unsigned char			NewCursorY = 255;
 unsigned int			CrtcMagicNumber;
 unsigned int			CursorAddress, CursorOffset;
-
-
-#define	MIN(x,y)		((( x ) < ( y )) ? ( x ) : ( y ))
 
 
 void
@@ -251,16 +294,18 @@ WriteCrtc ( int addr, byteval val )
 					break;
 
 				case 0x2 :
+					HorizSync = val;
 
 					/*
 					 * FIX ME
 					 *
-					 * When this register changes we need to change the
-					 * position of the start of the display across the
-					 * screen.
+					 * where do these "magic" numbers come from ?
 					 */
 
-					HorizSync = val;
+					if ( ClockRate )
+						StartPosnX = ( 98 - HorizSync ) * 8;
+					else
+						StartPosnX = ( 49 - HorizSync ) * 16;
 #ifdef	INFO
 					printf ( "CRTC Horiz. Sync. pos. set to 0x%2x\n", val );
 #endif
@@ -275,7 +320,7 @@ WriteCrtc ( int addr, byteval val )
 					 */
 
 					if (( SyncWidth = val ) != 0x28 && val != 0x24 )
-						fprintf ( stderr, "CRTC R3 set to odd value\n" );
+						fprintf ( stderr, "CRTC R3 set to 0x%2x\n", val );
 #ifdef	INFO
 					printf ( "CRTC Sync. width set to 0x%2x\n", val );
 #endif
@@ -295,7 +340,7 @@ WriteCrtc ( int addr, byteval val )
 					 */
 
 					if (( VertTotal = val ) != 38 && val != 30 )
-						fprintf ( stderr, "CRTC R4 set to odd value\n" );
+						fprintf ( stderr, "CRTC R4 set to 0x%2x\n", val );
 #ifdef	INFO
 					printf ( "CRTC Vert. Total set to 0x%2x\n", val );
 #endif
@@ -303,14 +348,22 @@ WriteCrtc ( int addr, byteval val )
 
 				case 0x5 :
 					/*
-					 * FIX ME
-					 *
-					 * Move the display up/down a number of scan lines.
-					 * Same situation as for R4.
+					 * Only the 5 lo bits of this register are valid, so the
+					 * rest are masked off.
 					 */
 
-					if (( VertAdjust = val ) != 0 && val != 2 )
-						fprintf ( stderr, "CRTC R5 set to odd value\n" );
+					/*
+					 * FIX ME
+					 *
+					 * Psycastria sets this to 0x60.  Why ?
+					 *
+					 * Also, is there a requirement to update the screen
+					 * here, or can (as I am going to do) we rely on things
+					 * working out in the normal course of time ?
+					 */
+
+					VertAdjust = val & 0x1f;
+					VertAdjust2 = val << 1;
 #ifdef	INFO
 					printf ( "CRTC Vert. Adjust set to 0x%2x\n", val );
 #endif
@@ -322,6 +375,10 @@ WriteCrtc ( int addr, byteval val )
 					 *
 					 * This is the vertical equivalent of R1 and the same
 					 * comments apply.
+					 *
+					 * Should we update the screen immediately here, or wait
+					 * for things to work out in the fullness of time (which
+					 * I do) ?
 					 */
 
 					VertDisplayed = val;
@@ -355,7 +412,8 @@ WriteCrtc ( int addr, byteval val )
 					ChangeBitmapWindowY ( y );
 					ChangeTeletextWindowY ( y );
 
-					CrtcMagicNumber = ( 35 - VertSync ) * ScanLinesPlus1 * 64;
+					CrtcMagicNumber = ( DefaultVertSync - VertSync ) *
+												ScanLinesPlus1 * uS_PER_LINE;
 #ifdef	INFO
 					printf ( "CRTC Vert. Sync. pos. set to 0x%2x\n", val );
 #endif
@@ -396,24 +454,10 @@ WriteCrtc ( int addr, byteval val )
 					break;
 
 				case 0x9 :
-					/*
-					 * FIX ME
-					 *
-					 * Changing this appears to completely nobble the display
-					 * so just give a warning if it's changed to a value that
-					 * isn't expected.
-					 *
-					 */
-
-					if (( ScanLines = val ) != 7 && val != 9 && val != 18 )
-					{
-						fprintf ( stderr, "CRTC R9 (scan lines/character) "
-							"set to odd value.  Can't handle this.  Program "
-							"exiting.\n" );
-						FatalError();
-					}
+					ScanLines = val;
 					ScanLinesPlus1 = ScanLines + 1;
-					CrtcMagicNumber = ( 35 - VertSync ) * ScanLinesPlus1 * 64;
+					CrtcMagicNumber = ( DefaultVertSync - VertSync ) *
+												ScanLinesPlus1 * uS_PER_LINE;
 #ifdef	INFO
 					printf ( "CRTC Scan lines/char set to 0x%2x\n", val );
 #endif
@@ -468,7 +512,10 @@ WriteCrtc ( int addr, byteval val )
 						 */
 
 						if ( CurrentScreenMode == MODE_TELETEXT )
+						{
 							TopOfScreen = (( val ^ 0x20 ) + 0x74 ) << 8;
+							TopOfScreen |= ScreenStartLo;
+						}
 						else
 						{
 							TopOfScreen = val << 8;
@@ -738,8 +785,13 @@ RestoreCRTC ( int fd, unsigned int ver )
 	 * FIX ME
 	 *
 	 * Now deal with the update of the window position based on the
-	 * value of R7 and R2.
-	 */
+	 * value of R7 and R2 (R2 is now done below...)
+  	 */
+  
+	if ( ClockRate )
+		StartPosnX = ( 98 - HorizSync ) * 8;
+	else
+		StartPosnX = ( 49 - HorizSync ) * 16;
 
 	/*
 	 * Set up variables for optimisation of drawing bitmapped display.
@@ -747,7 +799,9 @@ RestoreCRTC ( int fd, unsigned int ver )
 
 	ScanLinesPlus1 = ScanLines + 1;
 	HorizDisplayed8 = HorizDisplayed * 8;
-	CrtcMagicNumber = ( 35 - VertSync ) * ScanLinesPlus1 * 64;
+	VertAdjust2 = VertAdjust << 1;
+	CrtcMagicNumber = ( DefaultVertSync - VertSync ) * ScanLinesPlus1
+															* uS_PER_LINE;
 
 	return 0;
 }

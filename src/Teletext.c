@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Teletext.c,v 1.11 1996/10/10 22:09:02 james Exp $
+ * $Id: Teletext.c,v 1.20 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,36 @@
  * Modification History
  *
  * $Log: Teletext.c,v $
+ * Revision 1.20  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.19  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
+ * Revision 1.18  2000/08/16 17:41:45  james
+ * Changes to work on TrueColor displays
+ *
+ * Revision 1.17  1996/11/25 00:01:19  james
+ * Remove the "Default Vertical Sync value" magic number.
+ *
+ * Revision 1.16  1996/11/24 21:54:10  james
+ * Change MIN to XBEEB_MIN to avoid clashes with some OSes.
+ *
+ * Revision 1.15  1996/11/09 23:02:31  james
+ * Take account of the horizontal start of display based on the clock rate
+ * set in the Video ULA and the CRTC Horiz. Sync. register.
+ *
+ * Revision 1.14  1996/10/13 21:59:59  james
+ * Changed all window size/position parameters to #defined values.
+ *
+ * Revision 1.13  1996/10/13 16:38:32  james
+ * Screen addresses need to be recalculated on switching between bitmapped
+ * and non-bitmapped modes because they're calculated differently from the
+ * values in the registers.
+ *
+ * Revision 1.12  1996/10/13 12:13:33  james
+ * Parenthesise all parameters to #defined macros.
+ *
  * Revision 1.11  1996/10/10 22:09:02  james
  * HoldCharacter needs to change back to space for TT_DOUBLE_HEIGHT
  *
@@ -84,6 +114,7 @@
 #include <X11/Xutil.h>
 
 #include "Config.h"
+#include "Beeb.h"
 #include "Teletext.h"
 #include "Memory.h"
 #include "Screen.h"
@@ -142,8 +173,8 @@
 #define	DH_UPPER		1
 #define	DH_LOWER		2
 
-int						TeletextWindowX = 80;
-int						TeletextWindowY = 0;
+int						TeletextWindowX = TTXT_WIN_X;
+int						TeletextWindowY = TTXT_WIN_Y;
 
 static int				FlashTimer;
 static int				CursorTimer;
@@ -159,17 +190,12 @@ static unsigned int		CursorViewable = 0;
 
 static void				DrawCursor();
 
-#define	MIN(x,y)		((( x ) < ( y )) ? ( x ) : ( y ))
-
 
 void
 InitialiseTeletext()
 {
 	if ( CurrentScreenMode != MODE_TELETEXT )
 	{
-		int				i;
-		XColor			colour;
-
 		CurrentScreenMode = MODE_TELETEXT;
 
 		/*
@@ -217,29 +243,6 @@ InitialiseTeletext()
 
 		/*
 		 * FIX ME
-	 	 *
-		 * I'm not actually sure I need to do this...
-		 *
-		 * Set the first 8 entries into the colourmap back to their
-		 * default values -- they might have been changed if we've
-		 * changed from a graphics mode where the colours were
-		 * redefined.
-		 */
-
-		for ( i = 0; i < 8; i++ )
-		{
-			Cells [ i ] = ColourBits | ( i & 1 ? Masks [ 0 ] : 0 ) |
-					( i & 2 ? Masks [ 1 ] : 0 ) | ( i & 4 ? Masks [ 2 ] : 0 );
-			colour.pixel = Cells [ i ];
-			colour.red = RgbValues [ i % 8 ][ 0 ];
-			colour.green = RgbValues [ i % 8 ][ 1 ];
-			colour.blue = RgbValues [ i % 8 ][ 2 ];
-			colour.flags = DoRed | DoGreen | DoBlue;
-			XStoreColor ( dpy, DefCmap, &colour );
-		}
-
-		/*
-		 * FIX ME
 		 *
 		 * Should update the screen to be consistent with whatever is
 		 * in screen memory at the moment...
@@ -249,6 +252,14 @@ InitialiseTeletext()
 		XMapRaised ( dpy, TeletextScreen );
 		XFlush ( dpy );
 	}
+
+	/*
+	 * Default vertical sync. position (so we put the window somewhere
+	 * sane on the screen...
+	 */
+
+	DefaultVertSync = 28;
+
 	FlashTimer = CursorTimer = 0;
 	FlashStatus = CursorOnScreen = 0;
 
@@ -309,6 +320,12 @@ TeletextScreenUpdate()
 	{
 		SeenFlash = 0;
 		CursorOnScreen = 0;
+
+		/*
+		 * FIX ME
+		 *
+		 * We really should take account of StartPosnX here
+		 */
 
 		p = TopOfScreen;
 		for ( lines = 1; lines <= VertDisplayed; lines++ )
@@ -745,7 +762,8 @@ DrawCursor()
 					else
 						CursorViewable = 1;
 					CursorY = NewCursorY * 19 + CursorStartLine;
-					CursorDepth = MIN(19, CursorEndLine - CursorStartLine + 1);
+					CursorDepth = XBEEB_MIN ( 19, ( CursorEndLine -
+														CursorStartLine + 1 ));
 					CursorWidth = ( CursorByteWidth - 1 + MasterCursorWidth )
 																		* 12;
 					CursorResized = 0;
@@ -775,7 +793,8 @@ DrawCursor()
 					else
 						CursorViewable = 1;
 					CursorY = NewCursorY * 19 + CursorStartLine;
-					CursorDepth = MIN(19, CursorEndLine - CursorStartLine + 1);
+					CursorDepth = XBEEB_MIN ( 19, ( CursorEndLine -
+														CursorStartLine + 1 ));
 					CursorWidth = ( CursorByteWidth - 1 + MasterCursorWidth )
 																		* 12;
 					CursorResized = 0;
@@ -817,8 +836,8 @@ DrawCursor()
 						else
 							CursorViewable = 1;
 						CursorY = NewCursorY * 19 + CursorStartLine;
-						CursorDepth = MIN ( 19, CursorEndLine -
-														CursorStartLine + 1 );
+						CursorDepth = XBEEB_MIN ( 19, ( CursorEndLine -
+														CursorStartLine + 1 ));
 						CursorWidth = ( CursorByteWidth - 1 +
 													MasterCursorWidth ) * 12;
 						CursorResized = 0;
@@ -847,8 +866,8 @@ DrawCursor()
 					else
 						CursorViewable = 1;
 					CursorY = NewCursorY * 19 + CursorStartLine;
-					CursorDepth = MIN ( 19, CursorEndLine -
-													CursorStartLine + 1 );
+					CursorDepth = XBEEB_MIN ( 19, ( CursorEndLine -
+													CursorStartLine + 1 ));
 					CursorWidth = ( CursorByteWidth - 1 + MasterCursorWidth )
 																		* 12;
 					CursorResized = 0;

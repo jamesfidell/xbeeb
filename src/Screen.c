@@ -1,10 +1,10 @@
 /*
  *
- * $Id: Screen.c,v 1.12 1996/10/09 23:19:10 james Exp $
+ * $Id: Screen.c,v 1.24 2002/01/15 15:46:43 james Exp $
  *
- * Copyright (c) James Fidell 1994, 1995, 1996.
+ * Copyright (C) James Fidell 1994-2002.
  *
- * Permission to use, copy, modify, distribute, and sell this software
+ * Permission to use, copy, modify and distribute this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appear in all copies and
  * that both that copyright notice and this permission notice appear in
@@ -29,6 +29,42 @@
  * Modification History
  *
  * $Log: Screen.c,v $
+ * Revision 1.24  2002/01/15 15:46:43  james
+ * *** empty log message ***
+ *
+ * Revision 1.23  2002/01/14 22:18:51  james
+ * Added support for .inf files
+ *
+ * Revision 1.22  2002/01/13 23:29:46  james
+ * Unbreak MODE7 cursor
+ *
+ * Revision 1.21  2002/01/13 22:27:19  james
+ * Fix compile-time warnings
+ *
+ * Revision 1.20  2000/09/07 21:30:39  james
+ * Fix coredump
+ *
+ * Revision 1.19  2000/08/16 17:58:28  james
+ * Update copyright message
+ *
+ * Revision 1.18  2000/08/16 17:41:45  james
+ * Changes to work on TrueColor displays
+ *
+ * Revision 1.17  1996/11/11 23:52:31  james
+ * Corrections for non-MITSHM code.
+ *
+ * Revision 1.16  1996/10/13 22:17:18  james
+ * Helps to #include the file that TV_LINES is #defined in :-)
+ *
+ * Revision 1.15  1996/10/13 22:03:56  james
+ * Set up constant TV_LINES (=625) and used that instead of local magic numbers.
+ *
+ * Revision 1.14  1996/10/13 21:59:57  james
+ * Changed all window size/position parameters to #defined values.
+ *
+ * Revision 1.13  1996/10/12 14:30:25  james
+ * Corrections to MITSHM #ifdefs around code freeing up resources on shutdown.
+ *
  * Revision 1.12  1996/10/09 23:19:10  james
  * Added support for using the MIT X11 Shared Memory Extensions.
  *
@@ -81,6 +117,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
@@ -88,6 +125,7 @@
 #include "Config.h"
 #include "Beeb.h"
 #include "Screen.h"
+#include "Crtc.h"
 #include "Modes.h"
 #include "Teletext.h"
 #include "Bitmap.h"
@@ -98,14 +136,21 @@
 #include "Patchlevel.h"
 
 #ifdef	EMUL_FS
-#include "EFS.h"
+#include "EmulFS.h"
 #endif
 
+#ifdef	DGA
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <X11/extensions/xf86dga.h>
+#include <X11/extensions/xf86vmode.h>
+#else	/* DGA */
 #ifdef	MITSHM
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
 #endif	/* MITSHM */
+#endif	/* DGA */
 
 
 Display				*dpy;
@@ -144,7 +189,6 @@ GC					CopyAreaGC;
 Window				BitmapScreen;
 Pixmap				BitmapPixmap;
 int					BytesPerImageLine;
-char				*ImageData;
 
 /*
  * General colour-handling stuff
@@ -167,6 +211,10 @@ int					RgbValues [ 8 ][ 3 ] =
 	{ 0xffff, 0x0000, 0xffff },		/* 5 = Magenta */
 	{ 0x0000, 0xffff, 0xffff },		/* 6 = Cyan */
 	{ 0xffff, 0xffff, 0xffff }		/* 7 = White */
+};
+
+static const char	*Colours[8] = {
+	"black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"
 };
 
 
@@ -198,26 +246,27 @@ static XShmSegmentInfo	SharedSegInfo;
 void
 InitialiseScreen()
 {
-	int					i, dummy;
+	int					i;
 	XColor				colour, scol, xcol;
 	Window				Root;
 	XGCValues			CursorGCValues;
-	unsigned long		PlaneMask;
-	int					DefScreen, DefDepth;
+	unsigned long		PlaneMask = ~0;
+	int					DefScreen, DefDepth, visuals, VisualClass;
 	Visual				*DefVisual;
+	XVisualInfo			VisualTmpl, *MyVisual;
 	GC					DefGC;
 	XWindowChanges		Raise;
 	char				TitleString [ 80 ];
 	XSizeHints			SizeHints;
 #ifdef	MITSHM
-	int					PixmapFormat;
+	int					PixmapFormat, dummy;
 	Bool				SharedPixmapSupport;
 #endif
 
 
 	if (( dpy = XOpenDisplay ( 0 )) == 0 )
 	{
-		fprintf ( stderr, "Couldn't open connection to dispay\n" );
+		fprintf ( stderr, "Couldn't open connection to display\n" );
 		exit ( 1 );
 	}
 
@@ -226,6 +275,24 @@ InitialiseScreen()
 	DefVisual = DefaultVisual ( dpy, DefScreen );
 	DefDepth = DefaultDepth ( dpy, DefScreen );
 	DefGC = DefaultGC ( dpy, DefScreen );
+
+	if ( DefDepth < 3 ) {
+		fprintf ( stderr, "Screen depth of %d is not supported\n", DefDepth );
+		exit ( 1 );
+	}
+
+	VisualTmpl.visual = DefVisual;
+	VisualTmpl.screen = DefScreen;
+	VisualTmpl.depth = DefDepth;
+	MyVisual = XGetVisualInfo ( dpy, VisualScreenMask | VisualDepthMask,
+		&VisualTmpl, &visuals );
+	if ( visuals != 1 ) {
+		fprintf ( stderr, "can't handle default screen with multiple "
+			"visuals\n" );
+		exit ( 1 );
+	}
+	VisualClass = MyVisual->class;
+	XFree ( MyVisual );
 
 	/*
 	 * FIX ME
@@ -240,31 +307,46 @@ InitialiseScreen()
 	InfoWindowBlack = BlackPixel ( dpy, DefScreen );
 	InfoWindowWhite = WhitePixel ( dpy, DefScreen );
 
-	/*
-	 * Get four planes in the colourmap
-	 */
+	if ( VisualClass == PseudoColor ) {
+		/*
+	 	* Get four planes in the colourmap
+	 	*/
 
-	if ( XAllocColorCells( dpy, DefCmap, False, Masks, 4, &ColourBits, 1 ) == 0)
-	{
-		fprintf ( stderr, "Failed to allocate colour planes\n" );
+		if ( XAllocColorCells( dpy, DefCmap, False, Masks, 4,
+			&ColourBits, 1 ) == 0)
+		{
+			fprintf ( stderr, "Failed to allocate colour planes\n" );
+			exit ( 1 );
+		}
+
+		for ( i = 0; i < 16; i++ )
+		{
+			Cells [ i ] = ColourBits | ( i & 1 ? Masks [ 0 ] : 0 ) |
+				( i & 2 ? Masks [ 1 ] : 0 ) | ( i & 4 ? Masks [ 2 ] : 0 ) |
+				( i & 8 ? Masks [ 3 ] : 0 );
+			colour.pixel = Cells [ i ];
+			colour.red = RgbValues [ i % 8 ][ 0 ];
+			colour.green = RgbValues [ i % 8 ][ 1 ];
+			colour.blue = RgbValues [ i % 8 ][ 2 ];
+			colour.flags = DoRed | DoGreen | DoBlue;
+			XStoreColor ( dpy, DefCmap, &colour );
+		}
+
+		PlaneMask = ( Masks [ 0 ] | Masks [ 1 ] | Masks [ 2 ] | Masks [ 3 ] ) &
+					~( Masks [ 0 ] & Masks [ 1 ] & Masks [ 2 ] & Masks [ 4 ] );
+	} else if ( VisualClass == TrueColor ) {
+		Cells[0] = BlackPixel ( dpy, DefScreen );
+		Cells[7] = WhitePixel ( dpy, DefScreen );
+		Cells[8] = BlackPixel ( dpy, DefScreen );
+		Cells[15] = WhitePixel ( dpy, DefScreen );
+		for ( i = 1; i < 7; i++ ) {
+			XAllocNamedColor ( dpy, DefCmap, Colours[i], &scol, &xcol );
+			Cells[i] = Cells[i+8] = scol.pixel;
+		}
+	} else {
+		fprintf ( stderr, "Can't handle visual class %d\n", VisualClass );
 		exit ( 1 );
 	}
-
-	for ( i = 0; i < 16; i++ )
-	{
-		Cells [ i ] = ColourBits | ( i & 1 ? Masks [ 0 ] : 0 ) |
-					( i & 2 ? Masks [ 1 ] : 0 ) | ( i & 4 ? Masks [ 2 ] : 0 ) |
-												( i & 8 ? Masks [ 3 ] : 0 );
-		colour.pixel = Cells [ i ];
-		colour.red = RgbValues [ i % 8 ][ 0 ];
-		colour.green = RgbValues [ i % 8 ][ 1 ];
-		colour.blue = RgbValues [ i % 8 ][ 2 ];
-		colour.flags = DoRed | DoGreen | DoBlue;
-		XStoreColor ( dpy, DefCmap, &colour );
-	}
-
-	PlaneMask = ( Masks [ 0 ] | Masks [ 1 ] | Masks [ 2 ] | Masks [ 3 ] ) &
-				~( Masks [ 0 ] & Masks [ 1 ] & Masks [ 2 ] & Masks [ 4 ] );
 
 	/*
 	 * FIX ME
@@ -275,20 +357,20 @@ InitialiseScreen()
 	 * directly.
 	 */
 
-	BeebScreen = XCreateSimpleWindow ( dpy, Root, 0, 0, 640, 566, 0,
-															White, Black );
-	InfoWindow = XCreateSimpleWindow ( dpy, BeebScreen, 0, 512, 640, 40, 0,
-															White, Black );
+	BeebScreen = XCreateSimpleWindow ( dpy, Root, 0, 0, MAIN_WIN_W,
+											MAIN_WIN_H, 0, White, Black );
+	InfoWindow = XCreateSimpleWindow ( dpy, BeebScreen, INFO_WIN_X,
+					INFO_WIN_Y, INFO_WIN_W, INFO_WIN_H, 0, White, Black );
 	TeletextScreen = XCreateSimpleWindow ( dpy, BeebScreen, TeletextWindowX,
-								TeletextWindowY, 480, 475, 0, White, Black );
+					TeletextWindowY, TTXT_WIN_W, TTXT_WIN_H, 0, White, Black );
 	BitmapScreen = XCreateSimpleWindow ( dpy, BeebScreen, BitmapWindowX,
-								BitmapWindowY, 640, 512, 0, White, Black );
+					BitmapWindowY, BMAP_WIN_W, BMAP_WIN_H, 0, White, Black );
 
 	(void) sprintf ( TitleString, TITLE_STRING, VERSION, RELEASE, PATCHLEVEL );
 
 	SizeHints.flags = PSize;
-	SizeHints.width = 640;
-	SizeHints.height = 566;
+	SizeHints.width = MAIN_WIN_W;
+	SizeHints.height = MAIN_WIN_H;
 
 	XSetStandardProperties ( dpy, BeebScreen, TitleString, TitleString, None,
 														0, 0, &SizeHints );
@@ -312,7 +394,7 @@ InitialiseScreen()
 			 */
 
 			BitmapImage = XShmCreateImage ( dpy, DefVisual, DefDepth, ZPixmap,
-				0, &SharedSegInfo, 640, 624 );
+				0, &SharedSegInfo, BMAP_WIN_W, TV_LINES );
 
 			SharedSegInfo.shmid = shmget ( IPC_PRIVATE,
 				BitmapImage -> bytes_per_line * BitmapImage -> height,
@@ -335,9 +417,9 @@ InitialiseScreen()
 			 */
 
 			BitmapPixmap = XShmCreatePixmap ( dpy, BitmapScreen,
-				SharedSegInfo.shmaddr, &SharedSegInfo, 640, 624, DefDepth );
+				SharedSegInfo.shmaddr, &SharedSegInfo, BMAP_WIN_W,
+														TV_LINES, DefDepth );
 
-			ImageData = BitmapImage -> data;
 			BytesPerImageLine = BitmapImage -> bytes_per_line;
 		}
 		else
@@ -359,7 +441,8 @@ InitialiseScreen()
 	 * is just the bit that can be seen on the display.
 	 */
 
-	BitmapPixmap = XCreatePixmap ( dpy, BitmapScreen, 640, 624, DefDepth );
+	BitmapPixmap = XCreatePixmap ( dpy, BitmapScreen, BMAP_WIN_W,
+													BMAP_WIN_H, DefDepth );
 	
 
 #ifdef	MITSHM
@@ -466,7 +549,8 @@ InitialiseScreen()
 	 * Now clear the main Beeb window and the bitmapped screen to black.
 	 */
 
-	XFillRectangle ( dpy, BitmapPixmap, BitmapGC [ 0 ], 0, 0, 639, 623 );
+	XFillRectangle ( dpy, BitmapPixmap, BitmapGC [ 0 ], 0, 0, MAIN_WIN_W - 1,
+															MAIN_WIN_H - 1 );
 	XClearWindow ( dpy, BeebScreen );
 	XClearWindow ( dpy, InfoWindow );
 
@@ -499,7 +583,7 @@ ShutdownScreen()
 	shmctl ( SharedSegInfo.shmid, IPC_RMID, 0 );
 
 	XDestroyImage ( BitmapImage );
-#endif	/* MITSHM */
+#endif
 
 	/*
 	 * FIX ME
