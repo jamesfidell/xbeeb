@@ -152,7 +152,7 @@
  */
 
 
-		Disassemble2 ( "%04x : ", GetProgramCounter );
+		Disassemble2 ( "%04lx : ", GetProgramCounter );
 
 		opcode = *EmulatorPC++;
 
