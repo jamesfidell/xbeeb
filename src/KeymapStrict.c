@@ -358,7 +358,11 @@ HandleKey ( XKeyEvent *key_event, signed char action )
 				SnapshotRequested = 1;
 			break;
 
+#ifdef	XK_Pause
 		case XK_Pause :	/* Pause */
+#else
+		case XK_F12 :
+#endif
 			BreakKeypress  = 1 - BreakKeypress;
 			break;
 

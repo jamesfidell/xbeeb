@@ -387,7 +387,11 @@ HandleKey ( XKeyEvent *key_event, signed char action )
 				QuitEmulator = 1;
 			break;
 
+#ifdef	XK_Pause
 		case XK_Pause :
+#else
+		case XK_F12 :
+#endif
 			BreakKeypress  = 1 - BreakKeypress;
 			break;
 

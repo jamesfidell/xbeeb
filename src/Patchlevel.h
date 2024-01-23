@@ -50,6 +50,6 @@
 
 #define	VERSION		0
 #define	RELEASE		3
-#define	PATCHLEVEL	3
+#define	PATCHLEVEL	4
 
 #endif	/* PATCHLEVEL_H */

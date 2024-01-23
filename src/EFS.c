@@ -739,7 +739,7 @@ Emulate_OSFSC ( byteval A, byteval X, byteval Y, int *pPC )
 			 * fields when we're copying information into them.
 			 */
 
-			for ( i = 8; i < 256; i++ )
+			for ( i = 0; i < 256; i++ )
 			{
 				WriteByte ( XDFS_CATWS1 + i, ' ' );
 				WriteByte ( XDFS_CATWS2 + i, 0x00 );
@@ -777,10 +777,10 @@ Emulate_OSFSC ( byteval A, byteval X, byteval Y, int *pPC )
 				WriteByte( XDFS_SECTBASE + off,
 							Catalog [ i ].StartSector & 0xff );
 
-				byte = Catalog [ i ].ExeAddress >> 10;
-				byte &= Catalog [ i ].FileLength >> 12;
-				byte &= Catalog [ i ].LoadAddress >> 14;
-				byte &= ( Catalog [ i ].StartSector & 0xbff ) >> 8;
+				byte = ( Catalog [ i ].ExeAddress & 0x30000 ) >> 10;
+				byte &= ( Catalog [ i ].FileLength & 0x30000 ) >> 12;
+				byte &= ( Catalog [ i ].LoadAddress & 0x30000 ) >> 14;
+				byte &= ( Catalog [ i ].StartSector & 0x300 ) >> 8;
 
 				WriteByte ( fptr, byte );
 			}
@@ -1155,6 +1155,8 @@ ChangeDiskDirectory ( char *new )
 	( void ) strcat ( catalog, CAT_NAME );
 
 #ifdef	XDFS
+
+	( void ) memset ( DiskName, 0, MAX_DISKNAME );
 	if (( n = strrchr ( new, '/' )))
 		n++;
 	else
@@ -1162,7 +1164,6 @@ ChangeDiskDirectory ( char *new )
 	if (( l = strlen ( n )) > MAX_DISKNAME )
 		l = MAX_DISKNAME;
 	( void ) strncpy ( DiskName, n, l );
-	DiskName [ l + 1 ] = '\0';
 
 #endif	/* XDFS */
 
@@ -1506,7 +1507,7 @@ WriteCatalog ( char* tempcat )
 	 * Write the new catalogue
 	 */
 
-	sprintf ( catbuf, "%2.2d %1.1d", CatalogWrites, BootOption );
+	sprintf ( catbuf, "%2.2d %1.1d\n", CatalogWrites, BootOption );
 	if ( fputs ( catbuf, fp ) < 0 )
 	{
 		fprintf ( stderr, "error writing %s\n", cat );

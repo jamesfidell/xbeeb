@@ -481,3 +481,16 @@ o Mon Mar 18 23:33:55 GMT 1996
   Win32/eXceed port.
 
   Patch created for v0.3.3
+
+
+o Mon Mar 18 23:54:24 GMT 1996
+
+  Various bug-fixes in EFS.c
+
+
+o Mon Mar 18 23:56:08 GMT 1996
+
+  Added code to allow F12 to be used as the BREAK key if there is no
+  Pause key.
+
+  Patch created for v0.3.4
