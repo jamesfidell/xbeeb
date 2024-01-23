@@ -84,7 +84,7 @@ extern unsigned char			BreakKeypress;
 extern unsigned char			DebugLevel;
 extern unsigned char			MaskableInterruptRequest;
 
-#define	SetProgramCounter(v)		EmulatorPC = Mem + v
+#define	SetProgramCounter(v)		EmulatorPC = Mem + ( v )
 #define	GetProgramCounter			( EmulatorPC - Mem )
 
 /*

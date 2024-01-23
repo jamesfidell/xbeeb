@@ -159,7 +159,8 @@ static unsigned int		CursorViewable = 0;
 
 static void				DrawCursor();
 
-#define	MIN(x,y)	(( x < y ) ? x : y )
+#define	MIN(x,y)		((( x ) < ( y )) ? ( x ) : ( y ))
+
 
 void
 InitialiseTeletext()
@@ -170,6 +171,49 @@ InitialiseTeletext()
 		XColor			colour;
 
 		CurrentScreenMode = MODE_TELETEXT;
+
+		/*
+		 * Need to recalculate the top of screen information here because
+		 * it's not going to be right given that teletext screen start
+		 * addresses are calculated differently to bitmap screen start
+		 * addresses.  The same applies to the cursor address where more
+		 * calculations have to be done...
+		 */
+
+		TopOfScreen = (( ScreenStartHi ^ 0x20 ) + 0x74 ) << 8;
+		TopOfScreen |= ScreenStartLo;
+
+		/*
+		 * FIX ME
+		 *
+		 * I'm sure there's going to be a problem here if the cursor
+		 * drawing code doesn't realise that the cursor won't be on
+		 * the screen when the window pops up.
+		 */
+
+		CursorAddress = (( CursorPosHi ^ 0x20 ) + 0x74 ) << 8;
+		CursorAddress |= CursorPosLo;
+		CursorOffset = CursorAddress - TopOfScreen;
+
+		if ( CursorAddress < TopOfScreen )
+			CursorOffset += ScreenLength;
+
+		/*
+		 * FIX ME
+		 *
+		 * This is not right, because it doesn't take
+		 * account of the horizontal displayed value.
+		 *
+		 * It would be better to use
+		 * HorizDisplayed / ( 6845 chars per real char )
+		 * rather than CharsPerLine.
+		 *
+		 * This code should be corrected at the same time as the code
+		 * in Crtc.c (where I pinched it from).
+		 */
+
+		NewCursorX = CursorOffset % CharsPerLine;
+		NewCursorY = CursorOffset / CharsPerLine;
 
 		/*
 		 * FIX ME

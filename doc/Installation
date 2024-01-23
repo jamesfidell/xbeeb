@@ -30,6 +30,9 @@ There is an Imakefile for the emulator.  To use it you need to do :
 
 That should work.)
 
+It's possible that on HP-UX you may need to add -D_HPUX_SOURCE to the
+CFLAGS variable.
+
 To install the executable :
 
 	$ make install

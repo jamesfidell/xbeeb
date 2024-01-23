@@ -62,7 +62,7 @@ static unsigned int		CursorViewable = 0;
 static void				DrawCursor();
 #endif
 
-#define	MIN(x,y)	(( x < y ) ? x : y )
+#define	MIN(x,y)		((( x ) < ( y )) ? ( x ) : ( y ))
 
 #ifdef	MITSHM
 static unsigned int		Xmax = 0, Xmin = 639, Ymin = 511, Ymax = 0;
@@ -75,6 +75,50 @@ InitialiseBitmap()
 	if ( CurrentScreenMode != MODE_BITMAP )
 	{
 		CurrentScreenMode = MODE_BITMAP;
+
+		/*
+		 * Need to recalculate the top of screen information here because
+		 * it's not going to be right given that teletext screen start
+		 * addresses are calculated differently to bitmap screen start
+		 * addresses.  The same applies to the cursor address.
+		 */
+
+		TopOfScreen = ScreenStartHi << 8;
+		TopOfScreen |= ScreenStartLo;
+		TopOfScreen *= 8;
+
+		/*
+		 * FIX ME
+		 *
+		 * I'm sure there's going to be a problem here if the cursor
+		 * drawing code doesn't realise that the cursor won't be on
+		 * the screen when the window pops up.
+		 */
+
+		CursorAddress = CursorPosHi << 8;
+		CursorAddress |= CursorPosLo;
+		CursorAddress *= 8;
+
+		if ( CursorAddress < TopOfScreen )
+			CursorOffset += ScreenLength;
+
+		/*
+		 * FIX ME
+		 *
+		 * This is not right, because it doesn't take
+		 * account of the horizontal displayed value.
+		 *
+		 * It would be better to use
+		 * HorizDisplayed / ( 6845 chars per real char )
+		 * rather than CharsPerLine.
+		 *
+		 * This code should be corrected at the same time as the code
+		 * in Crtc.c (where I pinched it from).
+		 */
+
+		NewCursorX = CursorOffset % CharsPerLine;
+		NewCursorY = CursorOffset / CharsPerLine;
+
 		XUnmapWindow ( dpy, TeletextScreen );
 		XMapRaised ( dpy, BitmapScreen );
 		XFlush ( dpy );

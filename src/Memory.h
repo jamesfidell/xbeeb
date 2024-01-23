@@ -84,6 +84,7 @@ extern	byteval			PagedMem [ 16 ][ 16384 ];
 extern	unsigned char	PagedRAMChanged;
 extern	unsigned int	MaxRAMAddress;
 
+
 /*
  * FIX ME
  *
@@ -112,15 +113,15 @@ extern	unsigned int	MaxRAMAddress;
 #ifdef NO_FRED_JIM
 
 #define ReadByte(a) \
-	((( a >> 8 ) != 0xfe ) ? Mem [ a ] : \
+	(((( a ) >> 8 ) != 0xfe ) ? Mem [ a ] : \
 				ReadSheila ( a ))
 
 #else
 
 #define ReadByte(a) \
-	(( a < 0xfc00 || a >= 0xff00 ) ? Mem [ a ] : \
-		(( a < 0xfd00 ) ? ReadFred ( a ) : \
-			(( a < 0xfe00 ) ? ReadJim ( a ) : \
+	((( a  ) < 0xfc00 || ( a ) >= 0xff00 ) ? Mem [ a ] : \
+		((( a ) < 0xfd00 ) ? ReadFred ( a ) : \
+			((( a ) < 0xfe00 ) ? ReadJim ( a ) : \
 				ReadSheila ( a ))))
 
 #endif	/* NO_FRED_JIM */

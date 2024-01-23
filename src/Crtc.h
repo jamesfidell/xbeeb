@@ -71,6 +71,7 @@ extern	unsigned char		CursorResized;
 extern	unsigned char		CursorMoved;
 extern	unsigned char		NewCursorX, NewCursorY;
 extern	unsigned int		CrtcMagicNumber;
+extern	unsigned int		CursorAddress, CursorOffset;
 
 extern  void				ResetCrtc();
 extern  byteval				ReadCrtc ( int );

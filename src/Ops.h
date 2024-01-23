@@ -253,7 +253,6 @@
 	Anew = Aold - (v) + CarryFlag - 1; \
 	Accumulator = Anew & 0xff; \
 \
-	ResetCarryFlag ( Anew >= 0x0 ); \
 	NegativeFlag = Accumulator & 0x80; \
 	ResetOverflowFlag ((!(( Aold ^ (v)) & 0x80 )) && \
 						(( Aold ^ Accumulator ) & 0x80 )); \
@@ -279,6 +278,7 @@
 \
 		Accumulator = Alo + ( Ahi << 4 ); \
 	} \
+	ResetCarryFlag ( Anew >= 0x0 ); \
 } 
 
 

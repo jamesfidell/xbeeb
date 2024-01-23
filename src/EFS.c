@@ -106,7 +106,7 @@ static int			CatalogSize;
  * DFS
  */
 
-#define	DFS_PATH_MAX	16
+#define	DFS_FILE_MAX	16
 
 #ifdef	XDFS
 
@@ -159,7 +159,7 @@ Emulate_OSFILE ( byteval A, byteval X, byteval Y )
 	int						LoadAddress;
 	unsigned int			ExeAddress, StartAddress, EndAddress;
 	unsigned int			param_block, fname_address;
-	char					fname [ DFS_PATH_MAX ];
+	char					fname [ DFS_FILE_MAX ];
 
 	param_block = ( Y << 8 ) + X;
 	fname_address = ReadWord ( param_block );
@@ -443,7 +443,7 @@ Emulate_OSFILE ( byteval A, byteval X, byteval Y )
 		case 0x09 : 		/* *RENAME */
 		{
 			char			fail;
-			char			fname [ DFS_PATH_MAX ], fname2 [ DFS_PATH_MAX ];
+			char			fname [ DFS_FILE_MAX ], fname2 [ DFS_FILE_MAX ];
 			char			thefile [ PATH_MAX ], thefile2 [ PATH_MAX ];
 			short			idx;
 
@@ -660,7 +660,7 @@ Emulate_OSFSC ( byteval A, byteval X, byteval Y, int *pPC )
 		case 3 : 		/* Unrecognised star command */
         {
 			unsigned int	fname_address;
-			char			fname [ DFS_PATH_MAX ];
+			char			fname [ DFS_FILE_MAX ];
 			int				idx;
 
 			fname_address = ( Y << 8 ) + X;
@@ -796,17 +796,10 @@ Emulate_OSFSC ( byteval A, byteval X, byteval Y, int *pPC )
 			/* Put new disc title in memory */
 
 			for ( i = 0; i < 8; i++ )
-			{
-				if (!( byte = DiskName [ i ] ))
-					break;
-				WriteByte ( XDFS_CATWS1 + i, byte );
-			}
+				WriteByte ( XDFS_CATWS1 + i, DiskName [ i ] );
+
 			for ( i = 8; i < 12; i++ )
-			{
-				if (!( byte = DiskName [ i ] ))
-					break;
-				WriteByte ( XDFS_CATWS2 + i - 8, byte );
-			}
+				WriteByte ( XDFS_CATWS2 + i - 8, DiskName [ i ] );
 
 			WriteByte ( XDFS_CATWR, CatalogWrites );	/* times written */
 			WriteByte ( XDFS_NOFILES, CatalogSize * 8 );	/* no. of files */
@@ -1026,7 +1019,7 @@ CopyFilename ( unsigned int src, char *tgt )
 	i = 0;
 	while ((( c = ReadByte ((( src + i ) & 0xffff ))) != 0x0d )
 							&& c != ' ' && ( !quoted || c != '"' )
-							&& (( fstart + i ) < DFS_PATH_MAX ))
+							&& (( fstart + i ) < DFS_FILE_MAX ))
 	{
 		tgt [ fstart + i ] = c;
 		i++;
@@ -1600,7 +1593,7 @@ CopyFilenameLib ( unsigned int src, char *tgt )
 	i = 0;
 	while ((( c = ReadByte ((( src + i ) & 0xffff ))) != 0x0d )
 							&& c != ' ' && ( !quoted || c != '"' )
-							&& (( fstart + i ) < DFS_PATH_MAX ))
+							&& (( fstart + i ) < DFS_FILE_MAX ))
 	{
 		tgt [ fstart + i ] = c;
 		i++;
@@ -1633,7 +1626,7 @@ CopyDirname ( unsigned int src, char *tgt )
 	i = 0;   
 	while ((( c = ReadByte ((( src + i ) & 0xffff ))) != 0x0d )
 							&& c != ' ' && ( !quoted || c != '"' )
-							&& (( fstart + i ) < DFS_PATH_MAX ))
+							&& (( fstart + i ) < PATH_MAX ))
 	{
 		tgt [ fstart + i ] = c;
 		i++;

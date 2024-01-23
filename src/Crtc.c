@@ -113,11 +113,10 @@ unsigned char			CursorResized = 0;
 unsigned char			NewCursorX = 255;
 unsigned char			NewCursorY = 255;
 unsigned int			CrtcMagicNumber;
+unsigned int			CursorAddress, CursorOffset;
 
-static unsigned int		CursorAddress, CursorOffset;
 
-
-#define	MIN(a,b)		a < b ? a : b;
+#define	MIN(x,y)		((( x ) < ( y )) ? ( x ) : ( y ))
 
 
 void

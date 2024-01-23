@@ -50,6 +50,9 @@ Other keys worked as follows :
 	"-"			(on the keypad) turns off instruction disassembly
 	"+"			(on the keypad) turns on instruction disassembly
 
+If there is no "Pause" key on your keyboard and X doesn't #define XK_Pause,
+then F12 is used instead.
+
 The code that implemented this is still available by #defining
 KEYMAP_LEGEND in src/Config.h, because it may be more useful to use
 when not playing games, or when playing games that involve lots of text
@@ -93,6 +96,9 @@ that the Caps Lock key is handled as a toggle whilst retaining the
 relative positions of these keys to make playing game such as Arcadians
 more straightforward.  To use this keymap, #define KEYMAP_STRICT in
 src/Config.h.
+
+Again, F12 is used as a replacement for "Pause" should you not have that
+key.
 
 Note that the keyboard DIP switches can be set on the command line using
 the -s option.
