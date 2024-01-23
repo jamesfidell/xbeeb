@@ -287,8 +287,8 @@ InitialiseScreen()
 	MyVisual = XGetVisualInfo ( dpy, VisualScreenMask | VisualDepthMask,
 		&VisualTmpl, &visuals );
 	if ( visuals != 1 ) {
-		fprintf ( stderr, "can't handle default screen with multiple "
-			"visuals\n" );
+		fprintf ( stderr, "can't handle default screen with more than one (%d) "
+			"visuals\n", visuals );
 		exit ( 1 );
 	}
 	VisualClass = MyVisual->class;
