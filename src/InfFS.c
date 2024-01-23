@@ -1464,7 +1464,7 @@ ChangeDiskDirectory ( char *new )
 	char			cwd [ PATH_MAX+1];
 	FILE			*cat_fp;
 	FileInfoL		*p, *q;
-	char			*lock, *n;
+	char			lock[12], *n;
 	DIR				*dirp;
 	struct dirent	*entry;
 	unsigned int	l;
@@ -1521,8 +1521,9 @@ ChangeDiskDirectory ( char *new )
 					 * Check for errors from malloc and sscanf
 					 */
 					p = malloc ( sizeof ( FileInfoL ));
-					sscanf ( buff, "%*s %X %X %c",
-						&(p->info.LoadAddress), &(p->info.ExeAddress), &lock );
+					*lock = 0;
+					sscanf ( buff, "%*s %X %X %s",
+						&(p->info.LoadAddress), &(p->info.ExeAddress), lock );
 					p->info.StartSector = 0;
 					stat ( beebfile, &sb );
 					p->info.FileLength = sb.st_size;
@@ -1532,7 +1533,6 @@ ChangeDiskDirectory ( char *new )
 							p->info.LockFlag = 'L';
 						}
 #endif
-						free ( lock );
 					}
 					/*
 					 * Filenames are right-padded with spaces initially.
