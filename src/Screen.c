@@ -492,7 +492,9 @@ ShutdownScreen()
 
 #ifdef	MITSHM
 	XShmDetach ( dpy, &SharedSegInfo );
+#endif
 	XFreePixmap ( dpy, BitmapPixmap );
+#ifdef	MITSHM
 	shmdt ( SharedSegInfo.shmaddr );
 	shmctl ( SharedSegInfo.shmid, IPC_RMID, 0 );
 

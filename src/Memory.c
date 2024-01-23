@@ -80,6 +80,7 @@
 #include "Sheila.h"
 #include "Screen.h"
 #include "Modes.h"
+#include "Perms.h"
 
 
 /*
@@ -225,12 +226,12 @@ LoadOS ( char *osname )
 	 * ROM locations...
 	 */
 
-	if (( fd = open ( osname, O_RDONLY )) < 0 )
+	if (( fd = open ( osname, O_RDONLY | O_BINARY )) < 0 )
 	{
 		( void ) strcpy ( FnameBuffer, XBEEBROMS );
 		( void ) strcat ( FnameBuffer, osname );
 
-		if (( fd = open ( FnameBuffer, O_RDONLY )) < 0 )
+		if (( fd = open ( FnameBuffer, O_RDONLY | O_BINARY )) < 0 )
 		{
 			fprintf ( stderr, "Couldn't open OS ROM %s\n", osname );
 			exit ( 1 );
@@ -285,7 +286,7 @@ LoadPagedRom ( char *romname, byteval socket )
 		exit ( 1 );
 	}
 
-	if (( fd = open ( romname, O_RDONLY )) == 0 )
+	if (( fd = open ( romname, O_RDONLY | O_BINARY )) == 0 )
 	{
 		fprintf ( stderr, "Couldn't open paged ROM %s\n", romname );
 		exit ( 1 );
@@ -340,7 +341,7 @@ SaveUserRam ( char *fname )
 {
 	int				fd;
 
-	fd = open ( fname, O_WRONLY | O_CREAT | O_TRUNC, 0644 );
+	fd = open ( fname, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644 );
 	write ( fd, ( void* ) Mem, 32768 );
 	close ( fd );
 }

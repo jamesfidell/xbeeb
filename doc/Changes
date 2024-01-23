@@ -473,3 +473,11 @@ o Mon Mar 18 22:50:45 GMT 1996
   condition is true.
 
   Patch created for v0.3.2
+
+
+o Mon Mar 18 23:33:55 GMT 1996
+
+  Corrections for compilation errors under HPUX and for Robert Schmidt's
+  Win32/eXceed port.
+
+  Patch created for v0.3.3

@@ -195,6 +195,7 @@
 #include "VideoUla.h"
 #include "Options.h"
 #include "Sound.h"
+#include "Perms.h"
 
 #ifdef	EMUL_FS
 #include "EFS.h"
@@ -661,7 +662,8 @@ SaveSnapshot()
 		}
 	}
 
-	if (( fd = open ( InputBuffer, O_WRONLY | O_TRUNC | O_CREAT, 0644 )) < 0 )
+	if (( fd = open ( InputBuffer, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY,
+																0644 )) < 0 )
 	{
 		fprintf ( stderr, "Couldn't create snapshot file\n" );
 		FatalError();
@@ -800,7 +802,7 @@ RestoreSnapshot ( char* sname )
 	 * Try locally first, then prepend the snapshot directory.
 	 */
 
-	if (( fd = open ( SnapName, O_RDONLY )) < 0 )
+	if (( fd = open ( SnapName, O_RDONLY | O_BINARY )) < 0 )
 	{
 		if (( l + strlen ( XBEEBSNAPS )) <= PATH_MAX )
 		{

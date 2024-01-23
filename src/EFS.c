@@ -57,6 +57,7 @@
 #include	"Config.h"
 #include	"Beeb.h"
 #include	"Sheila.h"
+#include	"Perms.h"
 
 
 #ifdef	EMUL_FS
@@ -923,7 +924,7 @@ LoadFile ( char *fname, int got_address, int address, unsigned int *pExe )
 	( void ) strcat ( fullname, "/" );
 	( void ) strcat ( fullname, Catalog [ found ].Filename );
 
-	if (( file_fd = open ( fullname, O_RDONLY )) < 0 )
+	if (( file_fd = open ( fullname, O_RDONLY | O_BINARY )) < 0 )
 	{
 		fprintf ( stderr, "File %s found in EFS catalog, ", fname );
 		fprintf ( stderr, "but not in directory %s\n", DiskDirectory );
@@ -992,7 +993,7 @@ FindFile ( char *file )
 }
 
 
-void
+static void
 CopyFilename ( unsigned int src, char *tgt )
 {
 	int				quoted = 0, fstart = 0;
