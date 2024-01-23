@@ -88,6 +88,5 @@ extern	unsigned char		PixelsPerByte;
 extern	unsigned char		CursorByteWidth;
 extern	unsigned char		MasterCursorWidth;
 extern	unsigned char		ClockRate;
-extern	byteval				VidRegister0;
 
 #endif	/* VIDEOULA_H */
