@@ -1952,7 +1952,7 @@
 
 			case op_JMP_Ab :
 				SetProgramCounter ( ReadWordAtPC());
-				Disassemble2 ( "JMP &%04x\n", GetProgramCounter );
+				Disassemble2 ( "JMP &%04lx\n", GetProgramCounter );
 				AddClockCycles ( CLK_ABS_JMP );
 				break;
 
