@@ -281,6 +281,7 @@ InitialiseScreen()
 		exit ( 1 );
 	}
 
+	/*
 	VisualTmpl.visual = DefVisual;
 	VisualTmpl.screen = DefScreen;
 	VisualTmpl.depth = DefDepth;
@@ -288,7 +289,7 @@ InitialiseScreen()
 		&VisualTmpl, &visuals );
 	if ( visuals != 1 ) {
 		fprintf ( stderr, "can't handle default screen with more than one (%d) "
-			"visuals\n", visuals );
+			"visual\n", visuals );
 		exit ( 1 );
 	}
 	VisualClass = MyVisual->class;
@@ -307,10 +308,11 @@ InitialiseScreen()
 	InfoWindowBlack = BlackPixel ( dpy, DefScreen );
 	InfoWindowWhite = WhitePixel ( dpy, DefScreen );
 
+	/*
 	if ( VisualClass == PseudoColor ) {
-		/*
+		*//*
 	 	* Get four planes in the colourmap
-	 	*/
+	 	*//*
 
 		if ( XAllocColorCells( dpy, DefCmap, False, Masks, 4,
 			&ColourBits, 1 ) == 0)
@@ -335,6 +337,7 @@ InitialiseScreen()
 		PlaneMask = ( Masks [ 0 ] | Masks [ 1 ] | Masks [ 2 ] | Masks [ 3 ] ) &
 					~( Masks [ 0 ] & Masks [ 1 ] & Masks [ 2 ] & Masks [ 4 ] );
 	} else if ( VisualClass == TrueColor ) {
+		*/
 		Cells[0] = BlackPixel ( dpy, DefScreen );
 		Cells[7] = WhitePixel ( dpy, DefScreen );
 		Cells[8] = BlackPixel ( dpy, DefScreen );
@@ -343,10 +346,12 @@ InitialiseScreen()
 			XAllocNamedColor ( dpy, DefCmap, Colours[i], &scol, &xcol );
 			Cells[i] = Cells[i+8] = scol.pixel;
 		}
+		/*
 	} else {
 		fprintf ( stderr, "Can't handle visual class %d\n", VisualClass );
 		exit ( 1 );
 	}
+	*/
 
 	/*
 	 * FIX ME
