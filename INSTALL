@@ -1,0 +1,40 @@
+$Id$
+
+xbeeb Installation
+==================
+
+First off you'll need a copy of the OS ROM and a language ROM.
+
+Then edit Config.h for your system.  In practice, you'll probably only
+need to change the LITTLE_ENDIAN define and XBEEBROOT, which is the default
+location of the ROMs images and snapshots.
+
+There is an Imakefile for the emulator.  To use it you need to do :
+
+	$ xmkmf
+	$ make depend
+	$ make
+
+and finally, to install the executable :
+
+	$ make install
+
+If you don't have xmkmf, there's a Makefile called Makefile.v which
+may need a little doctoring before it will work.
+
+The fonts will also need to be installed before the emulator will work.
+There is no Imakefile for these (yet).  You should be able to do something
+like :
+
+	$ cd fonts
+	$ for i in *.bdf
+	$ do
+	$ bdftopcf $i -o `basename $i .bdf`.pcf
+	$ done
+
+These files will then need to be installed somewhere where the X server
+can find them.
+
+The OS and language ROMs should be placed in XBEEBROOT/roms/...  By
+default, the emulator will try to load OS1.2.rom and BASIC2.rom when it
+starts.
