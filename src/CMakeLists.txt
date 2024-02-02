@@ -3,30 +3,6 @@ project ( xbeeb VERSION 1.0.0 )
 
 include ( FindPkgConfig )
 
-#find_package(Qt5 REQUIRED COMPONENTS Core Widgets Gui Charts)
-#
-#if ( PKG_CONFIG_FOUND )
-#  pkg_search_module ( LIBTIFF4 libtiff-4 )
-#  pkg_search_module ( LIBRAW libraw )
-#  pkg_search_module ( LIBCFITSIO cfitsio )
-#  pkg_search_module ( LIBEXIV2 exiv2 )
-#else()
-#  message ( FATAL_ERROR "pkg-config not found" )
-#endif()
-#
-#if ( NOT LIBTIFF4_FOUND )
-#	message ( FATAL_ERROR "libtiff required for build" )
-#endif()
-#if ( NOT LIBRAW_FOUND )
-#	message ( FATAL_ERROR "libraw required for build" )
-#endif()
-#if ( NOT LIBCFITSIO_FOUND )
-#	message ( FATAL_ERROR "libcfitsio required for build" )
-#endif()
-#if ( NOT LIBEXIV2_FOUND )
-#	message ( FATAL_ERROR "libexiv2 required for build" )
-#endif()
-
 add_executable ( xbeeb
 	6522Via.c
 	Acia.c
@@ -62,17 +38,7 @@ add_executable ( xbeeb
 	VideoUla.c
 )
 
-#target_include_directories ( xbeeb
-#		PRIVATE
-#		${Qt5Gui_INCLUDE_DIRS}
-#		${Qt5Wisgets_INCLUDE_DIRS}
-#		${Qt5Core_INCLUDE_DIRS}
-#)
-
-#target_compile_options( DeepSkyStacker PRIVATE -fPIC)
-
 target_link_libraries( xbeeb
-#  Qt::Core
 	Xext
 	X11
 )
