@@ -199,6 +199,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <limits.h>
+#include <time.h>
 #include <sys/time.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -404,10 +405,14 @@ Beeb()
 
 	unsigned int			Cycles;
 	unsigned int			OpCount = 0;
+#ifdef USE_NANOSLEEP
+	struct timespec		start, now, delay;
+#else
 #ifdef	FASTHOST
 	unsigned long			usec = 0;
 	long					timediff = 0;
 	struct timeval			tv;
+#endif
 #endif
 
 	/*
@@ -433,9 +438,13 @@ Beeb()
 
 	Cycles = 0;
 
+#ifdef USE_NANOSLEEP
+	( void ) clock_gettime ( CLOCK_REALTIME, &start );
+#else
 #if defined(FASTHOST) && !defined(FASTCLOCK)
 		( void ) gettimeofday ( &tv, 0 );
 		usec = tv.tv_usec;
+#endif
 #endif
 
 	while ( CONT_CONDITION )
@@ -443,20 +452,23 @@ Beeb()
 
 		byteval			opcode;
 
-/*
- * The 6502 execute instruction loop is in a different source file
- * purely for reasons of maintainability.
- */
-
-#include "6502.c"
-
+#ifdef USE_NANOSLEEP
+	( void ) clock_gettime ( CLOCK_REALTIME, &start );
+#else
 #ifdef	FASTHOST
 		( void ) gettimeofday ( &tv, 0 );
 		if ( tv.tv_sec > SoundCallSecs || ( tv.tv_sec == SoundCallSecs
 				&& tv.tv_usec >= SoundCallUsecs ))
 			SoundRefresh();
 #endif
+#endif
 
+/*
+ * The 6502 execute instruction loop is in a different source file
+ * purely for reasons of maintainability.
+ */
+
+#include "6502.c"
 		/*
 		 * Now check to see if we need to service an interrupt
 		 */
@@ -520,6 +532,28 @@ Beeb()
 				}
 			}
 		}
+#ifdef USE_NANOSLEEP
+	if ( Cycles > 100 ) {
+		long ns;	// nanoseconds outstanding
+		int sec_corr = 0;	// seconds correction
+		ns = Cycles / CPU_SPEED * 1000;
+		( void ) clock_gettime ( CLOCK_REALTIME, &now );
+		ns = ns - ( now.tv_nsec - start.tv_nsec +
+				( now.tv_sec - start.tv_sec ) * 1000000000 );
+		while ( ns > 999999999 ) {
+			ns -= 1000000000;
+			sec_corr++;
+		}
+		if ( ns < 0 ) {
+			fprintf ( stderr, "ns < 0\n" );
+		} else {
+			delay.tv_nsec = ns;
+			delay.tv_sec = sec_corr;
+			nanosleep ( &delay, &delay );
+		}
+		Cycles = 0;
+	}
+#else
 #if defined(FASTHOST) && !defined(FASTCLOCK)
 		/*
 		 * Wait for amount of time this instruction should have taken
@@ -538,6 +572,7 @@ Beeb()
 			Cycles = 0;
 		}
 #endif
+#endif	/* USE_NANOSLEEP */
 	}
 
 #ifdef	M6502

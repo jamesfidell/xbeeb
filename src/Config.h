@@ -219,7 +219,8 @@
 #undef		FASTCLOCK	/* 100 */
 #undef		ENDIAN_6502
 #define		MITSHM
-#define		FASTHOST
+#undef		FASTHOST
+#define		USE_NANOSLEEP
 
 /*
  * Misc. config. stuff
